@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Vokabeltrainer</string>
+    <string name="ic_help">Hilfe</string>
+    <string name="ic_home">Home</string>
+    <string name="reset">Reset</string>
+    <string name="plus">Buch Hinzufügen</string>
+</resources>

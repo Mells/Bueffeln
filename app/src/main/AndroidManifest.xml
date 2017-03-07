@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.kathrin1.vokabeltrainer_newlayout">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".dictionary.VocabularyDictionary"></activity>
+        <activity android:name=".Status"></activity>
+        <activity android:name=".exercise.Translation"></activity>
+        <activity android:name=".exercise.Kontext"></activity>
+        <activity android:name=".exercise.AufgabeAuswahl"></activity>
+        <activity android:name=".dictionary.VocabularyEntry"></activity>
+        <activity android:name=".dictionary.Lektion"></activity>
+        <activity android:name=".buch.BuchAuswahl_Deprecated"></activity>
+        <activity android:name=".Help"></activity>
+    </application>
+
+</manifest>

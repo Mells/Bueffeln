@@ -1,0 +1,53 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.0"
+    defaultConfig {
+        applicationId "com.example.kathrin1.vokabeltrainer_newlayout"
+        minSdkVersion 16
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            debuggable true
+        }
+    }
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.0.1'
+    compile 'com.android.support:design:25.2.0'
+    compile 'com.readystatesoftware.sqliteasset:sqliteassethelper:+'
+    compile 'com.wunderlist:sliding-layer:1.2.5'
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support.constraint:constraint-layout:1.0.0-beta4'
+    //seekbar (need all?)
+    // ui module
+    compile 'net.qiujuer.genius:ui:2.0.0'
+    compile 'net.qiujuer.genius:res:2.0.0'
+
+    // use to bitmap blur and more
+    compile 'net.qiujuer.genius:graphics:2.0.0'
+
+    // ping/telnet/tracert/dns and run cmd
+    compile 'net.qiujuer.genius:kit-cmd:2.0.0'
+    // shuttle between ui-thread and child-thread
+    compile 'net.qiujuer.genius:kit-handler:2.0.0'
+    // calss reflect
+    compile 'net.qiujuer.genius:kit-reflect:2.0.0'
+
+}
