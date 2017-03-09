@@ -7,10 +7,14 @@ import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.Help;
+import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
@@ -84,5 +88,27 @@ public class VocabularyEntry extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.item_help:
+                Intent intent_help = new Intent(VocabularyEntry.this, Help.class);
+                startActivity(intent_help);
+                return (true);
+            case R.id.item_home:
+                Intent intent_home = new Intent(VocabularyEntry.this, MainActivity.class);
+                startActivity(intent_home);
+                return (true);
+        }
+        return (super.onOptionsItemSelected(item));
     }
 }

@@ -1,5 +1,6 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -9,10 +10,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -108,6 +113,7 @@ public class Kontext extends AppCompatActivity {
         txt_sent02 = (TextView) findViewById(R.id.txt_sentence02);
         txt_sent03 = (TextView) findViewById(R.id.txt_sentence03);
 
+        final EditText edit_solution = (EditText) findViewById(R.id.edit_solution);
         final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
 
         // on inatiating the activity
@@ -134,13 +140,6 @@ public class Kontext extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                             "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
                 }
-            }
-        });
-
-        btn_solution.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                    txt_feedback.setText(fromHtml("Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und Übersetzt <b><i>" + voc.getTranslation() + "</i></b>"));
             }
         });
 
@@ -176,6 +175,39 @@ public class Kontext extends AppCompatActivity {
 
             }
 
+        });
+
+        edit_solution.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                Log.d("TextEdit", "in TextEdit");
+                boolean handled = false;
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    Log.d("TextEdit", "in if");
+                    InputMethodManager inputManager = (InputMethodManager)
+                            getSystemService(Context.INPUT_METHOD_SERVICE);
+
+                    inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                            InputMethodManager.HIDE_NOT_ALWAYS);
+                    if (edit_solution.getText().toString().length() > 0) {
+                            if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                                txt_feedback.setText("Gratulation, das ist korrekt.");
+                                allVocabulary.remove(voc);
+                                // todo - schreib zu datenbank
+                                if (voc.getId() > 6) {
+                                    databaseQuery.updateTested(voc.getTested()+1, voc.getId());
+                                }
+                            } else {
+                                // Todo - feedback
+                                txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
+                                        edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
+                            }
+                    }
+                    handled = true;
+                }
+                edit_solution.getText().clear();
+                return handled;
+            }
         });
     }
 

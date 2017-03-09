@@ -167,7 +167,6 @@ public class Translation extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                edit_solution.getText().clear();
                 txt_feedback.setText("");
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
@@ -245,6 +244,7 @@ public class Translation extends AppCompatActivity {
                     }
                     handled = true;
                 }
+                edit_solution.getText().clear();
                 return handled;
             }
         });

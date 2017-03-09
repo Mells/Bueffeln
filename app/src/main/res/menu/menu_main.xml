@@ -11,7 +11,7 @@
         app:showAsAction="always|withText" />
     <item
         android:id="@+id/item_home"
-        android:icon="@android:drawable/ic_menu_add"
+        android:icon="@drawable/ic_home_black_24dp"
         android:title="@string/ic_home"
         app:showAsAction="always|withText" />
     <item
