@@ -26,14 +26,14 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -44,9 +44,9 @@ import java.util.Random;
 
 public class Kontext extends AppCompatActivity {
 
-    private DatabaseQuery databaseQuery = null;
+    private DatabaseManager dbManager = null;
 
-    private ArrayList<VocObject> allVocabulary;
+    private List<VocObject> allVocabulary;
     private TextView txt_sent01;
     private TextView txt_sent02;
     private TextView txt_sent03;
@@ -102,7 +102,7 @@ public class Kontext extends AppCompatActivity {
 
         // --------------------------------------------
 
-        databaseQuery = new DatabaseQuery(Kontext.this);
+        dbManager = DatabaseManager.build(Kontext.this);
 
         Button btn_next = (Button) findViewById(R.id.btn_next);
         Button btn_solution = (Button) findViewById(R.id.btn_solution);
@@ -120,7 +120,7 @@ public class Kontext extends AppCompatActivity {
         setBookValues();
 
         txt_feedback.setText("");
-        allVocabulary = databaseQuery.getWordsByBookChapterLevel(book, chapter, unit, level);
+        allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
 
         getVocabularyEnglishGerman();
 
@@ -195,7 +195,7 @@ public class Kontext extends AppCompatActivity {
                                 allVocabulary.remove(voc);
                                 // todo - schreib zu datenbank
                                 if (voc.getId() > 6) {
-                                    databaseQuery.updateTested(voc.getTested()+1, voc.getId());
+                                    dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
                             } else {
                                 // Todo - feedback
@@ -305,46 +305,51 @@ public class Kontext extends AppCompatActivity {
             Log.d("TRANSLATION:", Integer.toString(allVocabulary.size()));
             voc = allVocabulary.get(index);
 
-            List<String> sentenceList = new ArrayList<String>(Arrays.asList(voc.getSentences().substring(1, voc.getSentences().length() - 1).split(", ")));
+            List<String> sentenceList =
+                    new ArrayList<>(Arrays.asList(DBUtils.splitListString(voc.getSentences())));
+            
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
             // TODO - take gdex not random
             if (sentenceList.size() >= 3) {
+
+                // MOVED HANDLING OF PARSING INTEGERS FROM STRINGS TO DatabaseManager.getSentence(String)
+
                 index = randomGenerator.nextInt(sentenceList.size());
                 Log.d("TRANSLATION", Integer.toString(index));
-                int numberSentence1 = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
+                String numberSentence1 = sentenceList.get(index);
                 sentenceList.remove(index);
                 index = randomGenerator.nextInt(sentenceList.size());
-                int numberSentence2 = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
+                String numberSentence2 = sentenceList.get(index);
                 sentenceList.remove(index);
                 index = randomGenerator.nextInt(sentenceList.size());
-                int numberSentence3 = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-                //SentObject sentence = databaseQuery.getSentence(numberSentence1).getSentence();
+                String numberSentence3 = sentenceList.get(index);
+                //SentObject sentence = dbManager.getSentence(numberSentence1).getSentence();
                 // TODO - delete the word in sentences
 
 
 
-                txt_sent01.setText(deleteWordFromSentence(databaseQuery.getSentence(numberSentence1)));
-                txt_sent02.setText(deleteWordFromSentence(databaseQuery.getSentence(numberSentence2)));
-                txt_sent03.setText(deleteWordFromSentence(databaseQuery.getSentence(numberSentence3)));
+                txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence1)));
+                txt_sent02.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence2)));
+                txt_sent03.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence3)));
             }
             else{
                 // todo supplement sentences
                 Log.d("List:", sentenceList.toString());
                 if (sentenceList.size() == 1){
                     Log.d("List", sentenceList.toString());
-                    txt_sent01.setText(deleteWordFromSentence(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(0).substring(1, sentenceList.get(0).length() - 1)))));
+                    txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0))));
                     txt_sent02.setText("Kein Satz vorhanden, entschuldigung.");
                     txt_sent03.setText("Kein Satz vorhanden, entschuldigung.");
                 }
                 else if (sentenceList.size() == 2){
-                    txt_sent01.setText(deleteWordFromSentence(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(0).substring(1, sentenceList.get(0).length() - 1)))));
-                    txt_sent02.setText(deleteWordFromSentence(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(1).substring(1, sentenceList.get(1).length() - 1)))));
+                    txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0))));
+                    txt_sent02.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1))));
                     txt_sent03.setText("Kein Satz vorhanden, entschuldigung.");
                 }
                 //else if (sentenceList.size() == 3){
-                //    txt_sent01.setText(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(0).substring(1, sentenceList.get(0).length() - 1))).getSentence());
-                //    txt_sent02.setText(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(1).substring(1, sentenceList.get(1).length() - 1))).getSentence());
-                //    txt_sent03.setText(databaseQuery.getSentence(Integer.parseInt(sentenceList.get(2).substring(1, sentenceList.get(2).length() - 1))).getSentence());
+                //    txt_sent01.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(0).substring(1, sentenceList.get(0).length() - 1))).getSentence());
+                //    txt_sent02.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(1).substring(1, sentenceList.get(1).length() - 1))).getSentence());
+                //    txt_sent03.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(2).substring(1, sentenceList.get(2).length() - 1))).getSentence());
                 //}
 
             }
@@ -352,13 +357,13 @@ public class Kontext extends AppCompatActivity {
     }
 
     private String deleteWordFromSentence(SentObject sentence) {
-        Map<String, List<String>> smap = stringToMap(sentence.getTagged());
+        Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
 
-        List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
+        String[] lemmaVocList = DBUtils.splitListString(voc.getLemma());
         String sent = sentence.getSentence();
 
         Log.d("smap", smap.toString());
-        Log.d("lemmaList", lemmaVocList.toString());
+        Log.d("lemmaList", Arrays.toString(lemmaVocList));
 
         for (String l : lemmaVocList){
             Log.d("l", l.replaceAll("'",""));
@@ -377,26 +382,6 @@ public class Kontext extends AppCompatActivity {
         return mSlidingLayer;
     }
 
-    private Map stringToMap(String sentence) {
-        String punctutations = ".,:;?";
-        Map<String, List<String>> smap = new HashMap<String, List<String>>();
-        // {'car': ['car'], 'A': ['A'], '.': ['.']}
-        String[] pma = sentence.substring(1, sentence.length() - 2).replaceAll("\\[", "").replaceAll("\\'", "").split("\\], ");
-        // car: car -   A: A    -   .: .
-        //Log.d("errorSent", sentence);
-        //Log.d("errorPma", Arrays.toString(pma));
-        for (String item : pma) {
-            // ,: ,, ,, ,, ,]
-            String[] keyVal = item.split(": ");
-            if (punctutations.contains(keyVal[0])) {
-                continue;
-            }
-            //Log.d("error", Arrays.toString(keyVal));
-            //Log.d("error", keyVal[0]+" - "+keyVal[1]);
-            smap.put(keyVal[0], Arrays.asList(keyVal[1].split(",")));
-        }
-        return smap;
-    }
 
     @SuppressWarnings("deprecation")
     public static Spanned fromHtml(String html){

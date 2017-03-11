@@ -4,4 +4,8 @@
     <string name="ic_home">Home</string>
     <string name="reset">Reset</string>
     <string name="plus">Buch Hinzufügen</string>
+
+    <string name="Sent_Missing">:SENTENCE MISSING:</string>
+    <string name="DBHandler_ProgressDialog_Title">Database Update</string>
+    <string name="DBHandler_ProgressDialog_Message">Loading updated data…</string>
 </resources>

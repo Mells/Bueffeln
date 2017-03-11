@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
@@ -29,17 +28,19 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import static com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils.stringOfTagsToMap;
 
 /**
  * Created by kathrin1 on 20.12.16.
@@ -47,9 +48,9 @@ import java.util.Random;
 
 public class Translation extends AppCompatActivity {
 
-    private DatabaseQuery databaseQuery = null;
+    private DatabaseManager dbManager = null;
     private VocObject voc;
-    private ArrayList<VocObject> allVocabulary;
+    private List<VocObject> allVocabulary;
     private TextView txt_voc;
     private TextView txt_bsp;
     private SlidingLayer mSlidingLayer;
@@ -103,7 +104,7 @@ public class Translation extends AppCompatActivity {
 
         // --------------------------------------------
 
-        databaseQuery = new DatabaseQuery(Translation.this);
+        dbManager = DatabaseManager.build(Translation.this);
 
         Button btn_next = (Button) findViewById(R.id.btn_next);
         Button btn_solution = (Button) findViewById(R.id.btn_solution);
@@ -119,7 +120,7 @@ public class Translation extends AppCompatActivity {
         // on inatiating the activity
         setBookValues();
 
-        allVocabulary = databaseQuery.getWordsByBookChapterLevel(book, chapter, unit, level);
+        allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
 
         if(!sw_language.isChecked()){
             getVocabularyEnglish();
@@ -152,7 +153,7 @@ public class Translation extends AppCompatActivity {
                 // todo keep allVocabulary if nothing has changed
                 setBookValues();
 
-                allVocabulary = databaseQuery.getWordsByBookChapterLevel(book, chapter, unit, level);
+                allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
 
                 if(!sw_language.isChecked()){
                     getVocabularyEnglish();
@@ -219,7 +220,7 @@ public class Translation extends AppCompatActivity {
                                 allVocabulary.remove(voc);
                                 // todo - schreib zu datenbank
                                 if (voc.getId() > 6) {
-                                    databaseQuery.updateTested(voc.getTested()+1, voc.getId());
+                                    dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
                             } else {
                                 // Todo - feedback
@@ -232,7 +233,7 @@ public class Translation extends AppCompatActivity {
                                 allVocabulary.remove(voc);
                                 // todo - schreib zu datenbank
                                 if (voc.getId() > 6) {
-                                    databaseQuery.updateTested(voc.getTested()+1, voc.getId());
+                                    dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
 
                             } else {
@@ -370,18 +371,11 @@ public class Translation extends AppCompatActivity {
             Log.d("DE-Übersetzung", voc.getTranslation());
             txt_voc.setText(voc.getTranslation());
 
-            List<String> sentenceList = new ArrayList<String>(Arrays.asList(voc.getSentences().substring(1, voc.getSentences().length() - 1).split(", ")));
-            Log.d("DE-SentenceList", sentenceList.toString());
-            Log.d("DE-SentenceSize", Integer.toString(sentenceList.size()));
-            // TODO - take gdex not random
 
-            index = randomGenerator.nextInt(sentenceList.size());
-            //Log.d("DE-SentenceList", sentenceList.toString());
-            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-            SentObject sentence = databaseQuery.getSentence(numberSentence);
+            SentObject sentence = dbManager.getExampleSentence(voc);
             // TODO - delete the word from bsp
 
-            Map<String, List<String>> smap = stringToMap(sentence.getTagged());
+            Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
 
             List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
             String sent = sentence.getSentence();
@@ -391,8 +385,9 @@ public class Translation extends AppCompatActivity {
 
             for (String l : lemmaVocList){
                 Log.d("l", l.replaceAll("'",""));
-                if (smap.containsKey(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""))){
-                    List<String> bla = smap.get(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""));
+                String lemma = l.replaceAll("['\\[\\]]", "");
+                if (smap.containsKey(lemma)){
+                    List<String> bla = smap.get(lemma);
                     Log.d("bla", bla.toString());
                     for (String s : bla){
                         sent = sent.replaceAll(s, "___");
@@ -416,21 +411,14 @@ public class Translation extends AppCompatActivity {
             voc = allVocabulary.get(index);
             txt_voc.setText(voc.getVoc());
 
-            List<String> sentenceList = new ArrayList<String>(Arrays.asList(voc.getSentences().substring(1, voc.getSentences().length() - 1).split(", ")));
-            Log.d("EN-SentenceSize", Integer.toString(sentenceList.size()));
-            // TODO - take gdex not random
-
-            index = randomGenerator.nextInt(sentenceList.size());
-            Log.d("EN-SentenceList", sentenceList.toString());
-            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-            SentObject sentence = databaseQuery.getSentence(numberSentence);
+            SentObject sentence = dbManager.getExampleSentence(voc);
 
 
             // TODO - highlight the word in bsp
             Log.d("Voc", voc.getVoc());
             Log.d("errorSent", sentence.getSentence());
 
-            Map<String, List<String>> smap = stringToMap(sentence.getTagged());
+            Map<String, List<String>> smap = stringOfTagsToMap(sentence.getTagged());
 
             List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
             String sent = sentence.getSentence();
@@ -460,29 +448,7 @@ public class Translation extends AppCompatActivity {
         return mSlidingLayer;
     }
 
-    private Map stringToMap(String sentence){
-        String punctutations = ".,:;?";
-        Map<String, List<String>> smap = new HashMap<String, List<String>>();
-        // {'car': ['car'], 'A': ['A'], '.': ['.']}
-        String[] pma = sentence.substring(1,sentence.length()-2).replaceAll("\\[", "").replaceAll("\\'","").split("\\], ");
-        // car: car -   A: A    -   .: .
-        //Log.d("errorSent", sentence);
-        //Log.d("errorPma", Arrays.toString(pma));
-        for (String item : pma){
-            // ,: ,, ,, ,, ,]
-            String[] keyVal = item.split(": ");
-            if (punctutations.contains(keyVal[0])){
-                continue;
-            }
-            //Log.d("error", Arrays.toString(keyVal));
-            //Log.d("error", keyVal[0]+" - "+keyVal[1]);
-            smap.put(keyVal[0], Arrays.asList(keyVal[1].split(",")));
-        }
 
-        //Log.d("The map", smap.toString());
-
-        return smap;
-    }
 
     @SuppressWarnings("deprecation")
     private static Spanned fromHtml(String html){

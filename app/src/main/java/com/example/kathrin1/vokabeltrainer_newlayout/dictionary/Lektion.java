@@ -2,35 +2,31 @@ package com.example.kathrin1.vokabeltrainer_newlayout.dictionary;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
-import android.widget.RelativeLayout.LayoutParams;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,8 +40,8 @@ import java.util.Random;
 
 public class Lektion extends AppCompatActivity {
 
-    private DatabaseQuery databaseQuery = null;
-    private ArrayList<VocObject> allVocabulary;
+    private DatabaseManager dbManager = null;
+    private List<VocObject> allVocabulary;
     private int position = 0;
     private VocObject vocable;
     private SlidingLayer mSlidingLayer;
@@ -102,11 +98,11 @@ public class Lektion extends AppCompatActivity {
 
         // --------------------------------------------
 
-        databaseQuery = new DatabaseQuery(Lektion.this);
+        dbManager = DatabaseManager.build(Lektion.this);
 
         setBookValues();
 
-        allVocabulary = databaseQuery.getWordsByBookChapter(book, chapter, unit);
+        allVocabulary = dbManager.getWordsByBookChapter(book, chapter, unit);
 
         final int len_vocabulary = allVocabulary.size()-1;
 
@@ -190,16 +186,16 @@ public class Lektion extends AppCompatActivity {
         }
 
         String pref_chapter = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("chapter", "0");
+                .getString("chapter", "1");
 
         chapter = pref_chapter;
 
         Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean("unit_A", true);
         Boolean pref_unit_B = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
+                .getBoolean("unit_B", false);
         Boolean pref_unit_C = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
+                .getBoolean("unit_C", false);
 
         if (pref_unit_A){
             if (pref_unit_B){
@@ -270,10 +266,18 @@ public class Lektion extends AppCompatActivity {
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());
-        int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-        SentObject sentence = databaseQuery.getSentence(numberSentence);
-        // TODO - highlight the word in bsp
-        txt_bsp.setText(sentence.getSentence());
+
+        try {
+            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
+            SentObject sentence = dbManager.getSentence(numberSentence);
+            // TODO - highlight the word in bsp
+            txt_bsp.setText(sentence.getSentence());
+        } catch (NumberFormatException e) // Thrown if there if the string could not be parsed as an int
+        {
+            // If the sentence list value cannot be parsed as an integer, just display it
+            // TODO: THIS IS JUST FOR DEBUGGING
+            txt_bsp.setText(R.string.Sent_Missing);
+        }
     }
 
     public SlidingLayer getSlidingLayer(){

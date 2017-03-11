@@ -16,7 +16,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -43,7 +43,7 @@ public class VocabularyEntry extends AppCompatActivity {
         Bundle bundle = intent.getExtras();
         int vocId = bundle.getInt("voc_id");
 
-        final DatabaseQuery databaseQuery = new DatabaseQuery(VocabularyEntry.this);
+        final DatabaseManager databaseQuery = DatabaseManager.build(VocabularyEntry.this);
         final VocObject vocable = databaseQuery.getWordPairById(vocId);
 
         TextView txt_voc_de = (TextView) findViewById(R.id.txt_voc_de);

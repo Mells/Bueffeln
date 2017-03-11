@@ -50,4 +50,7 @@ dependencies {
     // calss reflect
     compile 'net.qiujuer.genius:kit-reflect:2.0.0'
 
+    // Parsing csv files
+    compile group: 'com.opencsv', name: 'opencsv', version: '3.8'
+
 }

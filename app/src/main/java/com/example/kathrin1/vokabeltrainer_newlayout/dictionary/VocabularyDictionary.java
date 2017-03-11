@@ -16,7 +16,7 @@ import android.widget.ListView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseQuery;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.ItemObject;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class VocabularyDictionary extends AppCompatActivity {
         filterText = (EditText)findViewById(R.id.edit_solution);
         final ListView itemList = (ListView)findViewById(R.id.listView);
 
-        final DatabaseQuery databaseQuery = new DatabaseQuery(VocabularyDictionary.this);
+        final DatabaseManager databaseQuery = DatabaseManager.build(VocabularyDictionary.this);
         //final String[] terms = databaseQuery.dictionaryWords();
 
 
