@@ -195,7 +195,7 @@ public class DBHandler extends SQLiteAssetHelper
             new SimpleDateFormat("'TIMESTAMP'''yyyy-MM-dd HH:mm:ss''", Locale.GERMANY);
 
 
-    public static final String LOG_TAG = "[DBHandler]";
+    private static final String LOG_TAG = "[DBHandler]";
 
 
 
@@ -415,15 +415,6 @@ public class DBHandler extends SQLiteAssetHelper
 
         public DatabaseHandlerException(String error) {
             super(error);
-        }
-    }
-
-    private class SyncCSVFilesTask extends AsyncTask<Void, Void, Void>
-    {
-        @Override
-        protected Void doInBackground(Void... params)
-        {
-            return null;
         }
     }
 }

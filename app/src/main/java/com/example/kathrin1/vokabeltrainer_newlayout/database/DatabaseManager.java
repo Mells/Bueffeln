@@ -10,7 +10,6 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -101,30 +100,31 @@ public class DatabaseManager
      * Gets a random example sentence for the given word object.  If no sentence is found,
      * returns an empty error sentence.
      *
-     * @param word
-     * @return
+     * @param word The word to get an example sentence for
+     * @return Example sentence for the given word, or an empty sentence if no example sentence
+     *          is found
      */
     public SentObject getExampleSentence(VocObject word)
     {
         String listString = word.getSentences();
 
-        String[] sentenceList = DBUtils.splitListString(listString);
+        List<String> sentenceList = DBUtils.splitListString(listString);
 
-        Log.d("DE-SentenceList", Arrays.toString(sentenceList));
-        Log.d("DE-SentenceSize", Integer.toString(sentenceList.length));
+        Log.d("DE-SentenceList", sentenceList.toString());
+        Log.d("DE-SentenceSize", Integer.toString(sentenceList.size()));
         // TODO - take gdex not random
 
         Random randomGenerator = new Random();
-        int index = randomGenerator.nextInt(sentenceList.length);
+        int index = randomGenerator.nextInt(sentenceList.size());
 
         try
         {
-            return getSentence(Integer.parseInt(sentenceList[index]));
+            return getSentence(Integer.parseInt(sentenceList.get(index)));
         } catch (NumberFormatException e)
         {
             Log.e(LOG_TAG,
                   String.format("Error parsing integer string (%s).  Returning default sentence instead.",
-                                sentenceList[index]));
+                                sentenceList.get(index)));
 
             return SentObject.emptySentence(c);
         }
@@ -153,7 +153,8 @@ public class DatabaseManager
     }
 
     /**
-     * Retrieves the sentence with the given ID from the sentence database.
+     * Retrieves the sentence with the given ID from the sentence database.  If the ID is not found
+     * in the database, returns an error sentence.
      *
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
@@ -165,7 +166,11 @@ public class DatabaseManager
                                  null, null, null, null);
 
         if (cursor.getCount() != 1)
-            throw new NoSuchElementException("Sentence with the given id [" + id + "] not found.");
+        {
+            Log.e(LOG_TAG, "Sentence with the given id [" + id + "] not found.  " +
+                           "Returning error sentence instead.");
+            return SentObject.emptySentence(c);
+        }
 
         cursor.moveToFirst();
 

@@ -32,8 +32,6 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -305,8 +303,7 @@ public class Kontext extends AppCompatActivity {
             Log.d("TRANSLATION:", Integer.toString(allVocabulary.size()));
             voc = allVocabulary.get(index);
 
-            List<String> sentenceList =
-                    new ArrayList<>(Arrays.asList(DBUtils.splitListString(voc.getSentences())));
+            List<String> sentenceList = DBUtils.splitListString(voc.getSentences());
             
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
             // TODO - take gdex not random
@@ -359,11 +356,11 @@ public class Kontext extends AppCompatActivity {
     private String deleteWordFromSentence(SentObject sentence) {
         Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
 
-        String[] lemmaVocList = DBUtils.splitListString(voc.getLemma());
+        List<String> lemmaVocList = DBUtils.splitListString(voc.getLemma());
         String sent = sentence.getSentence();
 
         Log.d("smap", smap.toString());
-        Log.d("lemmaList", Arrays.toString(lemmaVocList));
+        Log.d("lemmaList", lemmaVocList.toString());
 
         for (String l : lemmaVocList){
             Log.d("l", l.replaceAll("'",""));
