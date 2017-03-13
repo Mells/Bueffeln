@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -90,6 +91,67 @@ public class DatabaseManager
 
         while (cursor.moveToNext())
             words.add(cursor.getString(cursor.getColumnIndexOrThrow(fieldName)));
+
+        cursor.close();
+
+        return words;
+    }
+
+    /**
+     * Gets a list of all words in the database, along with their corresponding data values.
+     *
+     * @return The list of retrieved words.
+     */
+    public List<VocObject> getAllWords()
+    {
+        List<VocObject> words = new ArrayList<>();
+
+        Cursor cursor = db.query(DBHandler.WORD_TABLENAME, DBHandler.WORD_COLUMNS,
+                                 null, null, null, null, null);
+
+        while (cursor.moveToNext())
+            words.add(new VocObject(cursor));
+
+        cursor.close();
+
+        return words;
+    }
+
+    /**
+     * Gets a list of all word interactions in the database.
+     *
+     * @return The list of retrieved word interactions.
+     */
+    public List<InterxObject> getAllInteractions()
+    {
+        List<InterxObject> words = new ArrayList<>();
+
+        Cursor cursor = db.query(DBHandler.INTERX_TABLENAME, DBHandler.INTERX_COLUMNS,
+                                 null, null, null, null, null);
+
+        while (cursor.moveToNext())
+            words.add(InterxObject.build(cursor, this));
+
+        cursor.close();
+
+        return words;
+    }
+
+    /**
+     * Gets a list of all word interactions in the database without linking them to their
+     * corresponding word data.
+     *
+     * @return The list of retrieved word interactions.
+     */
+    public List<InterxObject> getAllInteractionsWithoutLinking()
+    {
+        List<InterxObject> words = new ArrayList<>();
+
+        Cursor cursor = db.query(DBHandler.INTERX_TABLENAME, DBHandler.INTERX_COLUMNS,
+                                 null, null, null, null, null);
+
+        while (cursor.moveToNext())
+            words.add(InterxObject.buildWithoutLink(cursor));
 
         cursor.close();
 

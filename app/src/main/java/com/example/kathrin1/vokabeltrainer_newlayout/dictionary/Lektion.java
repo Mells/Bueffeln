@@ -23,13 +23,12 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -256,28 +255,20 @@ public class Lektion extends AppCompatActivity {
     public void setEntryText(VocObject vocable, TextView txt_voc_de, TextView txt_voc_en, TextView txt_bsp, TextView txt_fundort, TextView txt_lemma, TextView txt_status, TextView txt_wortart){
         txt_voc_de.setText(vocable.getTranslation());
         txt_voc_en.setText(vocable.getVoc());
-        txt_lemma.setText(vocable.getLemma().replaceAll("\\[", "").replaceAll("\\'","").replaceAll("\\]",""));
+        txt_lemma.setText(vocable.getLemma().replaceAll("[\\[\\]']", ""));
         txt_status.setText(vocable.getStatus());
         txt_wortart.setText(vocable.getPOS());
         //txt_bsp.setText();
         txt_fundort.setText(vocable.getChapter()+" / "+vocable.getBook());
 
-        List<String> sentenceList = new ArrayList<String>(Arrays.asList(vocable.getSentences().substring(1, vocable.getSentences().length() - 1).split(", ")));
+        List<String> sentenceList = DBUtils.splitListString(vocable.getSentences());
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());
 
-        try {
-            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-            SentObject sentence = dbManager.getSentence(numberSentence);
-            // TODO - highlight the word in bsp
-            txt_bsp.setText(sentence.getSentence());
-        } catch (NumberFormatException e) // Thrown if there if the string could not be parsed as an int
-        {
-            // If the sentence list value cannot be parsed as an integer, just display it
-            // TODO: THIS IS JUST FOR DEBUGGING
-            txt_bsp.setText(R.string.Sent_Missing);
-        }
+        SentObject sentence = dbManager.getSentence(sentenceList.get(index));
+        // TODO - highlight the word in bsp
+        txt_bsp.setText(sentence.getSentence());
     }
 
     public SlidingLayer getSlidingLayer(){

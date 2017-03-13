@@ -122,7 +122,7 @@ public class VocObject {
         return beta_i;
     }
 
-    public float getAlpha()
+    public Float getAlpha()
     {
         return alpha;
     }
@@ -135,5 +135,23 @@ public class VocObject {
     public float getSigma()
     {
         return sigma;
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        VocObject vocObject = (VocObject) o;
+
+        return id == vocObject.id;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return id;
     }
 }
