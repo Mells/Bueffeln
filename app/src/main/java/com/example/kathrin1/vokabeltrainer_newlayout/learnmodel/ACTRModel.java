@@ -1,15 +1,19 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.learnmodel;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.exceptions.ModelNotInitializedException;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +67,14 @@ public class ACTRModel implements LearnModel
         this.unit = unit;
     }
 
+    /**
+     * Checks whether the given word meets the restrictions set by book, chapter, and unit.
+     */
     private boolean meetsRestrictions(VocObject word)
     {
-        // TODO:  Implement
-        return true;
+        return (book == null || word.getBook().equals(book))
+               && (chapter == null || word.getChapter().startsWith(chapter))
+               && (unit == null || word.getChapter().contains("/" + unit));
     }
 
     /**
@@ -75,6 +83,10 @@ public class ACTRModel implements LearnModel
     @Override
     public VocObject getNextWord()
     {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
         VocObject min = null;
         VocObject newWord = null;
 
@@ -86,14 +98,14 @@ public class ACTRModel implements LearnModel
 
             // If the word has no alpha value, then it is a new word.  Note the first new word
             // encountered, in case a new word needs to be presented.
-            if (word.getAlpha() == null)
+            if (word.getActivation() == null)
             {
                 if (newWord == null)
                     newWord = word;
                 continue;
             }
 
-            if (min == null || word.getAlpha() < min.getAlpha())
+            if (min == null || word.getActivation() < min.getActivation())
                 min = word;
         }
 
@@ -104,7 +116,7 @@ public class ACTRModel implements LearnModel
 
         if (min == null) // Should only happen if no words meet the requirements
             return null;
-        else if (min.getAlpha() < Params.THRESHOLD || newWord == null)
+        else if (min.getActivation() < ModelMath.THRESHOLD || newWord == null)
             return min;
         else
             return newWord;
@@ -117,18 +129,33 @@ public class ACTRModel implements LearnModel
     @Override
     public VocObject calculateNextWord()
     {
-        // TODO:  Implement
-        return null;
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        recalculateActivation();
+        return getNextWord();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void calculateNextWordASync(WordSelectionListener listener)
+    public void calculateNextWordASync(final WordSelectionListener listener)
     {
-        // TODO:  Implement
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
 
+        recalculateActivationASync(new CalcListener()
+        {
+            @Override
+            public void onCompletion()
+            {
+                if (listener != null)
+                    listener.onSelection(getNextWord());
+            }
+        });
     }
 
     /**
@@ -139,8 +166,11 @@ public class ACTRModel implements LearnModel
     {
         try
         {
+            // .get() forces this thread to wait until the asynctask completes,
+            // essentially making it synchronous.
             initTask(null).execute().get();
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             Log.e(LOG_TAG, "Error occurred while initializing model.  Could not initialize.", e);
             initialized = false; // Probably redundant
         }
@@ -153,11 +183,12 @@ public class ACTRModel implements LearnModel
     @Override
     public void initializeASync(CalcListener listener)
     {
-        initTask(listener);
+        initTask(listener).execute();
     }
 
     /**
      * Constructs a new ASyncTask used to initialize the model asynchronously, and returns it.
+     * This task will not yet have been executed.
      *
      * @param listener The listener object to call upon completion.  May be left null.
      * @return The constructed ASyncTask, which has not yet been executed.
@@ -185,13 +216,19 @@ public class ACTRModel implements LearnModel
                 // allowing for manual linking here without the need for further database querying.
                 for (InterxObject interx : dbManager.getAllInteractionsWithoutLinking())
                 {
-                    interx.setWord(wordIdMap.get(interx.getWordId()));
-                    interactions.get(interx.getWord()).add(interx);
+                    VocObject word = wordIdMap.get(interx.getWordId());
+
+                    // If for some reason there is no word matching the interaction's word ID,
+                    // skip this interaction
+                    if (word == null)
+                        continue;
+
+                    interx.setWord(word);
+                    interactions.get(word).add(interx);
                 }
 
                 return null;
             }
-
 
 
             @Override
@@ -212,7 +249,19 @@ public class ACTRModel implements LearnModel
     @Override
     public void recalculateActivation()
     {
-        // TODO:  Implement
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        try
+        {
+            // .get() forces this thread to wait until the asynctask completes,
+            // essentially making it synchronous.
+            recalcTask(null).execute().get();
+        } catch (Exception e)
+        {
+            Log.e(LOG_TAG, "Error occurred while recalculating activation of items in model.", e);
+        }
 
     }
 
@@ -222,8 +271,59 @@ public class ACTRModel implements LearnModel
     @Override
     public void recalculateActivationASync(CalcListener listener)
     {
-        // TODO:  Implement
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
 
+        recalcTask(listener).execute();
+    }
+
+
+    /**
+     * Constructs a new ASyncTask used to recalculate all activation values asynchronously,
+     * and returns it.
+     * This task will not yet have been executed.
+     *
+     * // TODO:  This also stores activation values in the database as soon as they are calculated.
+     * // TODO:  May not want to do this, and force local sync manually later instead.
+     *
+     * @param listener The listener object to call upon completion.  May be left null.
+     * @return The constructed ASyncTask, which has not yet been executed.
+     */
+    private AsyncTask<Void, Void, Void> recalcTask(final CalcListener listener)
+    {
+        // The meat occurs inside the doInBackground() method of this object
+        return new AsyncTask<Void, Void, Void>()
+        {
+            @Override
+            protected Void doInBackground(Void... params)
+            {
+                Date time = new Date();
+
+                for (Map.Entry<VocObject, List<InterxObject>> entry : interactions.entrySet())
+                {
+                    float activation = ModelMath.activation(time, entry.getKey(), entry.getValue());
+                    entry.getKey().setActivation(activation);
+
+                    ContentValues vals = new ContentValues();
+                    vals.put(DBHandler.WORD_ACTIVATION, activation);
+                    dbManager.getDatabase()
+                             .update(DBHandler.WORD_TABLENAME, vals,
+                                     DBHandler.WORD_ID + "=" + entry.getKey().getId(),
+                                     null);
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid)
+            {
+                super.onPostExecute(aVoid);
+                if (listener != null)
+                    listener.onCompletion();
+            }
+        };
     }
 
     /**
@@ -232,8 +332,11 @@ public class ACTRModel implements LearnModel
     @Override
     public List<VocObject> getAllWords()
     {
-        // TODO:  Implement
-        return null;
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        return new ArrayList<>(interactions.keySet());
     }
 
     /**
@@ -242,6 +345,10 @@ public class ACTRModel implements LearnModel
     @Override
     public void getUnknownParseIDs(ParseResponseListener listener)
     {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
         // TODO:  Implement
 
     }
@@ -252,6 +359,10 @@ public class ACTRModel implements LearnModel
     @Override
     public void pushToRemote(ParseResponseListener listener)
     {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
         // TODO:  Implement
 
     }
@@ -262,6 +373,11 @@ public class ACTRModel implements LearnModel
     @Override
     public void pullFromRemote(ParseResponseListener listener)
     {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+
         // TODO:  Implement
 
     }

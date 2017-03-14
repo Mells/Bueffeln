@@ -15,6 +15,8 @@ public class InterxObject
 {
     public static final String RESULT_SUCCESS = "SUCCESS";
     public static final String RESULT_FAILURE = "FAILURE";
+    public static final String EXERCISE_TRAIN = "TRAIN";
+    public static final String EXERCISE_TEST = "TEST";
 
     private final int id;
     private final int wordId;
@@ -22,11 +24,17 @@ public class InterxObject
     private final int latency; // In milliseconds
     private final Date timestamp;
     private final String result;
+    private final int charCount;
+    private final String exerciseType;
+
+    private Float activation; // Used for storing activation during activation calculations,
+    // but is not stored in database.
 
     /**
      * Private constructor, use static constructor instead.
      */
-    private InterxObject(int id, VocObject word, int latency, Date timestamp, String result)
+    private InterxObject(int id, VocObject word, int latency, Date timestamp, String result,
+                         int charCount, String exerciseType)
     {
         this.id = id;
         this.word = word;
@@ -34,12 +42,15 @@ public class InterxObject
         this.latency = latency;
         this.timestamp = timestamp;
         this.result = result;
+        this.charCount = charCount;
+        this.exerciseType = exerciseType;
     }
 
     /**
      * Private constructor, use static constructor instead.
      */
-    private InterxObject(int id, int wordId, int latency, Date timestamp, String result)
+    private InterxObject(int id, int wordId, int latency, Date timestamp, String result,
+                         int charCount, String exerciseType)
     {
         this.id = id;
         this.word = null;
@@ -47,21 +58,26 @@ public class InterxObject
         this.latency = latency;
         this.timestamp = timestamp;
         this.result = result;
+        this.charCount = charCount;
+        this.exerciseType = exerciseType;
     }
 
     /**
      * Static constructor, creates a new word interaction object and returns it.
      *
-     * @param id        Local database ID of the interaction
-     * @param word      The word that was presented
-     * @param latency   The measured reaction time for the interaction
-     * @param timestamp The timestamp of the moment the word was presented
-     * @param result    String describing the result of the interaction
+     * @param id           Local database ID of the interaction
+     * @param word         The word that was presented
+     * @param latency      The measured reaction time for the interaction
+     * @param timestamp    The timestamp of the moment the word was presented
+     * @param result       String describing the result of the interaction
+     * @param charCount    The number of characters in the context sentence for the presentation.
+     * @param exerciseType The type of exercise used for the presentation.
      * @return The newly constructed InterxObject object.
      */
-    public static InterxObject build(int id, VocObject word, int latency, Date timestamp, String result)
+    public static InterxObject build(int id, VocObject word, int latency, Date timestamp,
+                                     String result, int charCount, String exerciseType)
     {
-        return new InterxObject(id, word, latency, timestamp, result);
+        return new InterxObject(id, word, latency, timestamp, result, charCount, exerciseType);
     }
 
     /**
@@ -75,11 +91,14 @@ public class InterxObject
      * @param latency   The measured reaction time for the interaction
      * @param timestamp The timestamp of the moment the word was presented
      * @param result    String describing the result of the interaction
+     * @param charCount    The number of characters in the context sentence for the presentation.
+     * @param exerciseType The type of exercise used for the presentation.
      * @return The newly constructed InterxObject object.
      */
-    public static InterxObject buildWithoutLink(int id, int wordId, int latency, Date timestamp, String result)
+    public static InterxObject buildWithoutLink(int id, int wordId, int latency, Date timestamp,
+                                                String result, int charCount, String exerciseType)
     {
-        return new InterxObject(id, wordId, latency, timestamp, result);
+        return new InterxObject(id, wordId, latency, timestamp, result, charCount, exerciseType);
     }
 
 
@@ -87,7 +106,7 @@ public class InterxObject
      * Static constructor, constructs a new word interaction object by reading the data pointed
      * to by the given cursor object.
      *
-     * @param cursor Database cursor at the position of the interaction object to instantiate.
+     * @param cursor  Database cursor at the position of the interaction object to instantiate.
      * @param manager Database manager to allow retrieval of word data by ID.
      * @return The newly constructed InterxObject object.
      * @throws IllegalArgumentException Throws an exception if there was an error reading the cursor.
@@ -138,8 +157,14 @@ public class InterxObject
         // Extract result
         String result = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.INTERX_RESULT));
 
+        // Extract character count
+        int charCount = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.INTERX_CHARCOUNT));
+
+        // Extract exercise type
+        String exerciseType = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.INTERX_EXERCISE_TYPE));
+
         // Build the interaction object
-        return buildWithoutLink(id, wordId, latency, timestamp, result);
+        return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType);
     }
 
     public int getId()
@@ -172,6 +197,75 @@ public class InterxObject
         return result;
     }
 
+    public int getCharCount()
+    {
+        return charCount;
+    }
+
+    public String getExerciseType()
+    {
+        return exerciseType;
+    }
+
+
+    /*
+     * ===================================================================================
+     * The following 4 methods are for caching activation values the instant of this
+     * interaction.  These values are only temporary for the current activation calculation, and
+     * only serve to prevent duplicated math.  These values will change as the word's alpha
+     * fluctuates, so there is no value in permanently storing this.
+     * ===================================================================================
+     */
+
+    /**
+     * Stores a value of activation to attribute to this interaction.  This value is only
+     * temporarily stored, and is not written to the database.
+     *
+     * @param activation The activation value to set.
+     */
+    public void storeActivationValue(float activation)
+    {
+        this.activation = activation;
+    }
+
+    /**
+     * Gets the temporarily stored activation value.  Throws a NullPointerException if no
+     * value has been stored.  Use {@link InterxObject#hasActivation()} first to avoid this.
+     *
+     * @return The stored activation value
+     */
+    public float retrieveActivation()
+    {
+        if (activation == null)
+            throw new NullPointerException("Activation value not set for this InterxObject.");
+
+        return activation;
+    }
+
+    /**
+     * Returns whether or not this interaction object is temporarily storing an activation value.
+     *
+     * @return Returns true is this object is storing an activation value, false otherwise.
+     */
+    public boolean hasActivation()
+    {
+        return (activation != null);
+    }
+
+    /**
+     * Removes the temporarily held activation value for this interaction.
+     */
+    public void clearActivation()
+    {
+        activation = null;
+    }
+
+
+
+
+
+
+
     /**
      * Setter for the word associated with this interaction.  Return this object in order
      * to facilitate chaining.
@@ -197,4 +291,6 @@ public class InterxObject
         word = manager.getWordPairById(wordId);
         return this;
     }
+
+
 }

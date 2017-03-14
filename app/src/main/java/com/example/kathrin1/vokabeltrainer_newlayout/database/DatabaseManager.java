@@ -334,6 +334,21 @@ public class DatabaseManager
         return vocab;
     }
 
+    public void updateWordData(VocObject word)
+    {
+        ContentValues vals = word.getContentValues();
+        long id = db.insertWithOnConflict(DBHandler.WORD_TABLENAME, null, vals,
+                                          SQLiteDatabase.CONFLICT_IGNORE);
+        if (id < 0)
+            db.update(DBHandler.WORD_TABLENAME, vals,
+                      DBHandler.WORD_ID + " = " + word.getId(), null);
+    }
+
+    public SQLiteDatabase getDatabase()
+    {
+        return db;
+    }
+
     /**
      * Updates the tested count for the given word id with the given value
      * TODO:  Eventually get rid of this

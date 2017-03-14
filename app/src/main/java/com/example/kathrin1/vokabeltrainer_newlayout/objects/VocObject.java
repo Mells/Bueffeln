@@ -1,5 +1,6 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -21,14 +22,14 @@ public class VocObject {
     private String parseId; // ID of the word in remote Parse database
     private float beta_si; // Item+user difficulty
     private float beta_i; // Item difficulty
-    private Float alpha; // Activation level.. uses wrapper Float to allow for null
+    private float alpha; // Activation intercept
     private float alpha_d; // Default activation
     private float sigma; // Frequency modifier
+    private Float activation; // Activation level.. uses wrapper Float to allow for null
 
 
-
-    public VocObject(int id, String voc, String lemma, String translation, String status, String book, String chapter, String pos,
-                     String sentences, int tested) {
+    public VocObject(int id, String voc, String translation, String status, String book,
+                     String chapter, String pos, String sentences, int tested, String lemma) {
         this.id = id;
         this.voc = voc;
         this.lemma = lemma;
@@ -70,8 +71,9 @@ public class VocObject {
         beta_i = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_i));
         alpha_d = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA_d));
         sigma = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_SIGMA));
-        alpha = !cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA))
-                ? cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA))
+        alpha = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA));
+        activation = !cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
+                ? cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
                 : null;
     }
 
@@ -122,7 +124,7 @@ public class VocObject {
         return beta_i;
     }
 
-    public Float getAlpha()
+    public float getAlpha()
     {
         return alpha;
     }
@@ -137,6 +139,38 @@ public class VocObject {
         return sigma;
     }
 
+    public Float getActivation() { return activation; }
+
+    public void setActivation(Float activation)
+    {
+        this.activation = activation;
+    }
+
+    public ContentValues getContentValues()
+    {
+
+        ContentValues vals = new ContentValues();
+
+        vals.put(DBHandler.WORD_ID, id);
+        vals.put(DBHandler.WORD_WORD, voc);
+        vals.put(DBHandler.WORD_TRANSLATION, translation);
+        vals.put(DBHandler.WORD_VOCLEMMA, lemma);
+        vals.put(DBHandler.WORD_STATUS, status);
+        vals.put(DBHandler.WORD_BOOK, book);
+        vals.put(DBHandler.WORD_CHAPTER, chapter);
+        vals.put(DBHandler.WORD_POS, pos);
+        vals.put(DBHandler.WORD_SENTID, sentences);
+        vals.put(DBHandler.WORD_LEVEL, tested); // TODO: Remove
+        vals.put(DBHandler.WORD_PARSEID, parseId);
+        vals.put(DBHandler.WORD_BETA_si, beta_si);
+        vals.put(DBHandler.WORD_BETA_i, beta_i);
+        vals.put(DBHandler.WORD_ALPHA, alpha);
+        vals.put(DBHandler.WORD_ALPHA_d, alpha_d);
+        vals.put(DBHandler.WORD_SIGMA, sigma);
+        vals.put(DBHandler.WORD_ACTIVATION, activation);
+
+        return vals;
+    }
 
     @Override
     public boolean equals(Object o)

@@ -53,16 +53,17 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_PARSEID = "ParseId"; // ID of word in Parse database
     public static final String WORD_BETA_si = "beta_si"; // Item+user difficulty
     public static final String WORD_BETA_i = "beta_i"; // Item difficulty
-    public static final String WORD_ALPHA = "alpha_i"; // Activation level of word
+    public static final String WORD_ALPHA = "alpha_i"; // Activation intercept for word
     public static final String WORD_ALPHA_d = "alpha_d"; // Default activation of word
     public static final String WORD_SIGMA = "sigma_i"; // Frequency modifier for word
+    public static final String WORD_ACTIVATION = "activation"; // Activation of the word
     public static final String[] WORD_COLUMNS = {WORD_ID, WORD_WORD, WORD_TRANSLATION,
                                                  WORD_VOCLEMMA, WORD_STATUS, WORD_BOOK,
                                                  WORD_CHAPTER, WORD_POS, WORD_SENTID,
                                                  WORD_PARSEID, WORD_BETA_si, WORD_BETA_i,
                                                  WORD_ALPHA, WORD_ALPHA_d, WORD_SIGMA,
                                                  WORD_EXAMPLE, WORD_NOTE, WORD_TAGGED,
-                                                 WORD_LEVEL, WORD_LEMMA};
+                                                 WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION};
 
     // NO LONGER USED
     final private static String CREATE_WORD_TABLE =
@@ -88,6 +89,7 @@ public class DBHandler extends SQLiteAssetHelper
             WORD_ALPHA + " DECIMAL, " + // If not filled, treated as negative infinity
             WORD_ALPHA_d + " DECIMAL DEFAULT 0.0, " +
             WORD_SIGMA + " DECIMAL DEFAULT 0.0, " +
+            WORD_ACTIVATION + " DECIMAL, " +
             "PRIMARY KEY (" + WORD_ID + ") )";
 
 
@@ -138,9 +140,12 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String INTERX_LATENCY = "latency"; // Reaction time of the interaction
     public static final String INTERX_TIME = "timestamp"; // Timestamp of the interaction
     public static final String INTERX_RESULT = "result"; // Result of the interaction
+    public static final String INTERX_CHARCOUNT = "charCount"; // Number of characters in context
+    public static final String INTERX_EXERCISE_TYPE = "exerciseType"; // Type of exercise
     public static final String[] INTERX_COLUMNS = { INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
                                                     INTERX_WORD_PARSEID, INTERX_LATENCY,
-                                                    INTERX_TIME, INTERX_RESULT };
+                                                    INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
+                                                    INTERX_EXERCISE_TYPE};
 
     // NO LONGER USED
     private static final String CREATE_INTERX_TABLE =
@@ -152,6 +157,8 @@ public class DBHandler extends SQLiteAssetHelper
             INTERX_WORD_PARSEID + " TEXT, " +
             INTERX_LATENCY + " INTEGER, " +
             INTERX_TIME + " TIMESTAMP, " +
+            INTERX_CHARCOUNT + " INTEGER, " +
+            INTERX_EXERCISE_TYPE + " TEXT, " +
             INTERX_RESULT + " TEXT)";
 
 
@@ -208,7 +215,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 1;
+    private static final Integer VERSION = 2;
     // ======================================
 
 
@@ -230,8 +237,28 @@ public class DBHandler extends SQLiteAssetHelper
      */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Whenever the version number of the database increases, synchronize with the CSV files
-        syncWithCSV(db);
+
+        if (oldVersion < 2 && newVersion >= 2)
+        {
+            db.execSQL("alter table " + WORD_TABLENAME + " add " + WORD_ACTIVATION + " numeric");
+
+            ContentValues vals = new ContentValues();
+            vals.put(WORD_ALPHA, 0f);
+            db.update(WORD_TABLENAME, vals, null, null);
+
+            db.execSQL("alter table " + INTERX_TABLENAME + " add " +
+                        INTERX_CHARCOUNT + " integer");
+            db.execSQL("alter table " + INTERX_TABLENAME + " add " +
+                        INTERX_EXERCISE_TYPE + " text");
+
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
+        if (newVersion != 2)
+        {
+            // Whenever the version number of the database increases, synchronize with the CSV files
+            syncWithCSV(db);
+        }
     }
 
 

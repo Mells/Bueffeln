@@ -255,6 +255,7 @@ public class Lektion extends AppCompatActivity {
     public void setEntryText(VocObject vocable, TextView txt_voc_de, TextView txt_voc_en, TextView txt_bsp, TextView txt_fundort, TextView txt_lemma, TextView txt_status, TextView txt_wortart){
         txt_voc_de.setText(vocable.getTranslation());
         txt_voc_en.setText(vocable.getVoc());
+        // Replace all brackets and apostrophes
         txt_lemma.setText(vocable.getLemma().replaceAll("[\\[\\]']", ""));
         txt_status.setText(vocable.getStatus());
         txt_wortart.setText(vocable.getPOS());
