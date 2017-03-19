@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.ArrayList;
@@ -159,12 +160,32 @@ public class DatabaseManager
     }
 
     /**
+     * Gets a list of all study sessions in the database.
+     *
+     * @return The list of retrieved study sessions.
+     */
+    public List<SessionObject> getAllStudySessions()
+    {
+        List<SessionObject> words = new ArrayList<>();
+
+        Cursor cursor = db.query(DBHandler.SESSION_TABLENAME, DBHandler.SESSION_COLUMNS,
+                                 null, null, null, null, null);
+
+        while (cursor.moveToNext())
+            words.add(SessionObject.build(cursor));
+
+        cursor.close();
+
+        return words;
+    }
+
+    /**
      * Gets a random example sentence for the given word object.  If no sentence is found,
      * returns an empty error sentence.
      *
      * @param word The word to get an example sentence for
      * @return Example sentence for the given word, or an empty sentence if no example sentence
-     *          is found
+     * is found
      */
     public SentObject getExampleSentence(VocObject word)
     {
@@ -203,9 +224,11 @@ public class DatabaseManager
      */
     public SentObject getSentence(String id)
     {
-        try {
+        try
+        {
             return getSentence(Integer.parseInt(id));
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException e)
+        {
             Log.e(LOG_TAG,
                   String.format("Error parsing integer string (%s).  Returning default sentence instead.",
                                 id));
@@ -334,16 +357,62 @@ public class DatabaseManager
         return vocab;
     }
 
-    public void updateWordData(VocObject word)
+    /**
+     * Adds the given word data to the database.  If a word with the same ID is already in the
+     * database, it's values are updated to those of the given word.  Returns the ID of the item
+     * in the database.
+     *
+     * @param word The word to insert into/update in the database
+     */
+    public long updateWordData(VocObject word)
     {
         ContentValues vals = word.getContentValues();
         long id = db.insertWithOnConflict(DBHandler.WORD_TABLENAME, null, vals,
                                           SQLiteDatabase.CONFLICT_IGNORE);
         if (id < 0)
-            db.update(DBHandler.WORD_TABLENAME, vals,
-                      DBHandler.WORD_ID + " = " + word.getId(), null);
+            return db.update(DBHandler.WORD_TABLENAME, vals,
+                             DBHandler.WORD_ID + " = " + word.getId(), null);
+        else
+            return id;
     }
 
+
+    /**
+     * Adds the given interaction data to the database.  If an interaction with the same ID is
+     * already in the  database, it's values are updated to those of the given interaction.
+     * Returns the ID of the item in the database.
+     *
+     * @param interx The interaction to insert into/update in the database
+     */
+    public long updateInteraction(InterxObject interx)
+    {
+        ContentValues vals = interx.getContentVals();
+
+        return db.insertWithOnConflict(DBHandler.INTERX_TABLENAME, null, vals,
+                                       SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    /**
+     * Adds the given session data to the database.  If a session with the same ID is
+     * already in the  database, it's values are updated to those of the given session.
+     * Returns the ID of the item in the database.
+     *
+     * @param session The session to insert into/update in the database
+     */
+    public long updateSession(SessionObject session)
+    {
+        ContentValues vals = session.getContentVals();
+
+        return db.insertWithOnConflict(DBHandler.SESSION_TABLENAME, null, vals,
+                                       SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+
+    /**
+     * Retrieves the underlying database being managed by this DatabaseManager.
+     *
+     * @return The database object managed by this DatabaseManager.
+     */
     public SQLiteDatabase getDatabase()
     {
         return db;

@@ -23,7 +23,6 @@ public class VocObject {
     private float beta_si; // Item+user difficulty
     private float beta_i; // Item difficulty
     private float alpha; // Activation intercept
-    private float alpha_d; // Default activation
     private float sigma; // Frequency modifier
     private Float activation; // Activation level.. uses wrapper Float to allow for null
 
@@ -69,7 +68,6 @@ public class VocObject {
         parseId = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_PARSEID));
         beta_si = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_si));
         beta_i = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_i));
-        alpha_d = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA_d));
         sigma = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_SIGMA));
         alpha = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA));
         activation = !cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
@@ -114,6 +112,11 @@ public class VocObject {
         return parseId;
     }
 
+    public void setParseId(String parseId)
+    {
+        this.parseId = parseId;
+    }
+
     public float getBeta_si()
     {
         return beta_si;
@@ -129,17 +132,35 @@ public class VocObject {
         return alpha;
     }
 
-    public float getAlpha_d()
-    {
-        return alpha_d;
-    }
-
     public float getSigma()
     {
         return sigma;
     }
 
     public Float getActivation() { return activation; }
+
+    public void setAlpha(float alpha)
+    {
+        this.alpha = alpha;
+    }
+
+    /**
+     * Sets all model parameters for this word.  Returns this object in order to facilitate chaining.
+     *
+     * @param beta_si
+     * @param beta_i
+     * @param alpha
+     * @param sigma
+     * @return This VocObject.
+     */
+    public VocObject setParameters(float beta_si, float beta_i, float alpha, float sigma)
+    {
+        this.beta_i = beta_i;
+        this.beta_si = beta_si;
+        this.alpha = alpha;
+        this.sigma = sigma;
+        return this;
+    }
 
     public void setActivation(Float activation)
     {
@@ -151,7 +172,8 @@ public class VocObject {
 
         ContentValues vals = new ContentValues();
 
-        vals.put(DBHandler.WORD_ID, id);
+        if (id > 0)
+            vals.put(DBHandler.WORD_ID, id);
         vals.put(DBHandler.WORD_WORD, voc);
         vals.put(DBHandler.WORD_TRANSLATION, translation);
         vals.put(DBHandler.WORD_VOCLEMMA, lemma);
@@ -165,7 +187,6 @@ public class VocObject {
         vals.put(DBHandler.WORD_BETA_si, beta_si);
         vals.put(DBHandler.WORD_BETA_i, beta_i);
         vals.put(DBHandler.WORD_ALPHA, alpha);
-        vals.put(DBHandler.WORD_ALPHA_d, alpha_d);
         vals.put(DBHandler.WORD_SIGMA, sigma);
         vals.put(DBHandler.WORD_ACTIVATION, activation);
 

@@ -1,5 +1,6 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -13,12 +14,14 @@ import java.util.Date;
  */
 public class InterxObject
 {
+    public static final int NEW_INTERX_ID = -1;
+
     public static final String RESULT_SUCCESS = "SUCCESS";
     public static final String RESULT_FAILURE = "FAILURE";
     public static final String EXERCISE_TRAIN = "TRAIN";
     public static final String EXERCISE_TEST = "TEST";
 
-    private final int id;
+    private long id;
     private final int wordId;
     private VocObject word;
     private final int latency; // In milliseconds
@@ -33,7 +36,7 @@ public class InterxObject
     /**
      * Private constructor, use static constructor instead.
      */
-    private InterxObject(int id, VocObject word, int latency, Date timestamp, String result,
+    private InterxObject(long id, VocObject word, int latency, Date timestamp, String result,
                          int charCount, String exerciseType)
     {
         this.id = id;
@@ -49,7 +52,7 @@ public class InterxObject
     /**
      * Private constructor, use static constructor instead.
      */
-    private InterxObject(int id, int wordId, int latency, Date timestamp, String result,
+    private InterxObject(long id, int wordId, int latency, Date timestamp, String result,
                          int charCount, String exerciseType)
     {
         this.id = id;
@@ -65,7 +68,9 @@ public class InterxObject
     /**
      * Static constructor, creates a new word interaction object and returns it.
      *
-     * @param id           Local database ID of the interaction
+     * @param id           Local database ID of the interaction.  If this is a new interaction
+     *                     not yet in the database, this should be set to
+     *                     {@link InterxObject#NEW_INTERX_ID}.
      * @param word         The word that was presented
      * @param latency      The measured reaction time for the interaction
      * @param timestamp    The timestamp of the moment the word was presented
@@ -74,7 +79,7 @@ public class InterxObject
      * @param exerciseType The type of exercise used for the presentation.
      * @return The newly constructed InterxObject object.
      */
-    public static InterxObject build(int id, VocObject word, int latency, Date timestamp,
+    public static InterxObject build(long id, VocObject word, int latency, Date timestamp,
                                      String result, int charCount, String exerciseType)
     {
         return new InterxObject(id, word, latency, timestamp, result, charCount, exerciseType);
@@ -86,16 +91,18 @@ public class InterxObject
      * later established with {@link InterxObject#setWord(VocObject)} or
      * {@link InterxObject#link(DatabaseManager)}.
      *
-     * @param id        Local database ID of the interaction
-     * @param wordId    The ID word that was presented
-     * @param latency   The measured reaction time for the interaction
-     * @param timestamp The timestamp of the moment the word was presented
-     * @param result    String describing the result of the interaction
+     * @param id           Local database ID of the interaction.  If this is a new interaction
+     *                     not yet in the database, this should be set to
+     *                     {@link InterxObject#NEW_INTERX_ID}.
+     * @param wordId       The ID word that was presented
+     * @param latency      The measured reaction time for the interaction
+     * @param timestamp    The timestamp of the moment the word was presented
+     * @param result       String describing the result of the interaction
      * @param charCount    The number of characters in the context sentence for the presentation.
      * @param exerciseType The type of exercise used for the presentation.
      * @return The newly constructed InterxObject object.
      */
-    public static InterxObject buildWithoutLink(int id, int wordId, int latency, Date timestamp,
+    public static InterxObject buildWithoutLink(long id, int wordId, int latency, Date timestamp,
                                                 String result, int charCount, String exerciseType)
     {
         return new InterxObject(id, wordId, latency, timestamp, result, charCount, exerciseType);
@@ -167,7 +174,7 @@ public class InterxObject
         return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType);
     }
 
-    public int getId()
+    public long getId()
     {
         return id;
     }
@@ -207,6 +214,26 @@ public class InterxObject
         return exerciseType;
     }
 
+    public void setId(long id)
+    {
+        this.id = id;
+    }
+
+    public ContentValues getContentVals()
+    {
+        ContentValues vals = new ContentValues();
+
+        if (id > 0)
+            vals.put(DBHandler.INTERX_ID, id);
+        vals.put(DBHandler.INTERX_WORD_DBID, wordId);
+        vals.put(DBHandler.INTERX_LATENCY, latency);
+        vals.put(DBHandler.INTERX_TIME, DBHandler.SQL_DATE.format(timestamp));
+        vals.put(DBHandler.INTERX_RESULT, result);
+        vals.put(DBHandler.INTERX_CHARCOUNT, charCount);
+        vals.put(DBHandler.INTERX_EXERCISE_TYPE, exerciseType);
+
+        return vals;
+    }
 
     /*
      * ===================================================================================
@@ -261,11 +288,6 @@ public class InterxObject
     }
 
 
-
-
-
-
-
     /**
      * Setter for the word associated with this interaction.  Return this object in order
      * to facilitate chaining.
@@ -291,6 +313,4 @@ public class InterxObject
         word = manager.getWordPairById(wordId);
         return this;
     }
-
-
 }

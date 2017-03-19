@@ -54,14 +54,14 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_BETA_si = "beta_si"; // Item+user difficulty
     public static final String WORD_BETA_i = "beta_i"; // Item difficulty
     public static final String WORD_ALPHA = "alpha_i"; // Activation intercept for word
-    public static final String WORD_ALPHA_d = "alpha_d"; // Default activation of word
+    public static final String WORD_ALPHA_d = "alpha_d"; // Default activation of word (DEPRECATED)
     public static final String WORD_SIGMA = "sigma_i"; // Frequency modifier for word
     public static final String WORD_ACTIVATION = "activation"; // Activation of the word
     public static final String[] WORD_COLUMNS = {WORD_ID, WORD_WORD, WORD_TRANSLATION,
                                                  WORD_VOCLEMMA, WORD_STATUS, WORD_BOOK,
                                                  WORD_CHAPTER, WORD_POS, WORD_SENTID,
                                                  WORD_PARSEID, WORD_BETA_si, WORD_BETA_i,
-                                                 WORD_ALPHA, WORD_ALPHA_d, WORD_SIGMA,
+                                                 WORD_ALPHA, WORD_SIGMA,
                                                  WORD_EXAMPLE, WORD_NOTE, WORD_TAGGED,
                                                  WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION};
 
@@ -86,14 +86,10 @@ public class DBHandler extends SQLiteAssetHelper
             WORD_PARSEID + " TEXT DEFAULT '', " +
             WORD_BETA_si + " DECIMAL DEFAULT 0.0, " +
             WORD_BETA_i + " DECIMAL DEFAULT 0.0, " +
-            WORD_ALPHA + " DECIMAL, " + // If not filled, treated as negative infinity
-            WORD_ALPHA_d + " DECIMAL DEFAULT 0.0, " +
+            WORD_ALPHA + " DECIMAL DEFAULT 0.0, " +
             WORD_SIGMA + " DECIMAL DEFAULT 0.0, " +
-            WORD_ACTIVATION + " DECIMAL, " +
+            WORD_ACTIVATION + " DECIMAL, " + // If not filled, treated as negative infinity
             "PRIMARY KEY (" + WORD_ID + ") )";
-
-
-
 
 
     /**
@@ -125,9 +121,6 @@ public class DBHandler extends SQLiteAssetHelper
             "PRIMARY KEY (" + SENT_ID + ") )";
 
 
-
-
-
     /**
      * INTERACTIONS TABLE
      * ======================================================================
@@ -142,10 +135,10 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String INTERX_RESULT = "result"; // Result of the interaction
     public static final String INTERX_CHARCOUNT = "charCount"; // Number of characters in context
     public static final String INTERX_EXERCISE_TYPE = "exerciseType"; // Type of exercise
-    public static final String[] INTERX_COLUMNS = { INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
-                                                    INTERX_WORD_PARSEID, INTERX_LATENCY,
-                                                    INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
-                                                    INTERX_EXERCISE_TYPE};
+    public static final String[] INTERX_COLUMNS = {INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
+                                                   INTERX_WORD_PARSEID, INTERX_LATENCY,
+                                                   INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
+                                                   INTERX_EXERCISE_TYPE};
 
     // NO LONGER USED
     private static final String CREATE_INTERX_TABLE =
@@ -162,9 +155,6 @@ public class DBHandler extends SQLiteAssetHelper
             INTERX_RESULT + " TEXT)";
 
 
-
-
-
     /**
      * STUDY SESSIONS TABLE
      * ======================================================================
@@ -174,8 +164,8 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String SESSION_START = "start"; // Starting time of the study session
     public static final String SESSION_END = "end"; // Ending time of the study session
     public static final String SESSION_PARSEID = "parseId"; // ID of the session in Parse database
-    public static final String[] SESSION_COLUMNS = { SESSION_ID, SESSION_START, SESSION_END,
-                                                     SESSION_PARSEID};
+    public static final String[] SESSION_COLUMNS = {SESSION_ID, SESSION_START, SESSION_END,
+                                                    SESSION_PARSEID};
 
 
     // NO LONGER USED
@@ -186,9 +176,6 @@ public class DBHandler extends SQLiteAssetHelper
             SESSION_START + " TIMESTAMP, " +
             SESSION_END + " TIMESTAMP, " +
             SESSION_PARSEID + " TEXT)";
-
-
-
 
 
     // CSV file paths
@@ -205,19 +192,14 @@ public class DBHandler extends SQLiteAssetHelper
     private static final String LOG_TAG = "[DBHandler]";
 
 
-
-
-
     // Name of the database in storage
     private static final String NAME = "vokabel.db";
 
 
-
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 2;
+    private static final Integer VERSION = 3;
     // ======================================
-
 
 
     private final Context c;
@@ -226,7 +208,8 @@ public class DBHandler extends SQLiteAssetHelper
     /**
      * Constructor.
      */
-    public DBHandler(Context context) {
+    public DBHandler(Context context)
+    {
         super(context, NAME, null, VERSION);
         this.c = context;
     }
@@ -236,25 +219,42 @@ public class DBHandler extends SQLiteAssetHelper
      * {@inheritDoc}
      */
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
+    {
 
+        // VERSION 2 UPGRADE
+        // ==================
         if (oldVersion < 2 && newVersion >= 2)
         {
-            db.execSQL("alter table " + WORD_TABLENAME + " add " + WORD_ACTIVATION + " numeric");
+            db.execSQL(String.format("alter table %s add %s numeric",
+                                     WORD_TABLENAME, WORD_ACTIVATION));
 
             ContentValues vals = new ContentValues();
             vals.put(WORD_ALPHA, 0f);
             db.update(WORD_TABLENAME, vals, null, null);
 
-            db.execSQL("alter table " + INTERX_TABLENAME + " add " +
-                        INTERX_CHARCOUNT + " integer");
-            db.execSQL("alter table " + INTERX_TABLENAME + " add " +
-                        INTERX_EXERCISE_TYPE + " text");
+            db.execSQL(String.format("alter table %s add %s integer",
+                                     INTERX_TABLENAME, INTERX_CHARCOUNT));
+            db.execSQL(String.format("alter table %s add %s text",
+                                     INTERX_TABLENAME, INTERX_EXERCISE_TYPE));
 
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
-        if (newVersion != 2)
+
+        // VERSION 3 UPGRADE
+        // ==================
+        if (oldVersion < 3 && newVersion >= 3)
+        {
+            db.execSQL(String.format("alter table %s drop column %s",
+                                     WORD_TABLENAME, WORD_ALPHA_d));
+
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
+
+        if (newVersion != 2
+            && newVersion != 3)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
@@ -313,19 +313,19 @@ public class DBHandler extends SQLiteAssetHelper
      * the given database.  CSV file should be preceded by two formatting rows:  The first row
      * should contain the headers for each column, and the second row should contain the data
      * type of the column (int, string, float, time, id).
-     *
+     * <p>
      * Columns marked as containing 'time' should contain strings in the following format:
-     *      yyyy-MM-dd'T'HH:mm:ssZ
-     *  eg. 2017-03-11'T'12:00:00Z
-     *
+     * yyyy-MM-dd'T'HH:mm:ssZ
+     * eg. 2017-03-11'T'12:00:00Z
+     * <p>
      * Columns marked as containing 'id' are used as reference.  ID values that already exist in
      * the database are updated with the values given in that row, otherwise a new entry is
      * created.  The csv file must have exactly one column marked as ID, and is assumed to contain
      * integer values.
      *
-     * @param db The database to insert values into
+     * @param db        The database to insert values into
      * @param tableName The table to insert values into
-     * @param csvPath The path to the CSV file to read
+     * @param csvPath   The path to the CSV file to read
      */
     private void readCSVIntoTable(SQLiteDatabase db, String tableName, String csvPath)
     {
@@ -345,7 +345,7 @@ public class DBHandler extends SQLiteAssetHelper
 
             // Convert data type strings to lowercase, for consistency
             // Also, identify the id column
-            for (int i=0; i < dataTypes.length; i++)
+            for (int i = 0; i < dataTypes.length; i++)
             {
                 dataTypes[i] = dataTypes[i].trim().toLowerCase();
                 if (dataTypes[i].equals("id"))
@@ -379,7 +379,7 @@ public class DBHandler extends SQLiteAssetHelper
                 int itemId = -1;
 
                 // Iterate through all columns
-                for (int i=0; i < line.length; i++)
+                for (int i = 0; i < line.length; i++)
                 {
                     // Add the column item to the value collection after converting from string,
                     // if necessary
@@ -402,9 +402,8 @@ public class DBHandler extends SQLiteAssetHelper
                             vals.put(columns[i], line[i]);
                             break;
                         default:
-                            throw new DatabaseHandlerException(
-                                    String.format("Invalid data type in column %d: '%s'",
-                                                  i, dataTypes[i]));
+                            throw new DatabaseHandlerException(String.format("Invalid data type in column %d: '%s'",
+                                                                             i, dataTypes[i]));
                     }
                 }
 
@@ -426,7 +425,8 @@ public class DBHandler extends SQLiteAssetHelper
         } catch (IOException e)
         {
             Log.e("[DBHandler]", "Error reading CSV file.", e);
-        } catch (ParseException e) {
+        } catch (ParseException e)
+        {
             Log.e("[DBHandler]", "Error parsing date/time string.", e);
         }
     }
@@ -438,9 +438,12 @@ public class DBHandler extends SQLiteAssetHelper
     public static class DatabaseHandlerException extends SQLiteException
     {
 
-        public DatabaseHandlerException() {}
+        public DatabaseHandlerException()
+        {
+        }
 
-        public DatabaseHandlerException(String error) {
+        public DatabaseHandlerException(String error)
+        {
             super(error);
         }
     }

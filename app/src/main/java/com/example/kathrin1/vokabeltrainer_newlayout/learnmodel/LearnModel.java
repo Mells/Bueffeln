@@ -1,5 +1,6 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.learnmodel;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.List;
@@ -25,41 +26,59 @@ public interface LearnModel
     /**
      * Allows the model to choose the next word to present based on the current state of the model.
      *
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete.  This
+     * argument is entirely optional.
+     *
      * <br/><br/>
      * This does NOT force a recalculation of activation values, and should only be used after
      * doing so for the selection to be meaningful.
      *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @return The word most optimal to present, according to the model.
      */
-    VocObject getNextWord();
+    VocObject getNextWord(VocObject... ignoreWords);
 
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
      * returning the chosen word.
      *
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete. Their
+     * activation values will still be computed, but they cannot be selected.  This
+     * argument is entirely optional.
+     *
      * <br/><br/>
      * This method forces a full recalculation of all activation values, and does so
      * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
-     * an instance, use {@link LearnModel#calculateNextWordASync(WordSelectionListener)} instead.
+     * an instance, use {@link LearnModel#calculateNextWordASync(WordSelectionListener,
+     * VocObject...)} instead.
      *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @return The word most optimal to present, according to the model.
      */
-    VocObject calculateNextWord();
+    VocObject calculateNextWord(VocObject... ignoreWords);
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
      * calling the {@link WordSelectionListener#onSelection(VocObject)} method of the given
      * listener with the chosen word as an argument.
      *
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete.  Their
+     * activation values will still be computed, but they cannot be selected.  This
+     * argument is entirely optional.
+     *
      * <br/><br/>
      * This method forces a full recalculation of all activation values, and does so
      * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
      * the calculation completes.
      *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @param listener Listener that is invoked upon completion.  May be left null.
      */
-     void calculateNextWordASync(WordSelectionListener listener);
+     void calculateNextWordASync(WordSelectionListener listener, VocObject... ignoreWords);
 
     /**
      * Initializes the model, extracting word data from the local database and setting up the
@@ -110,6 +129,34 @@ public interface LearnModel
      * @param listener Listener that is invoked upon completion.  May be left null.
      */
     void recalculateActivationASync(CalcListener listener);
+
+    /**
+     * Adds the given interaction to the model and the database, and uses it to adjust the
+     * alpha value of the presented word.
+     *
+     * <br/><br/>
+     * This method performs a complete recalculation of an item's optimal alpha, and does so
+     * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
+     * an instance, use {@link LearnModel#addNewInteractionASync(InterxObject, CalcListener)} instead.
+     *
+     * @param interx The interaction to add.
+     */
+    void addNewInteraction(InterxObject interx);
+
+    /**
+     * Adds the given interaction to the model and the database, and uses it to adjust the
+     * alpha value of the presented word, calling the
+     * {@link CalcListener#onCompletion()} method of the given listener upon completion.
+     *
+     * <br/><br/>
+     * This method performs a complete recalculation of an item's optimal alpha, and does so
+     * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
+     * the calculation completes.
+     *
+     * @param interx The interaction to add.
+     * @param listener Listener that is invoked upon completion.  May be left null.
+     */
+    void addNewInteractionASync(InterxObject interx, CalcListener listener);
 
     /**
      * Gets all words tracked by the model.
