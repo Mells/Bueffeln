@@ -198,7 +198,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 3;
+    private static final Integer VERSION = 2;
     // ======================================
 
 
@@ -242,19 +242,7 @@ public class DBHandler extends SQLiteAssetHelper
         }
 
 
-        // VERSION 3 UPGRADE
-        // ==================
-        if (oldVersion < 3 && newVersion >= 3)
-        {
-            db.execSQL(String.format("alter table %s drop column %s",
-                                     WORD_TABLENAME, WORD_ALPHA_d));
-
-            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
-        }
-
-
-        if (newVersion != 2
-            && newVersion != 3)
+        if (newVersion != 2)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);

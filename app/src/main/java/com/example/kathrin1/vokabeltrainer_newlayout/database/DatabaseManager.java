@@ -125,17 +125,17 @@ public class DatabaseManager
      */
     public List<InterxObject> getAllInteractions()
     {
-        List<InterxObject> words = new ArrayList<>();
+        List<InterxObject> interactions = new ArrayList<>();
 
         Cursor cursor = db.query(DBHandler.INTERX_TABLENAME, DBHandler.INTERX_COLUMNS,
                                  null, null, null, null, null);
 
         while (cursor.moveToNext())
-            words.add(InterxObject.build(cursor, this));
+            interactions.add(InterxObject.build(cursor, this));
 
         cursor.close();
 
-        return words;
+        return interactions;
     }
 
     /**
@@ -146,17 +146,17 @@ public class DatabaseManager
      */
     public List<InterxObject> getAllInteractionsWithoutLinking()
     {
-        List<InterxObject> words = new ArrayList<>();
+        List<InterxObject> interactions = new ArrayList<>();
 
         Cursor cursor = db.query(DBHandler.INTERX_TABLENAME, DBHandler.INTERX_COLUMNS,
                                  null, null, null, null, null);
 
         while (cursor.moveToNext())
-            words.add(InterxObject.buildWithoutLink(cursor));
+            interactions.add(InterxObject.buildWithoutLink(cursor));
 
         cursor.close();
 
-        return words;
+        return interactions;
     }
 
     /**
@@ -166,17 +166,17 @@ public class DatabaseManager
      */
     public List<SessionObject> getAllStudySessions()
     {
-        List<SessionObject> words = new ArrayList<>();
+        List<SessionObject> sessions = new ArrayList<>();
 
         Cursor cursor = db.query(DBHandler.SESSION_TABLENAME, DBHandler.SESSION_COLUMNS,
                                  null, null, null, null, null);
 
         while (cursor.moveToNext())
-            words.add(SessionObject.build(cursor));
+            sessions.add(SessionObject.build(cursor));
 
         cursor.close();
 
-        return words;
+        return sessions;
     }
 
     /**
