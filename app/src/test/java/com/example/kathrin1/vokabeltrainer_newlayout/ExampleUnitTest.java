@@ -28,7 +28,7 @@ public class ExampleUnitTest
     {
 
         VocObject word = new VocObject(-1, "word", "translation", "status", "book", "chapter",
-                                       "pos", "[sentences]", 0, "lemma")
+                                       "pos", "[sentences]", 0, "lemma", "word")
                                  .setParameters(0f, 0f, 0.3f, 0f);
 
         Date referenceTime = new Date();

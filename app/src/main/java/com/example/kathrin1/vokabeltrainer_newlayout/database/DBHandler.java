@@ -50,7 +50,9 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_LEMMA = "Lemma";
     public static final String WORD_SENTID = "SentId";
     public static final String WORD_LEVEL = "Tested"; // TODO: Remove eventually
+    public static final String WORD_LABEL = "label"; // Unique identifier for synchronization
     public static final String WORD_PARSEID = "ParseId"; // ID of word in Parse database
+    public static final String WORD_USERINFO_PARSEID = "userInfoParseId"; // ID of user+word info in Parse database
     public static final String WORD_BETA_si = "beta_si"; // Item+user difficulty
     public static final String WORD_BETA_i = "beta_i"; // Item difficulty
     public static final String WORD_ALPHA = "alpha_i"; // Activation intercept for word
@@ -61,9 +63,10 @@ public class DBHandler extends SQLiteAssetHelper
                                                  WORD_VOCLEMMA, WORD_STATUS, WORD_BOOK,
                                                  WORD_CHAPTER, WORD_POS, WORD_SENTID,
                                                  WORD_PARSEID, WORD_BETA_si, WORD_BETA_i,
-                                                 WORD_ALPHA, WORD_SIGMA,
+                                                 WORD_ALPHA, WORD_SIGMA, WORD_LABEL,
                                                  WORD_EXAMPLE, WORD_NOTE, WORD_TAGGED,
-                                                 WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION};
+                                                 WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION,
+                                                 WORD_USERINFO_PARSEID};
 
     // NO LONGER USED
     final private static String CREATE_WORD_TABLE =
@@ -82,8 +85,10 @@ public class DBHandler extends SQLiteAssetHelper
             WORD_TAGGED + " TEXT, " +
             WORD_LEMMA + " TEXT, " +
             WORD_SENTID + " TEXT, " +
+            WORD_LABEL + " TEXT, " +
             WORD_LEVEL + " INTEGER DEFAULT 0, " +
             WORD_PARSEID + " TEXT DEFAULT '', " +
+            WORD_USERINFO_PARSEID + " TEXT DEFAULT '', " +
             WORD_BETA_si + " DECIMAL DEFAULT 0.0, " +
             WORD_BETA_i + " DECIMAL DEFAULT 0.0, " +
             WORD_ALPHA + " DECIMAL DEFAULT 0.0, " +
@@ -198,7 +203,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 2;
+    private static final Integer VERSION = 3;
     // ======================================
 
 
@@ -242,7 +247,28 @@ public class DBHandler extends SQLiteAssetHelper
         }
 
 
-        if (newVersion != 2)
+        // VERSION 3 UPGRADE
+        // ==================
+        if (oldVersion < 3 && newVersion >= 3)
+        {
+            db.execSQL(String.format("alter table %s add %s text",
+                                     WORD_TABLENAME, WORD_LABEL));
+
+            db.execSQL(String.format("update %s set %s = %s",
+                                     WORD_TABLENAME, WORD_LABEL, WORD_WORD));
+
+            db.execSQL(String.format("alter table %s add %s text",
+                                     WORD_TABLENAME, WORD_USERINFO_PARSEID));
+
+            db.execSQL(String.format("update %s set %s = %s",
+                                     WORD_TABLENAME, WORD_USERINFO_PARSEID, "''"));
+
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
+
+        if (newVersion != 2 &&
+                newVersion != 3)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);

@@ -185,6 +185,7 @@ public abstract class ModelMath
      * @param time         The time to calculate activation in reference to.
      * @param word         The word to calculate activation for.
      * @param interactions List of all interactions with the word, in temporal order.
+     * @param sessions     List of all study sessions, in order to scale the time between them.
      * @param alpha        The alpha value of the word to use for calculations.
      *                     This must be passed as an argument rather than simply reading the word
      *                     object in order to allow calculating with different alphas.
@@ -205,6 +206,11 @@ public abstract class ModelMath
         return activation;
     }
 
+    /**
+     * Clears the cached activation for all interactions in the given list.
+     *
+     * @param interactions The list of interactions for which to clear the activation cache
+     */
     public static void clearCachedActivation(List<InterxObject> interactions)
     {
         for (InterxObject interx : interactions)
@@ -229,7 +235,8 @@ public abstract class ModelMath
      * @param time         The time to calculate activation in reference to.
      * @param word         The word to calculate activation for.
      * @param interactions List of all interactions with the word, in temporal order.
-     * @param doLast       Whether or not the last interaction should be ignored
+     * @param sessions     List of all study sessions, in order to scale the time between them.
+     * @param doLast       Whether or not the last interaction should be counted
      * @param alpha        The alpha value of the word to use for calculations.
      *                     This must be passed as an argument rather than simply reading the word
      *                     object in order to allow calculating with different alphas.
@@ -290,6 +297,7 @@ public abstract class ModelMath
      * @param latest       The latest interaction.  This item should be the final item in the given
      *                     list.  // TODO:  Probably doesn't need to be it's own argument
      * @param interactions The list of all interactions for the word
+     * @param sessions     List of all study sessions, in order to scale the time between them.
      * @return The alpha value that fits the latest interaction
      */
     public static float latestAlpha(InterxObject latest, List<InterxObject> interactions,
@@ -336,6 +344,7 @@ public abstract class ModelMath
      *
      * @param word         The word to calculate the error for
      * @param interactions List of all interactions for the word
+     * @param sessions     List of all study sessions, in order to scale the time between them.
      * @param alpha        The alpha value to use (instead of whatever value is stored by the word)
      * @return The total reaction time error.
      */
@@ -378,6 +387,7 @@ public abstract class ModelMath
      * @param latest       The latest interaction.  This item should be the final item in the given
      *                     list.  // TODO:  Probably doesn't need to be it's own argument
      * @param interactions The list of all interactions for the word
+     * @param sessions     List of all study sessions, in order to scale the time between them.
      * @return The new alpha value that best fits the word's interactions
      */
     public static float newAlpha(InterxObject latest, List<InterxObject> interactions,
@@ -420,7 +430,7 @@ public abstract class ModelMath
 
     /**
      * Calculates the effective time distance between the two given dates, scaling the time that
-     * passed in between the given sessions.  Returns a value in SECONDS.
+     * passed between the given sessions.  Returns a value in <b>SECONDS</b>.
      *
      * @param older    The older of the two times to compare.
      * @param newer    The newer of the two times to compare.
@@ -434,27 +444,46 @@ public abstract class ModelMath
         if (newer.before(older))
             throw new IllegalArgumentException("'older' argument must be a time before 'newer'.");
 
+        // Find the raw millisecond difference between the gives dates
         double difference = newer.getTime() - older.getTime();
 
+        // If there are no sessions, simply return here
         if (sessions == null)
             return difference / 1000.0;
 
+        // Calculate the inverse psychological time scalar
         float deltaInverse = 1 - PSYCH_TIME_SCALAR;
 
+
+        /*
+         * The strategy here is the following:
+         *
+         * Iterate through all sessions, determining how much of the given timespan fell between
+         * the session and it's predecessor.  This amount is scaled by the INVERSE psychological
+         * time scalar to determine a value to SUBTRACT from the otherwise-unscaled difference.
+         * This results in the time remaining as part of the difference total to equal the time
+         * scaled by the non-inverted psych time scalar.
+         */
+
+        // Iterate through all sessions
         for (int i = 0; i < sessions.size(); i++)
         {
+            // Note the current and previous sessions (if one exists)
             SessionObject current = sessions.get(i);
             SessionObject previous = i > 0 ? sessions.get(i - 1) : null;
 
+            // If the previous interaction is marked as unfinished, throw an error
             if (previous != null && !previous.isFinished())
                 throw new IllegalArgumentException("Non-final session is unfinished.");
 
+            // If the sessions are mis-ordered or overlap, throw an error
             if (previous != null && !current.getStart().after(previous.getEnd()))
                 throw new IllegalArgumentException("Study sessions are not properly ordered.");
 
-
+            // If the older given timestamp is before the start of the current session
             if (older.before(current.getStart()))
             {
+                // If the older given timestamp is before the end of the previous session
                 if (previous != null && older.before(previous.getEnd()))
                 {
                     // Older -> Previous end *-> Newer -> Current start
@@ -462,7 +491,7 @@ public abstract class ModelMath
                         difference -= deltaInverse * (newer.getTime() -
                                                       previous.getEnd().getTime());
 
-                        // Older -> Previous end *-> Current start -> Newer
+                    // Older -> Previous end *-> Current start -> Newer
                     else
                         difference -= deltaInverse * (current.getStart().getTime() -
                                                       previous.getEnd().getTime());
@@ -473,7 +502,7 @@ public abstract class ModelMath
                     if (current.getStart().after(newer))
                         difference -= deltaInverse * (newer.getTime() -
                                                       older.getTime());
-                        // (Previous end) -> Older *-> Current start -> Newer
+                    // (Previous end) -> Older *-> Current start -> Newer
                     else
                         difference -= deltaInverse * (current.getStart().getTime() -
                                                       older.getTime());
@@ -484,12 +513,14 @@ public abstract class ModelMath
             if (i + 1 == sessions.size() && current.isFinished() && current.getEnd().before(newer))
                 difference -= deltaInverse * (newer.getTime() - current.getEnd().getTime());
 
+            // If both given timestamps lie within or before the current session, stop here
             if (!newer.after(current.getStart()) ||
                 (current.isFinished() && !newer.after(current.getEnd())))
                 break;
 
         }
 
+        // Return the scaled time difference, converted to seconds
         return difference / 1000.0;
 
 

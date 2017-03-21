@@ -17,9 +17,11 @@ public class VocObject {
     private String lemma;
     private String sentences;
     private int tested; // TODO: Remove this eventually
+    private String label; // Unique label for this word, for synchronizing between local and remote databases
 
     // For use with the learning model
     private String parseId; // ID of the word in remote Parse database
+    private String userInfoParseId;
     private float beta_si; // Item+user difficulty
     private float beta_i; // Item difficulty
     private float alpha; // Activation intercept
@@ -28,7 +30,8 @@ public class VocObject {
 
 
     public VocObject(int id, String voc, String translation, String status, String book,
-                     String chapter, String pos, String sentences, int tested, String lemma) {
+                     String chapter, String pos, String sentences, int tested, String lemma,
+                     String label) {
         this.id = id;
         this.voc = voc;
         this.lemma = lemma;
@@ -39,6 +42,7 @@ public class VocObject {
         this.pos = pos;
         this.sentences = sentences;
         this.tested = tested;
+        this.label = label;
     }
 
     /**
@@ -70,6 +74,8 @@ public class VocObject {
         beta_i = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_i));
         sigma = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_SIGMA));
         alpha = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ALPHA));
+        label = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_LABEL));
+        userInfoParseId = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_USERINFO_PARSEID));
         activation = !cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
                 ? cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
                 : null;
@@ -107,9 +113,24 @@ public class VocObject {
 
     public int getTested() { return tested; }
 
+    public String getLabel()
+    {
+        return label;
+    }
+
     public String getParseId()
     {
         return parseId;
+    }
+
+    public String getUserInfoParseId()
+    {
+        return userInfoParseId;
+    }
+
+    public void setUserInfoParseId(String userInfoParseId)
+    {
+        this.userInfoParseId = userInfoParseId;
     }
 
     public void setParseId(String parseId)
@@ -183,6 +204,7 @@ public class VocObject {
         vals.put(DBHandler.WORD_POS, pos);
         vals.put(DBHandler.WORD_SENTID, sentences);
         vals.put(DBHandler.WORD_LEVEL, tested); // TODO: Remove
+        vals.put(DBHandler.WORD_LABEL, label);
         vals.put(DBHandler.WORD_PARSEID, parseId);
         vals.put(DBHandler.WORD_BETA_si, beta_si);
         vals.put(DBHandler.WORD_BETA_i, beta_i);

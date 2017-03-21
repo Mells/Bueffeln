@@ -22,7 +22,7 @@ public class InterxBuilder
 
 
     /**
-     * Private constructor, use static constructor instead.
+     * Constructor.  Does nothing.
      */
     public InterxBuilder()
     {
@@ -78,8 +78,8 @@ public class InterxBuilder
      */
     private boolean isReadyToBuild()
     {
-        return !(word == null || latency < 0 || timestamp == null || result == null ||
-                charCount < 0 || exerciseType == null);
+        return !(word == null || latency <= 0 || timestamp == null || result == null ||
+                charCount <= 0 || exerciseType == null);
     }
 
 
