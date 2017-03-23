@@ -267,7 +267,7 @@ public class DatabaseManager
     }
 
     /**
-     * Retrieves the word with the given ID from the sentence database.
+     * Retrieves the word with the given ID from the word database.
      *
      * @param id ID of the word to retrieve.
      * @return The retrieved word.
@@ -280,6 +280,30 @@ public class DatabaseManager
 
         if (cursor.getCount() != 1)
             throw new NoSuchElementException("Word with the given id [" + id + "] not found.");
+
+        cursor.moveToFirst();
+
+        VocObject returnObj = new VocObject(cursor);
+
+        cursor.close();
+
+        return returnObj;
+    }
+
+    /**
+     * Retrieves the word with the given label from the word database.
+     *
+     * @param label Label of the word to retrieve.
+     * @return The retrieved word.
+     */
+    public VocObject getWordPairByLabel(String label)
+    {
+        Cursor cursor = db.query(DBHandler.WORD_TABLENAME, DBHandler.WORD_COLUMNS,
+                                 DBHandler.WORD_LABEL + " = " + label,
+                                 null, null, null, null);
+
+        if (cursor.getCount() != 1)
+            throw new NoSuchElementException("Word with the given label [" + label + "] not found.");
 
         cursor.moveToFirst();
 

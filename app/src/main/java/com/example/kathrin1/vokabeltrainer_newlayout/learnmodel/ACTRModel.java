@@ -9,6 +9,9 @@ import android.util.SparseArray;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.exceptions.ModelNotInitializedException;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.NetworkError;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.RequestManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.WordListUpdateListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
@@ -21,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Implementation of a learning model using the ACT-R learn model system
@@ -35,6 +39,8 @@ public class ACTRModel implements LearnModel
     private final SparseArray<VocObject> wordIdMap;
     private final List<SessionObject> sessions;
     private final DatabaseManager dbManager;
+    private final RequestManager requestManager;
+    private final StoredValueManager svManager;
 
     private String book, chapter, unit;
 
@@ -48,6 +54,8 @@ public class ACTRModel implements LearnModel
         wordIdMap = new SparseArray<>();
         sessions = new ArrayList<>();
         dbManager = DatabaseManager.build(c);
+        requestManager = RequestManager.build(c, dbManager);
+        svManager = StoredValueManager.build(c);
     }
 
     /**
@@ -181,6 +189,7 @@ public class ACTRModel implements LearnModel
             // .get() forces this thread to wait until the asynctask completes,
             // essentially making it synchronous.
             initTask(null).execute().get();
+            initialized = true;
         } catch (Exception e)
         {
             Log.e(LOG_TAG, "Error occurred while initializing model.  Could not initialize.", e);
@@ -245,6 +254,8 @@ public class ACTRModel implements LearnModel
                 // Retrieves all study sessions from the database
                 sessions.addAll(dbManager.getAllStudySessions());
 
+                initialized = true;
+
                 return null;
             }
 
@@ -256,7 +267,6 @@ public class ACTRModel implements LearnModel
                 if (listener != null)
                     listener.onCompletion();
 
-                initialized = true;
             }
         };
     }
@@ -442,6 +452,57 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
+    public void saveToDatabase()
+    {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        saveTask().run();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void saveToDatabaseASync(CalcListener listener)
+    {
+        performASync(saveTask(), listener);
+    }
+
+    private Runnable saveTask()
+    {
+        return new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                // Update all words and interactions
+
+                Log.d(LOG_TAG, "Saving database...");
+
+                for (Map.Entry<VocObject, List<InterxObject>> entry : interactions.entrySet())
+                {
+                    dbManager.updateWordData(entry.getKey());
+                    for (InterxObject interx : entry.getValue())
+                        dbManager.updateInteraction(interx);
+                }
+
+                // Update all sessions
+
+                for (SessionObject session : sessions)
+                    dbManager.updateSession(session);
+
+                Log.d(LOG_TAG, "Database saved.");
+            }
+
+        };
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public List<VocObject> getAllWords()
     {
         // Check that the model has been initialized, otherwise throw runtime exception
@@ -461,7 +522,13 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        // TODO:  Implement
+        List<NetworkError> errorList = new ArrayList<>();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        pushDictionaryItems(errorList, latch);
+
+        waitForActionsTask(latch, errorList, listener).execute();
 
     }
 
@@ -475,8 +542,6 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        // TODO:  Implement
-
     }
 
     /**
@@ -489,8 +554,152 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
+        // If update is successful, this timestamp is used as the reference for update
+        Date updateTime = new Date();
 
-        // TODO:  Implement
+        List<NetworkError> errorList = new ArrayList<>();
 
+        final CountDownLatch latch = new CountDownLatch(1);
+
+
+        pullDictionaryItems(errorList, latch);
+
+
+        waitForActionsTask(latch, errorList, listener).execute();
+    }
+
+
+    private void pullDictionaryItems(final List<NetworkError> errors,
+                                     final CountDownLatch latch)
+    {
+        requestManager.getDictionaryItems(svManager.getLastUpdate(), new WordListUpdateListener()
+        {
+            @Override
+            public void onSuccess(List<VocObject> words)
+            {
+                latch.countDown();
+
+                for (VocObject word : words)
+                {
+                    wordIdMap.put(word.getId(), word);
+
+                    // REMINDER:  VocObject.equals(), and thus the Map.containsKey() check,
+                    // is based SOLELY on database ID
+                    if (interactions.containsKey(word))
+                        interactions.put(word, interactions.get(word));
+                    else
+                        interactions.put(word, new ArrayList<InterxObject>());
+                }
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "Word retrieval error: " + error.toString());
+                errors.add(error);
+                latch.countDown();
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "Word retrieval error.", error);
+                errors.add(NetworkError.buildFromThrowable(error));
+                latch.countDown();
+            }
+        });
+    }
+
+    private void pushDictionaryItems(final List<NetworkError> errors,
+                                     final CountDownLatch latch)
+    {
+        List<VocObject> wordsWithoutParseId = new ArrayList<>();
+
+        for (VocObject word : interactions.keySet())
+            if (!word.hasParseId())
+                wordsWithoutParseId.add(word);
+
+        Log.d(LOG_TAG, "Getting Parse ID for " + wordsWithoutParseId.size() + " items.");
+
+        requestManager.pushDictionaryItems(wordsWithoutParseId, new WordListUpdateListener()
+        {
+            @Override
+            public void onSuccess(List<VocObject> words)
+            {
+                latch.countDown();
+                // Shouldn't need to do anything, words will already be updated with their new
+                // Parse object IDs
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "Word retrieval error: " + error.toString());
+                errors.add(error);
+                latch.countDown();
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "Word retrieval error.", error);
+                errors.add(NetworkError.buildFromThrowable(error));
+                latch.countDown();
+            }
+        });
+    }
+
+    private AsyncTask<Void, Void, Void> waitForActionsTask(final CountDownLatch latch,
+                                                           final List<NetworkError> errors,
+                                                           final ParseResponseListener listener)
+    {
+        return new AsyncTask<Void, Void, Void>()
+        {
+            @Override
+            protected Void doInBackground(Void... params)
+            {
+                try
+                {
+                    latch.await();
+
+                    if (errors.size() == 0)
+                        listener.onResponse(null);
+                    else
+                    {
+                        for (NetworkError error : errors)
+                            listener.onResponse(error);
+                    }
+
+                } catch (InterruptedException e) {
+                    errors.add(NetworkError.buildFromThrowable(e));
+                    for (NetworkError error : errors)
+                        listener.onResponse(error);
+                }
+
+                return null;
+            }
+        };
+    }
+
+
+    private void performASync(final Runnable runnable, final CalcListener listener)
+    {
+        new AsyncTask<Void, Void, Void>()
+        {
+            @Override
+            protected Void doInBackground(Void... params)
+            {
+                runnable.run();
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid)
+            {
+                super.onPostExecute(aVoid);
+                if (listener != null)
+                    listener.onCompletion();
+            }
+        }.execute();
     }
 }

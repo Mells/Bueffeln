@@ -1,6 +1,9 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.network;
 
+import android.util.Log;
+
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
@@ -10,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,6 +35,7 @@ public abstract class JSONHandler
     public static final String FIELD_WORD_SIGMA = "sigma_i";
     public static final String FIELD_WORD_LABEL = "label";
     public static final String FIELD_WORD_BETA_I = "beta_i";
+    public static final String FIELD_WORD_STORE_ARRAY = "words";
 
     public static final String FIELD_UWINFO_WORDID = "wordId";
     public static final String FIELD_UWINFO_ALPHA = "alpha_i";
@@ -50,6 +55,7 @@ public abstract class JSONHandler
     public static final String FIELD_INTERX_LATENCY = "latency";
 
     public static final String FIELD_USER_BETA_S = "beta_s";
+    public static final String LOG_TAG = "[JSONHandler]";
 
 
     public static JSONObject getUserWordInfoJSON(VocObject word)
@@ -70,7 +76,8 @@ public abstract class JSONHandler
 
             return jObj;
 
-        } catch (JSONException e) {
+        } catch (JSONException e)
+        {
             // TODO:  Handle exception
             return null;
         }
@@ -89,13 +96,42 @@ public abstract class JSONHandler
             jObj.put(FIELD_WORD_SIGMA, word.getSigma());
             jObj.put(FIELD_WORD_LABEL, word.getLabel());
             jObj.put(FIELD_WORD_BETA_I, word.getBeta_i());
+            jObj.put(FIELD_WORD_ALPHA_D, 0);  // TODO:  REMOVE
 
             return jObj;
 
-        } catch (JSONException e) {
+        } catch (JSONException e)
+        {
             // TODO:  Handle exception
             return null;
         }
+    }
+
+    public static JSONObject getWordInfoJSONArray(List<VocObject> words)
+    {
+        try
+        {
+            JSONObject jObj = new JSONObject();
+
+            JSONArray jArray = new JSONArray();
+
+            for (VocObject word : words)
+            {
+                JSONObject wordInfoJSON = getWordInfoJSON(word);
+                if (wordInfoJSON != null)
+                    jArray.put(wordInfoJSON);
+            }
+
+            jObj.put(FIELD_WORD_STORE_ARRAY, jArray);
+
+            return jObj;
+
+        } catch (JSONException e)
+        {
+            // TODO:  Handle exception
+            return null;
+        }
+
     }
 
 
@@ -120,7 +156,8 @@ public abstract class JSONHandler
 
             return jObj;
 
-        } catch (JSONException e) {
+        } catch (JSONException e)
+        {
             // TODO:  Handle exception
             return null;
         }
@@ -144,7 +181,8 @@ public abstract class JSONHandler
 
             return jObj;
 
-        } catch (JSONException e) {
+        } catch (JSONException e)
+        {
             // TODO:  Handle exception
             return null;
         }
@@ -161,14 +199,120 @@ public abstract class JSONHandler
 
             return jObj;
 
-        } catch (JSONException e) {
+        } catch (JSONException e)
+        {
             // TODO:  Handle exception
             return null;
         }
     }
 
 
+    public static VocObject parseWord(JSONObject jObj, DatabaseManager dm)
+    {
+        String label = parseWordLabel(jObj);
+
+        if (label == null)
+            return null;
+
+        VocObject wordObj = dm.getWordPairByLabel(label);
+
+        return parseWordInto(jObj, wordObj);
+    }
+
+    public static String parseWordLabel(JSONObject jObj)
+    {
+        try
+        {
+            return jObj.getString(FIELD_WORD_LABEL);
+        } catch (JSONException e)
+        {
+            Log.e(LOG_TAG, "Could not extract word data from JSON object: " + jObj.toString(), e);
+            return null;
+        }
+
+    }
+
+    public static VocObject parseWordInto(JSONObject jObj, VocObject into)
+    {
+        try
+        {
+            String objectId = jObj.getString(FIELD_OBJECTID);
+            String label = jObj.getString(FIELD_WORD_LABEL);
+
+            if (!label.equals(into.getLabel()))
+                throw new IllegalArgumentException(String.format("Mismatched word labels: %s and %s",
+                                                                 label, into.getLabel()));
+
+            if (jObj.has(FIELD_WORD_BETA_I) && jObj.has(FIELD_WORD_SIGMA))
+            {
+                float beta_i = (float) jObj.getDouble(FIELD_WORD_BETA_I);
+                float sigma_i = (float) jObj.getDouble(FIELD_WORD_SIGMA);
+                // float alpha_d = (float) jObj.getDouble(FIELD_WORD_ALPHA_D);
+                into.setParameters(into.getBeta_si(), beta_i, into.getAlpha(), sigma_i);
+            }
+
+            into.setParseId(objectId);
+
+            return into;
+
+        } catch (JSONException e)
+        {
+            Log.e(LOG_TAG, "Could not extract word data from JSON object: " + jObj.toString(), e);
+            return null;
+        }
+    }
 
 
+    public static List<JSONObject> extractResults(JSONObject jObj)
+    {
+        List<JSONObject> list = new ArrayList<>();
+        try
+        {
+            JSONArray results = jObj.getJSONArray("results");
+
+            for (int i = 0; i < results.length(); i++)
+                list.add(results.getJSONObject(i));
+
+        } catch (JSONException e)
+        {
+            Log.e(LOG_TAG, "Could not extract results array from: " + jObj.toString(), e);
+        }
+
+        return list;
+    }
+
+
+    public static JSONObject parseJSONOrThrow(String jsonString) throws JSONException
+    {
+        return new JSONObject(jsonString);
+    }
+
+    public static JSONObject parseJSON(String jsonString)
+    {
+        try
+        {
+            return parseJSONOrThrow(jsonString);
+        } catch (JSONException e)
+        {
+            Log.e(LOG_TAG, "Could not parse JSON string: " + jsonString, e);
+            return null;
+        }
+    }
+
+    public static JSONObject parseJSONOrThrow(byte[] rawBytes) throws JSONException
+    {
+        if (rawBytes == null)
+            throw new NullPointerException("Null byte array cannot be parsed to JSON.");
+
+        return parseJSONOrThrow(new String(rawBytes));
+    }
+
+    public static JSONObject parseJSON(byte[] rawBytes)
+    {
+        if (rawBytes == null)
+            return null;
+
+        return parseJSON(new String(rawBytes));
+    }
 
 }

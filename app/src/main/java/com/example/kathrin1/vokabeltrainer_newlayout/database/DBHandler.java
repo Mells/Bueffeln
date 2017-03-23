@@ -189,7 +189,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // Date formats
     public static final SimpleDateFormat ISO_DATE =
-            new SimpleDateFormat("yyyy-MM-dd'''T'''HH:mm:ssZ", Locale.GERMANY);
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.GERMANY);
     public static final SimpleDateFormat SQL_DATE =
             new SimpleDateFormat("'TIMESTAMP'''yyyy-MM-dd HH:mm:ss''", Locale.GERMANY);
 
@@ -255,7 +255,7 @@ public class DBHandler extends SQLiteAssetHelper
                                      WORD_TABLENAME, WORD_LABEL));
 
             db.execSQL(String.format("update %s set %s = %s",
-                                     WORD_TABLENAME, WORD_LABEL, WORD_WORD));
+                                     WORD_TABLENAME, WORD_LABEL, WORD_ID));
 
             db.execSQL(String.format("alter table %s add %s text",
                                      WORD_TABLENAME, WORD_USERINFO_PARSEID));

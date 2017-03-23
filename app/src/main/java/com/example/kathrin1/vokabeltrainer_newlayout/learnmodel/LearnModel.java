@@ -1,5 +1,6 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.learnmodel;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.network.NetworkError;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -159,6 +160,26 @@ public interface LearnModel
     void addNewInteractionASync(InterxObject interx, CalcListener listener);
 
     /**
+     * Saves all values currently tracked by the model into the LOCAL database.
+     *
+     * <br/><br/>
+     * This method operates SYNCHRONOUSLY.  If the operations take very long, this will lag the
+     * UI thread.  In such an instance, use {@link LearnModel#saveToDatabaseASync(CalcListener)} instead.
+     */
+    void saveToDatabase();
+
+    /**
+     * Saves all values currently tracked by the model into the LOCAL database.
+     *
+     * <br/><br/>
+     * This method operates ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the
+     * UI to update whenever the calculation completes.
+     */
+    void saveToDatabaseASync(CalcListener listener);
+
+
+
+    /**
      * Gets all words tracked by the model.
      */
     List<VocObject> getAllWords();
@@ -166,7 +187,7 @@ public interface LearnModel
     /**
      * Identifies all words in the database that do not have a Parse ID, submits them to the Parse
      * database, receiving their Parse IDs as a response, storing them in the local database.
-     * Calls the {@link ParseResponseListener#onResponse(ParseError)} method of the given listener
+     * Calls the {@link ParseResponseListener#onResponse(NetworkError)} method of the given listener
      * upon completion.
      *
      * @param listener Listener that is invoked upon completion.  May be left null.
@@ -175,7 +196,7 @@ public interface LearnModel
 
     /**
      * Pushes all local data to the remote database.
-     * Calls the {@link ParseResponseListener#onResponse(ParseError)} method of the given listener
+     * Calls the {@link ParseResponseListener#onResponse(NetworkError)} method of the given listener
      * upon completion.
      *
      * @param listener Listener that is invoked upon completion.  May be left null.
@@ -184,14 +205,12 @@ public interface LearnModel
 
     /**
      * Pulls all data from the remote database into the local database.
-     * Calls the {@link ParseResponseListener#onResponse(ParseError)} method of the given listener
+     * Calls the {@link ParseResponseListener#onResponse(NetworkError)} method of the given listener
      * upon completion.
      *
      * @param listener Listener that is invoked upon completion.  May be left null.
      */
     void pullFromRemote(ParseResponseListener listener);
-
-
 
 
 
@@ -236,13 +255,13 @@ public interface LearnModel
     {
         /**
          * Called when an interaction with the Parse server completes.  If an error occurred,
-         * then the given {@link ParseError} argument will describe the error.  Otherwise,
+         * then the given {@link NetworkError} argument will describe the error.  Otherwise,
          * the argument will be null.
          *
          * @param error Description of an error that occurred while communicating with the Parse
          *              server, or null if no such error occurred.
          */
-        void onResponse(ParseError error);
+        void onResponse(NetworkError error);
     }
 
 

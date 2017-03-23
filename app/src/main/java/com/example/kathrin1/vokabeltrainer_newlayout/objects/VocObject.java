@@ -123,6 +123,8 @@ public class VocObject {
         return parseId;
     }
 
+    public boolean hasParseId() { return parseId != null && !parseId.equals(""); }
+
     public String getUserInfoParseId()
     {
         return userInfoParseId;
