@@ -29,7 +29,7 @@ public class InterxBuilder
     }
 
     /**
-     * Uses the current parameters to build a new interaction object, inserting it into the database
+     * Uses the current parameters to buildFromJSON a new interaction object, inserting it into the database
      * referenced by the given database manager.
      *
      * @param manager The manager for the database to insert the interaction into.
@@ -58,7 +58,7 @@ public class InterxBuilder
     }
 
     /**
-     * Uses the current parameters to build a new interaction object, but does not insert it into
+     * Uses the current parameters to buildFromJSON a new interaction object, but does not insert it into
      * the database.  The returned InterxObject will always have an ID of -1.
      *
      * @return The newly constructed InterxObject.
@@ -72,9 +72,9 @@ public class InterxBuilder
     }
 
     /**
-     * Tests if all fields are initialized, and thus the builder is ready to build.
+     * Tests if all fields are initialized, and thus the builder is ready to buildFromJSON.
      *
-     * @return Returns true if the builder is ready to build, false otherwise.
+     * @return Returns true if the builder is ready to buildFromJSON, false otherwise.
      */
     private boolean isReadyToBuild()
     {
@@ -84,7 +84,7 @@ public class InterxBuilder
 
 
     /**
-     * Sets the word value for the InterxObject to build.  Returns this builder in order
+     * Sets the word value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param word The word value to set.
@@ -97,7 +97,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the latency value for the InterxObject to build.  Returns this builder in order
+     * Sets the latency value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param latency The latency value to set.
@@ -110,7 +110,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the timestamp value for the InterxObject to build.  Returns this builder in order
+     * Sets the timestamp value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param timestamp The timestamp value to set.
@@ -123,7 +123,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the result value for the InterxObject to build.  Returns this builder in order
+     * Sets the result value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param result The result value to set.
@@ -136,7 +136,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the character count value for the InterxObject to build.  Returns this builder in order
+     * Sets the character count value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param charCount The character count value to set.
@@ -149,7 +149,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the exercise type value for the InterxObject to build.  Returns this builder in order
+     * Sets the exercise type value for the InterxObject to buildFromJSON.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param exerciseType The word exercise type to set.

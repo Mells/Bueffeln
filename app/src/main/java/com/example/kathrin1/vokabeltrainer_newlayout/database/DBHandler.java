@@ -68,6 +68,8 @@ public class DBHandler extends SQLiteAssetHelper
                                                  WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION,
                                                  WORD_USERINFO_PARSEID};
 
+    public static final String INDEX_WORD_LABEL = "index_word_label";
+
     // NO LONGER USED
     final private static String CREATE_WORD_TABLE =
 
@@ -203,7 +205,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 3;
+    private static final Integer VERSION = 4;
     // ======================================
 
 
@@ -266,9 +268,20 @@ public class DBHandler extends SQLiteAssetHelper
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
+        // VERSION 4 UPGRADE
+        // ==================
+        if (oldVersion < 4 && newVersion >= 4)
+        {
+            db.execSQL(String.format("create unique index %s on %s (%s)",
+                                     INDEX_WORD_LABEL, WORD_TABLENAME, WORD_LABEL));
 
-        if (newVersion != 2 &&
-                newVersion != 3)
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
+
+        if (newVersion != 2
+            && newVersion != 3
+            && newVersion != 4)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);

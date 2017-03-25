@@ -1,11 +1,11 @@
 package com.example.kathrin1.vokabeltrainer_newlayout;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -112,6 +112,20 @@ public class MainActivity extends AppCompatActivity {
                         mSlidingLayer.openLayer(true);
             }
         });
+
+
+        /*
+        FOR TESTING //TODO: REMOVE
+        ==========================
+         */
+
+        /*
+        LearnModel model = ACTRModel.buildFromJSON(this);
+
+        model.initialize();
+
+        model.pullFromRemote(null);
+        //*/
     }
 
     private int setCurrentBook() {

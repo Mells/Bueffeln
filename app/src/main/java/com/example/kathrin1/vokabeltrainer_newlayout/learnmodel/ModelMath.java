@@ -25,6 +25,9 @@ public abstract class ModelMath
     public static float RT_MIN = 300; // In milliseconds
     public static float BETA_S = 0;
     public static float ALPHA_CONVERGENCE_ITERATIONS = 6;
+    public static float RT_MAX_MULT = 1.5f;
+
+    // If adding a new constant here, be sure to update StoredValueManager and JSONHandler
 
 
     /**
@@ -50,7 +53,7 @@ public abstract class ModelMath
     public static float maxRT(int charCount)
     {
         // RT_max = Fe^(-1.5tau) + f
-        return (RT_SCALAR * (float) Math.exp(-1.5 * THRESHOLD)) + reactionTimeCharDiscount(charCount);
+        return (RT_SCALAR * (float) Math.exp(-RT_MAX_MULT * THRESHOLD)) + reactionTimeCharDiscount(charCount);
     }
 
     /**

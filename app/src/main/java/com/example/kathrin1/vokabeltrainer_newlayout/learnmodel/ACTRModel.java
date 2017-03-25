@@ -1,6 +1,5 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.learnmodel;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -11,9 +10,12 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.exceptions.ModelNotInitializedException;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.NetworkError;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.RequestManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.GenericUpdateListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.UserUpdateListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.WordListUpdateListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.UserObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.ArrayList;
@@ -42,7 +44,12 @@ public class ACTRModel implements LearnModel
     private final RequestManager requestManager;
     private final StoredValueManager svManager;
 
+    private final Set<VocObject> wordsToUpdate;
+    private final Set<SessionObject> sessionsToUpdate;
+
     private String book, chapter, unit;
+
+    private UserObject user = null;
 
     /**
      * Private constructor, use static constructor instead.
@@ -56,6 +63,9 @@ public class ACTRModel implements LearnModel
         dbManager = DatabaseManager.build(c);
         requestManager = RequestManager.build(c, dbManager);
         svManager = StoredValueManager.build(c);
+
+        wordsToUpdate = new HashSet<>();
+        sessionsToUpdate = new HashSet<>();
     }
 
     /**
@@ -184,6 +194,12 @@ public class ACTRModel implements LearnModel
     @Override
     public void initialize()
     {
+        // Attempt to log in.
+        // The log-in attempt occurs asynchronously, and initialization does not depend
+        // on it or its success.
+
+        logIn(null);
+
         try
         {
             // .get() forces this thread to wait until the asynctask completes,
@@ -204,6 +220,12 @@ public class ACTRModel implements LearnModel
     @Override
     public void initializeASync(CalcListener listener)
     {
+        // Attempt to log in.
+        // The log-in attempt occurs asynchronously, and initialization does not depend
+        // on it or its success.
+
+        logIn(null);
+
         initTask(listener).execute();
     }
 
@@ -254,7 +276,14 @@ public class ACTRModel implements LearnModel
                 // Retrieves all study sessions from the database
                 sessions.addAll(dbManager.getAllStudySessions());
 
+
+                // Load all stored parameter values into ModelMath
+                svManager.loadConstants();
+
+
+
                 initialized = true;
+
 
                 return null;
             }
@@ -311,7 +340,7 @@ public class ACTRModel implements LearnModel
      * Constructs a new ASyncTask used to recalculate all activation values asynchronously,
      * and returns it.
      * This task will not yet have been executed.
-     *
+     * <p>
      * // TODO:  This also stores activation values in the database as soon as they are calculated.
      * // TODO:  May not want to do this, and force local sync manually later instead.
      *
@@ -334,12 +363,14 @@ public class ACTRModel implements LearnModel
                                                             sessions, entry.getKey().getAlpha());
                     entry.getKey().setActivation(activation);
 
+                    /*
                     ContentValues vals = new ContentValues();
                     vals.put(DBHandler.WORD_ACTIVATION, activation);
                     dbManager.getDatabase()
                              .update(DBHandler.WORD_TABLENAME, vals,
                                      DBHandler.WORD_ID + "=" + entry.getKey().getId(),
                                      null);
+                                     */
                 }
 
                 return null;
@@ -432,6 +463,8 @@ public class ACTRModel implements LearnModel
                     float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
 
                     word.setAlpha(newAlpha);
+
+                    wordsToUpdate.add(word);
                 }
 
                 return null;
@@ -446,6 +479,25 @@ public class ACTRModel implements LearnModel
             }
 
         };
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addNewSession(SessionObject session)
+    {
+        for (SessionObject existingSession : sessions)
+        {
+            if (existingSession.getStart().equals(session.getStart()))
+            {
+                Log.e(LOG_TAG, "Attempted to add session with starting time that matches an" +
+                               "existing session.");
+                return;
+            }
+        }
+        sessions.add(session);
+        sessionsToUpdate.add(session);
     }
 
     /**
@@ -491,7 +543,15 @@ public class ACTRModel implements LearnModel
                 // Update all sessions
 
                 for (SessionObject session : sessions)
-                    dbManager.updateSession(session);
+                {
+                    if (session.isFinished())
+                        dbManager.updateSession(session);
+                }
+
+                if (user != null)
+                    svManager.storeUserInfo(user); // Probably unnecessary
+
+                svManager.saveConstants();
 
                 Log.d(LOG_TAG, "Database saved.");
             }
@@ -513,6 +573,53 @@ public class ACTRModel implements LearnModel
     }
 
     /**
+     * Attempts to log the user in.  If unsuccessful, the 'user' member variable will be set to
+     * null.  Otherwise, it will contain the current login info for the user.
+     *
+     * @param listener Actions to perform upon completion.  May be left null.
+     */
+    private void logIn(final UserUpdateListener listener)
+    {
+        // TODO:  THIS SHOULD BE 'user = null', and better login flow should be developed.
+        // TODO:  This way, user info is only used if it has been verified to be valid.
+        user = svManager.getUserInfo();
+
+        requestManager.logInUser(svManager.getUserInfo(), new UserUpdateListener()
+        {
+            @Override
+            public void onSuccess(UserObject userInfo)
+            {
+                user = userInfo;
+                svManager.storeUserInfo(user);
+
+                if (listener != null)
+                    listener.onSuccess(userInfo);
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "Error while logging user in.  User was not logged in.\n" +
+                               error.toString());
+
+                if (listener != null)
+                    listener.onRemoteFailure(error);
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "Error while logging user in.  User was not logged in.\n" +
+                               error.getMessage());
+
+                if (listener != null)
+                    listener.onLocalFailure(error);
+            }
+        });
+    }
+
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -526,7 +633,7 @@ public class ACTRModel implements LearnModel
 
         final CountDownLatch latch = new CountDownLatch(1);
 
-        pushDictionaryItems(errorList, latch);
+        getMissingWordParseIDs(errorList, latch);
 
         waitForActionsTask(latch, errorList, listener).execute();
 
@@ -542,33 +649,78 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
+
+    }
+
+    @Override
+    public void pushToRemoteAndForget()
+    {
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        // TODO:  Implement
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void pullFromRemote(ParseResponseListener listener)
+    public void pullFromRemote(final ParseResponseListener listener)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        // If update is successful, this timestamp is used as the reference for update
-        Date updateTime = new Date();
+        // If update is successful, this timestamp is used as the reference for update after
+        // update completion
+        final Date updateTime = new Date();
 
+        // Create a list to hold all accumulated errors across all async tasks.
+        // TODO:  This *SHOULD* be threadsafe without having to specifically define it, as it
+        // TODO:  should only be modified on the UI thread, in theory.  This is something to keep an eye on
+        // TODO:  Reference = http://stackoverflow.com/questions/31119277/is-android-asynct-http-library-coupled-with-ui-thread
         List<NetworkError> errorList = new ArrayList<>();
 
-        final CountDownLatch latch = new CountDownLatch(1);
+        // Start a latch to track completion of all 4 asynchronous tasks
+        final CountDownLatch latch = new CountDownLatch(4);
 
-
+        // Find all dictionary items that have been modified since the last update
         pullDictionaryItems(errorList, latch);
 
+        // Find all model parameters that have been modified since the last update
+        pullConstants(errorList, latch);
 
-        waitForActionsTask(latch, errorList, listener).execute();
+        // Find all user info that has been modified since the last update
+        pullUserInfo(errorList, latch);
+
+        // Find all user word info that has been modified since the last update
+        pullUserWordInfo(errorList, latch);
+
+
+        // Start an ASyncTask that will wait on the countdown latch, then report success or failure
+        waitForActionsTask(latch, errorList, new ParseResponseListener()
+        {
+            @Override
+            public void onResponse(NetworkError error)
+            {
+                svManager.storeLastUpdate(updateTime);
+                Log.d(LOG_TAG, "Successfully pulled all info, storing new last update time: " +
+                               DBHandler.ISO_DATE.format(updateTime));
+                if (listener != null)
+                    listener.onResponse(error);
+            }
+        }).execute();
     }
 
 
+    /**
+     * Queries the remote database for all dictionary values that have been modified since the
+     * last known update.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch Latch to decrement whenever the request completes
+     */
     private void pullDictionaryItems(final List<NetworkError> errors,
                                      final CountDownLatch latch)
     {
@@ -579,6 +731,8 @@ public class ACTRModel implements LearnModel
             {
                 latch.countDown();
 
+                // Replace all words in the word ID map and interactions map with the new
+                // word objects
                 for (VocObject word : words)
                 {
                     wordIdMap.put(word.getId(), word);
@@ -590,6 +744,7 @@ public class ACTRModel implements LearnModel
                     else
                         interactions.put(word, new ArrayList<InterxObject>());
                 }
+                Log.d(LOG_TAG, "Retrieved dictionary info from remote server.");
             }
 
             @Override
@@ -610,11 +765,145 @@ public class ACTRModel implements LearnModel
         });
     }
 
-    private void pushDictionaryItems(final List<NetworkError> errors,
-                                     final CountDownLatch latch)
+    /**
+     * Queries the remote database for all parameter values that have been modified since the
+     * last known update.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch Latch to decrement whenever the request completes
+     */
+    private void pullConstants(final List<NetworkError> errors,
+                               final CountDownLatch latch)
+    {
+        requestManager.updateConstants(svManager.getLastUpdate(), new GenericUpdateListener()
+        {
+            @Override
+            public void onSuccess()
+            {
+                Log.d(LOG_TAG, "Retrieved parameter info from remote server.");
+                latch.countDown();
+                svManager.saveConstants();
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "Parameter retrieval error: " + error.toString());
+                errors.add(error);
+                latch.countDown();
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "Parameter retrieval error.", error);
+                errors.add(NetworkError.buildFromThrowable(error));
+                latch.countDown();
+            }
+        });
+    }
+
+    /**
+     * Queries the remote database for all user values that have been modified since the
+     * last known update.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch Latch to decrement whenever the request completes
+     */
+    private void pullUserInfo(final List<NetworkError> errors,
+                              final CountDownLatch latch)
+    {
+        requestManager.updateUserInfo(user, new GenericUpdateListener()
+        {
+            @Override
+            public void onSuccess()
+            {
+                Log.d(LOG_TAG, "Retrieved user info from remote server.");
+                latch.countDown();
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "User info retrieval error: " + error.toString());
+                errors.add(error);
+                latch.countDown();
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "User info retrieval error.", error);
+                errors.add(NetworkError.buildFromThrowable(error));
+                latch.countDown();
+            }
+        });
+    }
+
+    /**
+     * Queries the remote database for all user word values that have been modified since the
+     * last known update.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch Latch to decrement whenever the request completes
+     */
+    private void pullUserWordInfo(final List<NetworkError> errors,
+                                  final CountDownLatch latch)
+    {
+        requestManager.updateUserWordInfo(svManager.getLastUpdate(), user, new WordListUpdateListener()
+        {
+            @Override
+            public void onSuccess(List<VocObject> words)
+            {
+                latch.countDown();
+                // Replace all words in the word ID map and interactions map with the new
+                // word objects
+                for (VocObject word : words)
+                {
+                    wordIdMap.put(word.getId(), word);
+
+                    // REMINDER:  VocObject.equals(), and thus the Map.containsKey() check,
+                    // is based SOLELY on database ID
+                    if (interactions.containsKey(word))
+                        interactions.put(word, interactions.get(word));
+                    else
+                        interactions.put(word, new ArrayList<InterxObject>());
+                }
+                Log.d(LOG_TAG, "Retrieved user word info from remote server.");
+            }
+
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                Log.e(LOG_TAG, "User word info retrieval error: " + error.toString());
+                errors.add(error);
+                latch.countDown();
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                Log.e(LOG_TAG, "User word info retrieval error.", error);
+                errors.add(NetworkError.buildFromThrowable(error));
+                latch.countDown();
+            }
+        });
+    }
+
+
+    /**
+     * Finds all words that are still missing a Parse ID, and queries the remote database to
+     * retrieve them.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch Latch to decrement whenever the request completes
+     */
+    private void getMissingWordParseIDs(final List<NetworkError> errors,
+                                        final CountDownLatch latch)
     {
         List<VocObject> wordsWithoutParseId = new ArrayList<>();
 
+        // Find all words that are still missing Parse IDs
         for (VocObject word : interactions.keySet())
             if (!word.hasParseId())
                 wordsWithoutParseId.add(word);
@@ -649,6 +938,29 @@ public class ACTRModel implements LearnModel
         });
     }
 
+
+    private Map<SessionObject, List<InterxObject>> mapInteractionsToSessions()
+    {
+        Map<SessionObject, List<InterxObject>> returnMap = new HashMap<>();
+
+
+        // TODO:  IMPLEMENT THIS
+        // TODO:  Tip:  may want to add FOREIGN KEY column to interactions table that associates them?
+        // TODO:  Otherwise, this computation may get slow once there are many interactions.
+
+
+        return returnMap;
+    }
+
+    /**
+     * Defines an asynchronous task designed to wait on the given latch, and then respond to
+     * any errors in the given list (or lack thereof) through the given listener.
+     *
+     * @param latch The countdown latch to wait on
+     * @param errors List of accumulated errors
+     * @param listener Actions to perform upon completion
+     * @return The constructed ASyncTask, which will not have yet been executed.
+     */
     private AsyncTask<Void, Void, Void> waitForActionsTask(final CountDownLatch latch,
                                                            final List<NetworkError> errors,
                                                            final ParseResponseListener listener)
@@ -662,15 +974,23 @@ public class ACTRModel implements LearnModel
                 {
                     latch.await();
 
+                    if (listener == null)
+                        return null;
+
                     if (errors.size() == 0)
                         listener.onResponse(null);
                     else
                     {
-                        for (NetworkError error : errors)
+                        for (NetworkError error : errors)  // TODO:  Report all errors?  or combine?
                             listener.onResponse(error);
                     }
 
-                } catch (InterruptedException e) {
+                } catch (InterruptedException e)
+                {
+
+                    if (listener == null)
+                        return null;
+
                     errors.add(NetworkError.buildFromThrowable(e));
                     for (NetworkError error : errors)
                         listener.onResponse(error);
@@ -682,6 +1002,13 @@ public class ACTRModel implements LearnModel
     }
 
 
+    /**
+     * Takes a runnable task and performs it on another thread, reporting results through the
+     * given listener.
+     *
+     * @param runnable The code to run asynchronously.
+     * @param listener Actions to perform upon completion.
+     */
     private void performASync(final Runnable runnable, final CalcListener listener)
     {
         new AsyncTask<Void, Void, Void>()

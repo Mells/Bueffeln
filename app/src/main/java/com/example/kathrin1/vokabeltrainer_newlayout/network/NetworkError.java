@@ -45,10 +45,10 @@ public class NetworkError
         return new NetworkError(httpStatus, code, message, description, details);
     }
 
-    public static NetworkError build(int httpStatus, JSONObject jObj)
+    public static NetworkError buildFromJSON(int httpStatus, JSONObject jObj)
     {
         if (jObj == null)
-            return null;
+            return build(httpStatus, 999, "UNKNOWN ERROR", "No idea what happened.", "");
 
         try
         {
@@ -71,12 +71,24 @@ public class NetworkError
 
     public static NetworkError build(int httpStatus, String jsonString)
     {
-        return build(httpStatus, JSONHandler.parseJSON(jsonString));
+        try
+        {
+            return buildFromJSON(httpStatus, JSONHandler.parseJSON(jsonString));
+        } catch (JSONException e)
+        {
+            return buildFromJSON(httpStatus, null);
+        }
     }
 
     public static NetworkError build(int httpStatus, byte[] rawBytes)
     {
-        return build(httpStatus, JSONHandler.parseJSON(rawBytes));
+        try
+        {
+            return buildFromJSON(httpStatus, JSONHandler.parseJSON(rawBytes));
+        } catch (JSONException e)
+        {
+            return buildFromJSON(httpStatus, null);
+        }
     }
 
     public static NetworkError buildFromThrowable(Throwable throwable)

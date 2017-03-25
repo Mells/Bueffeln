@@ -7,6 +7,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.UserObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import org.json.JSONArray;
@@ -55,159 +56,187 @@ public abstract class JSONHandler
     public static final String FIELD_INTERX_LATENCY = "latency";
 
     public static final String FIELD_USER_BETA_S = "beta_s";
+    public static final String FIELD_USER_ANONID = "anonId";
+    public static final String FIELD_USER_SESSION_TOKEN = "sessionToken";
+
+    public static final String FIELD_CONST_NAME = "name";
+    public static final String FIELD_CONST_VALUE = "value";
+
+    public static final String CONST_THRESHOLD = "tau";
+    public static final String CONST_ALPHA_D = "alpha_default";
+    public static final String CONST_DECAY_SCALAR = "c";
+    public static final String CONST_RT_SCALAR = "F";
+    public static final String CONST_RECALL_NOISE = "s";
+    public static final String CONST_TRAIN_FACTOR = "b_j_train";
+    public static final String CONST_TEST_FACTOR = "b_j_test";
+    public static final String CONST_LOOKAHEAD = "t_lookahead";
+    public static final String CONST_PSYCH_TIME = "psychtime_mult";
+    public static final String CONST_CHAR_SCALAR = "f_char_mult";
+    public static final String CONST_CHAR_INTERCEPT = "f_char_add";
+    public static final String CONST_RT_MIN = "f_min";
+    public static final String CONST_BETA_S = "beta_s";
+    public static final String CONST_ALPHA_ITERS = "alpha_convergence_iters";
+    public static final String CONST_RT_MAX_MULT = "rt_max_mult";
+
+
     public static final String LOG_TAG = "[JSONHandler]";
+    public static final String FIELD_RESULTS = "results";
 
 
-    public static JSONObject getUserWordInfoJSON(VocObject word)
+    /**
+     * Constructs a new JSON object representing the parts of the given word object that pertain
+     * to a particular user
+     *
+     * @param word The word to convert into a JSON object
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getUserWordInfoJSON(VocObject word) throws JSONException
     {
-        try
-        {
-            JSONObject jObj = new JSONObject();
+        JSONObject jObj = new JSONObject();
 
-            if (!word.getUserInfoParseId().equals(""))
-                jObj.put(FIELD_OBJECTID, word.getUserInfoParseId());
+        if (!word.getUserInfoParseId().equals(""))
+            jObj.put(FIELD_OBJECTID, word.getUserInfoParseId());
 
-            if (word.getParseId() != null && !word.getParseId().equals(""))
-                jObj.put(FIELD_UWINFO_WORDID, word.getParseId());
+        if (word.getParseId() != null && !word.getParseId().equals(""))
+            jObj.put(FIELD_UWINFO_WORDID, word.getParseId());
 
-            jObj.put(FIELD_UWINFO_WORD, word.getVoc());
-            jObj.put(FIELD_UWINFO_ALPHA, word.getAlpha());
-            jObj.put(FIELD_UWINFO_BETA_SI, word.getBeta_si());
+        jObj.put(FIELD_UWINFO_WORD, word.getVoc());
+        jObj.put(FIELD_UWINFO_ALPHA, word.getAlpha());
+        jObj.put(FIELD_UWINFO_BETA_SI, word.getBeta_si());
 
-            return jObj;
-
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
-        }
+        return jObj;
     }
 
-    public static JSONObject getWordInfoJSON(VocObject word)
+    /**
+     * Constructs a new JSON object representing the parts of the given word object that are
+     * independent from individual users
+     *
+     * @param word The word to convert into a JSON object
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getWordInfoJSON(VocObject word) throws JSONException
     {
-        try
-        {
-            JSONObject jObj = new JSONObject();
+        JSONObject jObj = new JSONObject();
 
-            if (word.getParseId() != null && !word.getParseId().equals(""))
-                jObj.put(FIELD_OBJECTID, word.getParseId());
+        if (word.getParseId() != null && !word.getParseId().equals(""))
+            jObj.put(FIELD_OBJECTID, word.getParseId());
 
-            jObj.put(FIELD_WORD_WORD, word.getVoc());
-            jObj.put(FIELD_WORD_SIGMA, word.getSigma());
-            jObj.put(FIELD_WORD_LABEL, word.getLabel());
-            jObj.put(FIELD_WORD_BETA_I, word.getBeta_i());
-            jObj.put(FIELD_WORD_ALPHA_D, 0);  // TODO:  REMOVE
+        jObj.put(FIELD_WORD_WORD, word.getVoc());
+        jObj.put(FIELD_WORD_SIGMA, word.getSigma());
+        jObj.put(FIELD_WORD_LABEL, word.getLabel());
+        jObj.put(FIELD_WORD_BETA_I, word.getBeta_i());
+        jObj.put(FIELD_WORD_ALPHA_D, 0);  // TODO:  REMOVE
 
-            return jObj;
-
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
-        }
+        return jObj;
     }
 
-    public static JSONObject getWordInfoJSONArray(List<VocObject> words)
+    /**
+     * Constructs a new JSON object containing a JSON array of objects created by
+     * {@link JSONHandler#getWordInfoJSON(VocObject)}
+     *
+     * @param words The words to convert into a JSON object
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getWordInfoJSONArray(List<VocObject> words) throws JSONException
     {
-        try
+        JSONObject jObj = new JSONObject();
+
+        JSONArray jArray = new JSONArray();
+
+        for (VocObject word : words)
         {
-            JSONObject jObj = new JSONObject();
-
-            JSONArray jArray = new JSONArray();
-
-            for (VocObject word : words)
-            {
-                JSONObject wordInfoJSON = getWordInfoJSON(word);
-                if (wordInfoJSON != null)
-                    jArray.put(wordInfoJSON);
-            }
-
-            jObj.put(FIELD_WORD_STORE_ARRAY, jArray);
-
-            return jObj;
-
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
+            JSONObject wordInfoJSON = getWordInfoJSON(word);
+            if (wordInfoJSON != null)
+                jArray.put(wordInfoJSON);
         }
+
+        jObj.put(FIELD_WORD_STORE_ARRAY, jArray);
+
+        return jObj;
 
     }
 
-
+    /**
+     * Constructs a new JSON object representing a study session and all relevant word interactions
+     *
+     * @param session      The session to convert into a JSON object
+     * @param interactions The interactions to include in the session data
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
     public static JSONObject getSessionJSON(SessionObject session, List<InterxObject> interactions)
+            throws JSONException
     {
-        try
-        {
-            JSONObject jObj = new JSONObject();
+        JSONObject jObj = new JSONObject();
 
-            if (session.getParseId() != null && !session.getParseId().equals(""))
-                jObj.put(FIELD_OBJECTID, session.getParseId());
+        if (session.getParseId() != null && !session.getParseId().equals(""))
+            jObj.put(FIELD_OBJECTID, session.getParseId());
 
-            jObj.put(FIELD_SESSION_START, DBHandler.ISO_DATE.format(session.getStart()));
-            jObj.put(FIELD_SESSION_END, DBHandler.ISO_DATE.format(session.getEnd()));
+        jObj.put(FIELD_SESSION_START, DBHandler.ISO_DATE.format(session.getStart()));
+        jObj.put(FIELD_SESSION_END, DBHandler.ISO_DATE.format(session.getEnd()));
 
-            JSONArray array = new JSONArray();
+        JSONArray array = new JSONArray();
 
-            for (InterxObject interx : interactions)
-                array.put(getInteractionJSON(interx));
+        for (InterxObject interx : interactions)
+            array.put(getInteractionJSON(interx));
 
-            jObj.put(FIELD_SESSION_PRESENTATIONS, array);
+        jObj.put(FIELD_SESSION_PRESENTATIONS, array);
 
-            return jObj;
+        return jObj;
+    }
 
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
-        }
+    /**
+     * Constructs a new JSON object representing a word interaction
+     *
+     * @param interx The interaction to convert into a JSON object
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getInteractionJSON(InterxObject interx) throws JSONException
+    {
+        JSONObject jObj = new JSONObject();
+
+        jObj.put(FIELD_INTERX_CHARCOUNT, interx.getCharCount());
+        jObj.put(FIELD_INTERX_EXERCISE, interx.getExerciseType());
+        jObj.put(FIELD_INTERX_LATENCY, interx.getLatency());
+        jObj.put(FIELD_INTERX_RESULT, interx.getResult());
+        jObj.put(FIELD_INTERX_TIMESTAMP, interx.getTimestamp());
+        jObj.put(FIELD_INTERX_WORD, interx.getWord().getVoc());
+        if (interx.getWord().getParseId() != null && !interx.getWord().getParseId().equals(""))
+            jObj.put(FIELD_INTERX_WORDID, interx.getWord().getParseId());
+
+        return jObj;
+    }
+
+    /**
+     * Constructs a new JSON object representing parameters that are unique to a particular user
+     *
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getUserInfoJSON() throws JSONException
+    {
+        JSONObject jObj = new JSONObject();
+
+        jObj.put(FIELD_USER_BETA_S, ModelMath.BETA_S);
+
+        return jObj;
     }
 
 
-    public static JSONObject getInteractionJSON(InterxObject interx)
-    {
-        try
-        {
-            JSONObject jObj = new JSONObject();
-
-            jObj.put(FIELD_INTERX_CHARCOUNT, interx.getCharCount());
-            jObj.put(FIELD_INTERX_EXERCISE, interx.getExerciseType());
-            jObj.put(FIELD_INTERX_LATENCY, interx.getLatency());
-            jObj.put(FIELD_INTERX_RESULT, interx.getResult());
-            jObj.put(FIELD_INTERX_TIMESTAMP, interx.getTimestamp());
-            jObj.put(FIELD_INTERX_WORD, interx.getWord().getVoc());
-            if (interx.getWord().getParseId() != null && !interx.getWord().getParseId().equals(""))
-                jObj.put(FIELD_INTERX_WORDID, interx.getWord().getParseId());
-
-            return jObj;
-
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
-        }
-    }
-
-
-    public static JSONObject getUserInfoJSON()
-    {
-        try
-        {
-            JSONObject jObj = new JSONObject();
-
-            jObj.put(FIELD_USER_BETA_S, ModelMath.BETA_S);
-
-            return jObj;
-
-        } catch (JSONException e)
-        {
-            // TODO:  Handle exception
-            return null;
-        }
-    }
-
-
-    public static VocObject parseWord(JSONObject jObj, DatabaseManager dm)
+    /**
+     * Parses relevant data out of the given JSON object, and uses it to query the local database
+     * for a matching word, replacing with values found in the JSON object.
+     *
+     * @param jObj The JSON object to parse
+     * @param dm   The database manager for retrieving words by label
+     * @return A word object containing the values contained in the JSON object
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static VocObject parseWord(JSONObject jObj, DatabaseManager dm) throws JSONException
     {
         String label = parseWordLabel(jObj);
 
@@ -216,101 +245,198 @@ public abstract class JSONHandler
 
         VocObject wordObj = dm.getWordPairByLabel(label);
 
-        return parseWordInto(jObj, wordObj);
+        parseWordInto(jObj, wordObj);
+
+        return wordObj;
+    }
+    /**
+     * Extracts the label field from the given JSON object.
+     *
+     * @param jObj The JSON object to parse
+     * @return The label value contained in the JSON object
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static String parseWordLabel(JSONObject jObj) throws JSONException
+    {
+        return jObj.getString(FIELD_WORD_LABEL);
     }
 
-    public static String parseWordLabel(JSONObject jObj)
+    /**
+     * Parses relevant data out of the given JSON object, and inserts its values into the given
+     * word object.
+     *
+     * @param jObj The JSON object to parse
+     * @param into The word object to insert values into
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static void parseWordInto(JSONObject jObj, VocObject into) throws JSONException
     {
-        try
+        String objectId = jObj.getString(FIELD_OBJECTID);
+        String label = jObj.getString(FIELD_WORD_LABEL);
+
+        if (!label.equals(into.getLabel()))
+            throw new IllegalArgumentException(String.format("Mismatched word labels: %s and %s",
+                                                             label, into.getLabel()));
+
+
+        if (jObj.has(FIELD_WORD_BETA_I) && jObj.has(FIELD_WORD_SIGMA))
         {
-            return jObj.getString(FIELD_WORD_LABEL);
-        } catch (JSONException e)
+            float beta_i = (float) jObj.getDouble(FIELD_WORD_BETA_I);
+            float sigma_i = (float) jObj.getDouble(FIELD_WORD_SIGMA);
+            // float alpha_d = (float) jObj.getDouble(FIELD_WORD_ALPHA_D);
+
+            into.setParameters(into.getBeta_si(), beta_i, into.getAlpha(), sigma_i);
+        }
+        else if (jObj.has(FIELD_UWINFO_ALPHA) && jObj.has(FIELD_UWINFO_BETA_SI))
         {
-            Log.e(LOG_TAG, "Could not extract word data from JSON object: " + jObj.toString(), e);
-            return null;
+            float beta_si = (float) jObj.getDouble(FIELD_UWINFO_BETA_SI);
+            float alpha_i = (float) jObj.getDouble(FIELD_UWINFO_ALPHA);
+
+            into.setParameters(beta_si, into.getBeta_i(), alpha_i, into.getSigma());
         }
 
+        into.setParseId(objectId);
     }
 
-    public static VocObject parseWordInto(JSONObject jObj, VocObject into)
+
+    /**
+     * Parses user info from the given JSON object.
+     *
+     * @param jObj JSON object to parse.
+     * @return The extracted user info.  Returns null if an error occurred while parsing.
+     */
+    public static UserObject parseUser(JSONObject jObj)
     {
         try
         {
-            String objectId = jObj.getString(FIELD_OBJECTID);
-            String label = jObj.getString(FIELD_WORD_LABEL);
+            return parseUserOrThrow(jObj);
+        } catch (JSONException e)
+        {
+            Log.e(LOG_TAG, "Could not extract user data from JSON object: " + jObj.toString(), e);
+            return null;
+        }
+    }
 
-            if (!label.equals(into.getLabel()))
-                throw new IllegalArgumentException(String.format("Mismatched word labels: %s and %s",
-                                                                 label, into.getLabel()));
+    /**
+     * Parses user info from the given JSON object.  Throws a JSONException if an error occurs
+     * while parsing.
+     *
+     * @param jObj JSON object to parse.
+     * @return The extracted user info.  Returns null if an error occurred while parsing.
+     * @throws JSONException If object could not be parsed into user info, throws JSONException.
+     */
+    public static UserObject parseUserOrThrow(JSONObject jObj) throws JSONException
+    {
+        String objectId = jObj.getString(FIELD_OBJECTID);
+        String anonId = jObj.getString(FIELD_USER_ANONID);
+        String sessionToken = jObj.getString(FIELD_USER_SESSION_TOKEN);
 
-            if (jObj.has(FIELD_WORD_BETA_I) && jObj.has(FIELD_WORD_SIGMA))
+        return UserObject.build(objectId, anonId, sessionToken);
+    }
+
+
+    /**
+     * Parses the given JSON object for all constants contained in a results array.
+     *
+     * @param jObj JSON object with a 'results' array of constants to update
+     * @throws JSONException If object could not be parsed, throws JSONException
+     */
+    public static void parseConstantsAndUpdate(JSONObject jObj) throws JSONException
+    {
+        for (JSONObject param : extractResults(jObj))
+        {
+            switch (param.getString(FIELD_CONST_NAME))
             {
-                float beta_i = (float) jObj.getDouble(FIELD_WORD_BETA_I);
-                float sigma_i = (float) jObj.getDouble(FIELD_WORD_SIGMA);
-                // float alpha_d = (float) jObj.getDouble(FIELD_WORD_ALPHA_D);
-                into.setParameters(into.getBeta_si(), beta_i, into.getAlpha(), sigma_i);
+                case CONST_ALPHA_ITERS:
+                    ModelMath.ALPHA_CONVERGENCE_ITERATIONS = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_PSYCH_TIME:
+                    ModelMath.PSYCH_TIME_SCALAR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_RT_MAX_MULT:
+                    ModelMath.RT_MAX_MULT = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_RT_MIN:
+                    ModelMath.RT_MIN = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_RECALL_NOISE:
+                    ModelMath.RECALL_PROB_NOISE_REDUCTION = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_CHAR_INTERCEPT:
+                    ModelMath.RT_CHAR_DISCOUNT_INTERCEPT = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_CHAR_SCALAR:
+                    ModelMath.RT_CHAR_DISCOUNT_SCALAR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_LOOKAHEAD:
+                    ModelMath.LOOKAHEAD_TIME = param.getInt(FIELD_CONST_VALUE);
+                    break;
+                case CONST_DECAY_SCALAR:
+                    ModelMath.DECAY_SCALAR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_RT_SCALAR:
+                    ModelMath.RT_SCALAR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_THRESHOLD:
+                    ModelMath.THRESHOLD = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_ALPHA_D:
+                    ModelMath.ALPHA_DEFAULT = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_TRAIN_FACTOR:
+                    ModelMath.TRAIN_FACTOR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_TEST_FACTOR:
+                    ModelMath.TEST_FACTOR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
             }
-
-            into.setParseId(objectId);
-
-            return into;
-
-        } catch (JSONException e)
-        {
-            Log.e(LOG_TAG, "Could not extract word data from JSON object: " + jObj.toString(), e);
-            return null;
         }
     }
 
-
-    public static List<JSONObject> extractResults(JSONObject jObj)
+    /**
+     * Extracts an list of JSON objects from a JSON array in the "results" field of the given
+     * JSON object.
+     *
+     * @param jObj JSON object to extract results from
+     * @return List of JSON objects contained in the results array of the given object
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static List<JSONObject> extractResults(JSONObject jObj) throws JSONException
     {
         List<JSONObject> list = new ArrayList<>();
-        try
-        {
-            JSONArray results = jObj.getJSONArray("results");
+        JSONArray results = jObj.getJSONArray(FIELD_RESULTS);
 
-            for (int i = 0; i < results.length(); i++)
-                list.add(results.getJSONObject(i));
+        for (int i = 0; i < results.length(); i++)
+            list.add(results.getJSONObject(i));
 
-        } catch (JSONException e)
-        {
-            Log.e(LOG_TAG, "Could not extract results array from: " + jObj.toString(), e);
-        }
 
         return list;
     }
 
 
-    public static JSONObject parseJSONOrThrow(String jsonString) throws JSONException
+    /**
+     * Parses the given string into a JSON object.
+     *
+     * @param jsonString The string to parse
+     * @return The parsed JSON object
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static JSONObject parseJSON(String jsonString) throws JSONException
     {
         return new JSONObject(jsonString);
     }
 
-    public static JSONObject parseJSON(String jsonString)
-    {
-        try
-        {
-            return parseJSONOrThrow(jsonString);
-        } catch (JSONException e)
-        {
-            Log.e(LOG_TAG, "Could not parse JSON string: " + jsonString, e);
-            return null;
-        }
-    }
-
-    public static JSONObject parseJSONOrThrow(byte[] rawBytes) throws JSONException
+    /**
+     * Parses the given byte array into a JSON object.
+     *
+     * @param rawBytes The bytes to parse
+     * @return The parsed JSON object
+     * @throws JSONException Throws exception if an error occurs while parsing JSON object
+     */
+    public static JSONObject parseJSON(byte[] rawBytes) throws JSONException
     {
         if (rawBytes == null)
-            throw new NullPointerException("Null byte array cannot be parsed to JSON.");
-
-        return parseJSONOrThrow(new String(rawBytes));
-    }
-
-    public static JSONObject parseJSON(byte[] rawBytes)
-    {
-        if (rawBytes == null)
-            return null;
+            throw new IllegalArgumentException("Null byte array cannot be parsed to JSON.");
 
         return parseJSON(new String(rawBytes));
     }

@@ -34,7 +34,7 @@ public abstract class DBUtils
         char quotingChar = '"'; // This changes between single and double quotes as needed
         boolean inQuotes = false; // Whether or not we're in quoting mode
 
-        // The string builder for holding the strings we build as while iterating through input
+        // The string builder for holding the strings we buildFromJSON as while iterating through input
         StringBuilder builder = new StringBuilder();
 
         // Ignore opening and closing brackets
@@ -54,7 +54,7 @@ public abstract class DBUtils
                 if (i + 1 >= end)
                     break;
 
-                // Grab the next character and build a string with a literal backslash from it
+                // Grab the next character and buildFromJSON a string with a literal backslash from it
                 char next = list.charAt(i + 1);
                 String escapeString = "\\" + next;
 
