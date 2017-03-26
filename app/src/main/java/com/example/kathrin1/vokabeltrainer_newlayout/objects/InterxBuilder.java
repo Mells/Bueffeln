@@ -19,6 +19,7 @@ public class InterxBuilder
     private String result;
     private int charCount = -1;
     private String exerciseType;
+    private SessionObject session;
 
 
     /**
@@ -51,6 +52,8 @@ public class InterxBuilder
         vals.put(DBHandler.INTERX_RESULT, result);
         vals.put(DBHandler.INTERX_CHARCOUNT, charCount);
         vals.put(DBHandler.INTERX_EXERCISE_TYPE, exerciseType);
+        if (session != null)
+            vals.put(DBHandler.INTERX_SESSION, session.getId());
 
         int id = (int)manager.getDatabase().insert(DBHandler.INTERX_TABLENAME, null, vals);
 
@@ -84,7 +87,7 @@ public class InterxBuilder
 
 
     /**
-     * Sets the word value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the word value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param word The word value to set.
@@ -97,7 +100,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the latency value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the latency value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param latency The latency value to set.
@@ -110,7 +113,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the timestamp value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the timestamp value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param timestamp The timestamp value to set.
@@ -123,7 +126,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the result value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the result value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param result The result value to set.
@@ -136,7 +139,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the character count value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the character count value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param charCount The character count value to set.
@@ -149,7 +152,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the exercise type value for the InterxObject to buildFromJSON.  Returns this builder in order
+     * Sets the exercise type value for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
      *
      * @param exerciseType The word exercise type to set.
@@ -158,6 +161,18 @@ public class InterxBuilder
     public InterxBuilder setExerciseType(String exerciseType)
     {
         this.exerciseType = exerciseType;
+        return this;
+    }
+    /**
+     * Sets the session reference for the InterxObject to build.  Returns this builder in order
+     * to facilitate chaining.
+     *
+     * @param session The session reference to set.
+     * @return This InterxBuilder object.
+     */
+    public InterxBuilder setSession(SessionObject session)
+    {
+        this.session = session;
         return this;
     }
 }

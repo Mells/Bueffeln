@@ -7,10 +7,12 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.GenericUpdateListener;
-import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.NetworkFailureListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.JSONReceivedListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.NetworkFailureListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.UserUpdateListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.WordListUpdateListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.UserObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.loopj.android.http.AsyncHttpClient;
@@ -22,6 +24,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +58,7 @@ public class RequestManager
     public static final String URL_CONSTANTS = URL + "/data/params";
     public static final String URL_USER_INFO = URL + "/user/info";
     public static final String URL_USER_WORD_INFO = URL + "/user/words";
+    public static final String URL_USER_SESSION = "/user/session";
 
 
     public static final String LOG_TAG = "[RequestManager]";
@@ -237,6 +241,220 @@ public class RequestManager
         client.put(c, URL_DATA_DICTIONARY, body, APPLICATION_JSON, loggingWrapper(handler));
     }
 
+
+    /**
+     * Pushes all given sessions and interactions to the remote database.
+     *
+     * @param user                  User to associate the sessions with
+     * @param sessionInteractionMap The sessions and their respective interactions to push.
+     * @param responseHandler       Actions to perform upon completion.
+     */
+    public void pushSessions(UserObject user,
+                             Map<SessionObject, List<InterxObject>> sessionInteractionMap,
+                             final GenericUpdateListener responseHandler)
+    {
+        if (!isNetworkReady())
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable to communicate on network."));
+            return;
+        }
+
+        if (user == null)
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable get info for null user."));
+            return;
+        }
+
+        Header sessionToken = new BasicHeader(HEADER_SESSION_TOKEN, user.getSessionToken());
+        Header objectId = new BasicHeader(HEADER_OBJECT_ID, user.getObjectId());
+        Header[] headers = new Header[]{sessionToken, objectId};
+
+        List<SessionObject> sessionList = new ArrayList<>(sessionInteractionMap.keySet());
+
+        batchPushSessions(sessionInteractionMap, sessionList, 0, headers, responseHandler);
+    }
+
+    /**
+     * Recursively works through the list of sessions and interactions, processing individual
+     * sessions and waiting for the server's reply to move onto the next session.
+     *
+     * @param sessionInteractionMap The map from sessions to interactions
+     * @param sessionList           The list of sessions to work through
+     * @param index                 The index of the next session to submit
+     * @param headers               The headers to include in the request
+     * @param responseHandler       Actions to perform upon completion.
+     */
+    private void batchPushSessions(final Map<SessionObject, List<InterxObject>> sessionInteractionMap,
+                                   final List<SessionObject> sessionList, final int index,
+                                   final Header[] headers, final GenericUpdateListener responseHandler)
+    {
+        // BASE CASE:  If we've successfully iterated through all sessions, report success
+        if (index >= sessionList.size())
+        {
+            responseHandler.onSuccess();
+            return;
+        }
+
+        SessionObject currSession = sessionList.get(index);
+
+        // Convert the current session and interaction list into a JSON object
+        StringEntity body;
+        try
+        {
+            // Convert the session and interactions into a JSON object
+            JSONObject jObj = JSONHandler.getSessionJSON(currSession, sessionInteractionMap.get(currSession));
+
+            // Convert the JSON object into an HTTP body
+            body = buildEntity(jObj);
+        }
+        // Catches JSONExceptions (if error occurs while parsing JSON) or
+        // UnsupportedEncodingExceptions if the JSON could not be formatted into a StringEntity
+        catch (Exception e)
+        {
+            responseHandler.onLocalFailure(e);
+            return;
+        }
+
+
+        AsyncHttpResponseHandler handler = basicHandler(new JSONReceivedListener()
+        {
+            @Override
+            public void onJSONReceived(JSONObject jObj)
+            {
+                // Do nothing with the JSON
+                batchPushSessions(sessionInteractionMap, sessionList, index + 1,
+                                  headers, responseHandler);
+            }
+        }, responseHandler);
+
+
+        // Perform the HTTP operation
+        client.post(c, URL_USER_SESSION, headers, body, APPLICATION_JSON, loggingWrapper(handler));
+    }
+
+
+
+    public void pushUserInfo(UserObject user, final GenericUpdateListener responseHandler)
+    {
+        if (!isNetworkReady())
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable to communicate on network."));
+            return;
+        }
+
+        if (user == null)
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable get info for null user."));
+            return;
+        }
+
+        Header sessionToken = new BasicHeader(HEADER_SESSION_TOKEN, user.getSessionToken());
+        Header objectId = new BasicHeader(HEADER_OBJECT_ID, user.getObjectId());
+        Header[] headers = new Header[]{sessionToken, objectId};
+
+        // Convert the current session and interaction list into a JSON object
+        StringEntity body;
+        try
+        {
+            // Convert the session and interactions into a JSON object
+            JSONObject jObj = JSONHandler.getUserInfoJSON();
+
+            // Convert the JSON object into an HTTP body
+            body = buildEntity(jObj);
+        }
+        // Catches JSONExceptions (if error occurs while parsing JSON) or
+        // UnsupportedEncodingExceptions if the JSON could not be formatted into a StringEntity
+        catch (Exception e)
+        {
+            responseHandler.onLocalFailure(e);
+            return;
+        }
+
+        AsyncHttpResponseHandler handler = basicHandler(new JSONReceivedListener()
+        {
+            @Override
+            public void onJSONReceived(JSONObject jObj)
+            {
+                // Do nothing with JSON
+                responseHandler.onSuccess();
+            }
+        }, responseHandler);
+
+
+
+        // Perform the HTTP operation
+        client.put(c, URL_USER_INFO, headers, body, APPLICATION_JSON, loggingWrapper(handler));
+    }
+
+    public void pushUserWordInfo(UserObject user, Collection<VocObject> words,
+                                 GenericUpdateListener responseHandler)
+    {
+        if (!isNetworkReady())
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable to communicate on network."));
+            return;
+        }
+
+        if (user == null)
+        {
+            responseHandler.onLocalFailure(new IllegalStateException("Unable get info for null user."));
+            return;
+        }
+
+        Header sessionToken = new BasicHeader(HEADER_SESSION_TOKEN, user.getSessionToken());
+        Header objectId = new BasicHeader(HEADER_OBJECT_ID, user.getObjectId());
+        Header[] headers = new Header[]{sessionToken, objectId};
+
+        batchPushUserWordInfo(new ArrayList<VocObject>(words), 0, headers, responseHandler);
+    }
+
+    private void batchPushUserWordInfo(final List<VocObject> allWords, final int index,
+                                       final Header[] headers,
+                                       final GenericUpdateListener responseHandler)
+    {
+        // BASE CASE:  If we've batched all list entries, return success
+        if (index >= allWords.size())
+        {
+            responseHandler.onSuccess();
+            return;
+        }
+
+        // Get the sublist to batch
+        int limit = Math.min(allWords.size(), index + BATCH_SIZE);
+        final List<VocObject> words = allWords.subList(index, limit);
+
+        StringEntity body;
+        try
+        {
+            // Convert the sublist into a JSON object
+            JSONObject jObj = JSONHandler.getWordInfoJSONArray(words);
+
+            // Convert the JSON object into an HTTP body
+            body = buildEntity(jObj);
+        }
+        // Catches JSONExceptions (if error occurs while parsing JSON) or
+        // UnsupportedEncodingExceptions if the JSON could not be formatted into a StringEntity
+        catch (Exception e)
+        {
+            responseHandler.onLocalFailure(e);
+            return;
+        }
+
+        AsyncHttpResponseHandler handler = basicHandler(new JSONReceivedListener()
+        {
+            @Override
+            public void onJSONReceived(JSONObject jObj)
+            {
+                // Do nothing with JSON
+                batchPushUserWordInfo(allWords, index + BATCH_SIZE, headers, responseHandler);
+            }
+        }, responseHandler);
+
+
+
+        // Perform the HTTP operation
+        client.put(c, URL_USER_WORD_INFO, headers, body, APPLICATION_JSON, loggingWrapper(handler));
+    }
 
     /**
      * Attempts to log-in the given user.
@@ -487,7 +705,6 @@ public class RequestManager
         }
 
 
-
         RequestParams params = new RequestParams();
         if (lastUpdate != null)
             params.put(PARAM_LAST_UPDATE, DBHandler.ISO_DATE.format(lastUpdate));
@@ -519,9 +736,6 @@ public class RequestManager
                 }
             }
         }, responseHandler);
-
-
-
 
 
         // Create the necessary headers

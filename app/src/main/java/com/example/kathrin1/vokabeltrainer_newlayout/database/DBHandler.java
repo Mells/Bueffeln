@@ -129,40 +129,6 @@ public class DBHandler extends SQLiteAssetHelper
 
 
     /**
-     * INTERACTIONS TABLE
-     * ======================================================================
-     */
-    public static final String INTERX_TABLENAME = "interactions";
-    public static final String INTERX_ID = "_id";
-    public static final String INTERX_WORD = "ortho"; // Orthography of the interaction's word
-    public static final String INTERX_WORD_DBID = "db_id"; // ID of word in local database
-    public static final String INTERX_WORD_PARSEID = "parse_id"; // ID of word in Parse database
-    public static final String INTERX_LATENCY = "latency"; // Reaction time of the interaction
-    public static final String INTERX_TIME = "timestamp"; // Timestamp of the interaction
-    public static final String INTERX_RESULT = "result"; // Result of the interaction
-    public static final String INTERX_CHARCOUNT = "charCount"; // Number of characters in context
-    public static final String INTERX_EXERCISE_TYPE = "exerciseType"; // Type of exercise
-    public static final String[] INTERX_COLUMNS = {INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
-                                                   INTERX_WORD_PARSEID, INTERX_LATENCY,
-                                                   INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
-                                                   INTERX_EXERCISE_TYPE};
-
-    // NO LONGER USED
-    private static final String CREATE_INTERX_TABLE =
-
-            "CREATE TABLE " + INTERX_TABLENAME + " (" +
-            INTERX_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            INTERX_WORD + " TEXT, " +
-            INTERX_WORD_DBID + " INTEGER, " +
-            INTERX_WORD_PARSEID + " TEXT, " +
-            INTERX_LATENCY + " INTEGER, " +
-            INTERX_TIME + " TIMESTAMP, " +
-            INTERX_CHARCOUNT + " INTEGER, " +
-            INTERX_EXERCISE_TYPE + " TEXT, " +
-            INTERX_RESULT + " TEXT)";
-
-
-    /**
      * STUDY SESSIONS TABLE
      * ======================================================================
      */
@@ -185,6 +151,44 @@ public class DBHandler extends SQLiteAssetHelper
             SESSION_PARSEID + " TEXT)";
 
 
+    /**
+     * INTERACTIONS TABLE
+     * ======================================================================
+     */
+    public static final String INTERX_TABLENAME = "interactions";
+    public static final String INTERX_ID = "_id";
+    public static final String INTERX_WORD = "ortho"; // Orthography of the interaction's word
+    public static final String INTERX_WORD_DBID = "db_id"; // ID of word in local database
+    public static final String INTERX_WORD_PARSEID = "parse_id"; // ID of word in Parse database
+    public static final String INTERX_LATENCY = "latency"; // Reaction time of the interaction
+    public static final String INTERX_TIME = "timestamp"; // Timestamp of the interaction
+    public static final String INTERX_RESULT = "result"; // Result of the interaction
+    public static final String INTERX_CHARCOUNT = "charCount"; // Number of characters in context
+    public static final String INTERX_EXERCISE_TYPE = "exerciseType"; // Type of exercise
+    public static final String INTERX_SESSION = "session"; // Session of this interaction
+    public static final String[] INTERX_COLUMNS = {INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
+                                                   INTERX_WORD_PARSEID, INTERX_LATENCY,
+                                                   INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
+                                                   INTERX_EXERCISE_TYPE, INTERX_SESSION};
+
+    // NO LONGER USED
+    private static final String CREATE_INTERX_TABLE =
+
+            "CREATE TABLE " + INTERX_TABLENAME + " (" +
+            INTERX_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            INTERX_WORD + " TEXT, " +
+            INTERX_WORD_DBID + " INTEGER, " +
+            INTERX_WORD_PARSEID + " TEXT, " +
+            INTERX_LATENCY + " INTEGER, " +
+            INTERX_TIME + " TIMESTAMP, " +
+            INTERX_CHARCOUNT + " INTEGER, " +
+            INTERX_EXERCISE_TYPE + " TEXT, " +
+            INTERX_RESULT + " TEXT, " +
+            INTERX_SESSION + " INTEGER, " +
+            "FOREIGN KEY (" + INTERX_SESSION + ") " +
+            "REFERENCES " + SESSION_TABLENAME + "(" + SESSION_ID + ") )";
+
+
     // CSV file paths
     private static final String WORD_CSV = "databases/vocabulary.csv";
     private static final String SENT_CSV = "databases/sentences.csv";
@@ -205,8 +209,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final Integer VERSION = 4;
+    private static final int VERSION = 5;
     // ======================================
+
+    private static final int FORCED_UPGRADE_VERSION = 5;
 
 
     private final Context c;
@@ -219,6 +225,7 @@ public class DBHandler extends SQLiteAssetHelper
     {
         super(context, NAME, null, VERSION);
         this.c = context;
+        setForcedUpgrade(FORCED_UPGRADE_VERSION);
     }
 
 
@@ -229,6 +236,7 @@ public class DBHandler extends SQLiteAssetHelper
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
     {
 
+        /*
         // VERSION 2 UPGRADE
         // ==================
         if (oldVersion < 2 && newVersion >= 2)
@@ -278,10 +286,20 @@ public class DBHandler extends SQLiteAssetHelper
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
+        // VERSION 5 UPGRADE
+        // ==================
+        if (oldVersion < 5 && newVersion >= 5)
+        {
 
+        }
+        */
+
+        // This denotes which versions should not include CSV updates.  This could be simplified,
+        // but I think it's clearer when each ignored version is specifically listed
         if (newVersion != 2
             && newVersion != 3
-            && newVersion != 4)
+            && newVersion != 4
+            && newVersion != 5)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);

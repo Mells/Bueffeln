@@ -47,9 +47,6 @@ public class StoredValueManager
     private final Context c;
     private final SharedPreferences prefs;
 
-    // After the last update time has been retrieved, it is cached in this value for quicker retrieval
-    private Date lastUpdateCache = null;
-
 
     /**
      * Private constructor, use static constructor instead.
@@ -79,10 +76,6 @@ public class StoredValueManager
      */
     public Date getLastUpdate()
     {
-        // If the last update time has been cached, simply return it
-        if (lastUpdateCache != null)
-            return lastUpdateCache;
-
         return getDate(LAST_UPDATE);
     }
 
@@ -129,9 +122,37 @@ public class StoredValueManager
      */
     public void storeLastUpdate(Date update)
     {
-        lastUpdateCache = update;
         prefs.edit()
              .putString(LAST_UPDATE, DBHandler.ISO_DATE.format(update))
+             .apply();
+    }
+
+    /**
+     * Stores the timestamp of the latest submission of data.
+     * This value commit is performed asynchronously.
+     *
+     * @param update The timestamp to store.
+     */
+    public void storeLastSubmission(Date update)
+    {
+        prefs.edit()
+             .putString(LAST_SUBMISSION, DBHandler.ISO_DATE.format(update))
+             .apply();
+    }
+
+    /**
+     * Stores the timestamp of the latest submission of data.
+     * This is done in a static manner, so that a StoredValueManager object needn't exist in memory
+     * This value commit is performed asynchronously.
+     *
+     * @param c Context within which to perform the operation.
+     * @param update The timestamp to store.
+     */
+    public static void storeLastSubmissionStatic(Context c, Date update)
+    {
+        SharedPreferences prefs = c.getSharedPreferences(PREFS_FILE, 0);
+        prefs.edit()
+             .putString(LAST_SUBMISSION, DBHandler.ISO_DATE.format(update))
              .apply();
     }
 

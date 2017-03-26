@@ -29,6 +29,7 @@ public class InterxObject
     private final String result;
     private final int charCount;
     private final String exerciseType;
+    private Integer session;
 
     private Float activation; // Used for storing activation during activation calculations,
     // but is not stored in database.
@@ -170,8 +171,15 @@ public class InterxObject
         // Extract exercise type
         String exerciseType = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.INTERX_EXERCISE_TYPE));
 
+        // Extract the session reference
+        Integer sessionId = cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION))
+                            ? null
+                            : cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION));
+
+
         // Build the interaction object
-        return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType);
+        return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType)
+                       .setSessionId(sessionId);
     }
 
     public long getId()
@@ -214,6 +222,24 @@ public class InterxObject
         return exerciseType;
     }
 
+    public Integer getSessionId()
+    {
+        return session;
+    }
+
+    /**
+     * Sets the session reference for this interaction.  Returns this InterxObject in order
+     * to facilitate chaining.
+     *
+     * @param session The session to reference.  May be left null.
+     * @return This InterxObject.
+     */
+    public InterxObject setSessionId(Integer session)
+    {
+        this.session = session;
+        return this;
+    }
+
     public void setId(long id)
     {
         this.id = id;
@@ -231,6 +257,8 @@ public class InterxObject
         vals.put(DBHandler.INTERX_RESULT, result);
         vals.put(DBHandler.INTERX_CHARCOUNT, charCount);
         vals.put(DBHandler.INTERX_EXERCISE_TYPE, exerciseType);
+        if (session != null)
+            vals.put(DBHandler.INTERX_SESSION, session);
 
         return vals;
     }

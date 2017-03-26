@@ -22,7 +22,7 @@ public class SessionObject
      */
     private SessionObject(int id, Date start, Date end)
     {
-        if (end != null && !start.before(end))
+        if (start != null && end != null && !start.before(end))
             throw new IllegalArgumentException("Start time must be before ending time when" +
                                                "creating new SessionObject.");
 
@@ -57,6 +57,18 @@ public class SessionObject
     public static SessionObject buildUnfinished(int id, Date start)
     {
         return new SessionObject(id, start, null);
+    }
+
+    /**
+     * Creates a blank session with the given ID, used for matching hashes.  Do NOT use for any
+     * other purposes, as key fields will not be instantiated and NullPointerExceptions will occur.
+     *
+     * @param id The id to set for this placeholder
+     * @return The newly constructed placeholder SessionObject
+     */
+    public static SessionObject buildPlaceholder(int id)
+    {
+        return new SessionObject(id, null, null);
     }
 
     /**
@@ -172,5 +184,22 @@ public class SessionObject
             vals.put(DBHandler.SESSION_PARSEID, parseId);
 
         return vals;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SessionObject that = (SessionObject) o;
+
+        return id == that.id;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return id;
     }
 }

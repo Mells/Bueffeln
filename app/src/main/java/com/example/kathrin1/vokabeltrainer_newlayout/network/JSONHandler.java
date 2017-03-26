@@ -160,6 +160,33 @@ public abstract class JSONHandler
     }
 
     /**
+     * Constructs a new JSON object containing a JSON array of objects created by
+     * {@link JSONHandler#getUserWordInfoJSON(VocObject)}
+     *
+     * @param words The words to convert into a JSON object
+     * @return A JSON object ready to submit to remote server
+     * @throws JSONException Throws exception if an error occurs while creating JSON object
+     */
+    public static JSONObject getUserWordInfoJSONArray(List<VocObject> words) throws JSONException
+    {
+        JSONObject jObj = new JSONObject();
+
+        JSONArray jArray = new JSONArray();
+
+        for (VocObject word : words)
+        {
+            JSONObject userWordInfoJSON = getUserWordInfoJSON(word);
+            if (userWordInfoJSON != null)
+                jArray.put(userWordInfoJSON);
+        }
+
+        jObj.put(FIELD_WORD_STORE_ARRAY, jArray);
+
+        return jObj;
+
+    }
+
+    /**
      * Constructs a new JSON object representing a study session and all relevant word interactions
      *
      * @param session      The session to convert into a JSON object

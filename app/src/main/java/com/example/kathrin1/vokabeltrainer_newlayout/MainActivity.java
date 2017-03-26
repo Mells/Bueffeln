@@ -120,11 +120,22 @@ public class MainActivity extends AppCompatActivity {
          */
 
         /*
-        LearnModel model = ACTRModel.buildFromJSON(this);
+        final LearnModel model = ACTRModel.build(this);
 
         model.initialize();
 
         model.pullFromRemote(null);
+
+        model.pushToRemote(null);
+
+        model.getUnknownParseIDs(new LearnModel.ParseResponseListener()
+        {
+            @Override
+            public void onResponse(NetworkError error)
+            {
+                model.saveToDatabaseASync(null);
+            }
+        });
         //*/
     }
 

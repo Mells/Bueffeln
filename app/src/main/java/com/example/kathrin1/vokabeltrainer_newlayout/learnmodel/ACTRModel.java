@@ -11,7 +11,10 @@ import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.exceptions.Model
 import com.example.kathrin1.vokabeltrainer_newlayout.network.NetworkError;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.RequestManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.GenericUpdateListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.NetworkFailureListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.SuccessListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.UserUpdateListener;
+import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.WordListSuccessListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.listeners.WordListUpdateListener;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
@@ -44,9 +47,6 @@ public class ACTRModel implements LearnModel
     private final RequestManager requestManager;
     private final StoredValueManager svManager;
 
-    private final Set<VocObject> wordsToUpdate;
-    private final Set<SessionObject> sessionsToUpdate;
-
     private String book, chapter, unit;
 
     private UserObject user = null;
@@ -63,9 +63,6 @@ public class ACTRModel implements LearnModel
         dbManager = DatabaseManager.build(c);
         requestManager = RequestManager.build(c, dbManager);
         svManager = StoredValueManager.build(c);
-
-        wordsToUpdate = new HashSet<>();
-        sessionsToUpdate = new HashSet<>();
     }
 
     /**
@@ -276,10 +273,8 @@ public class ACTRModel implements LearnModel
                 // Retrieves all study sessions from the database
                 sessions.addAll(dbManager.getAllStudySessions());
 
-
                 // Load all stored parameter values into ModelMath
                 svManager.loadConstants();
-
 
 
                 initialized = true;
@@ -463,8 +458,6 @@ public class ACTRModel implements LearnModel
                     float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
 
                     word.setAlpha(newAlpha);
-
-                    wordsToUpdate.add(word);
                 }
 
                 return null;
@@ -497,7 +490,6 @@ public class ACTRModel implements LearnModel
             }
         }
         sessions.add(session);
-        sessionsToUpdate.add(session);
     }
 
     /**
@@ -636,22 +628,117 @@ public class ACTRModel implements LearnModel
         getMissingWordParseIDs(errorList, latch);
 
         waitForActionsTask(latch, errorList, listener).execute();
+    }
 
+
+
+    /**
+     * Finds all words that are still missing a Parse ID, and queries the remote database to
+     * retrieve them.
+     *
+     * @param errors List of errors to keep track of
+     * @param latch  Latch to decrement whenever the request completes
+     */
+    private void getMissingWordParseIDs(final List<NetworkError> errors,
+                                        final CountDownLatch latch)
+    {
+        List<VocObject> wordsWithoutParseId = new ArrayList<>();
+
+        // Find all words that are still missing Parse IDs
+        for (VocObject word : interactions.keySet())
+            if (!word.hasParseId())
+                wordsWithoutParseId.add(word);
+
+        Log.d(LOG_TAG, "Getting Parse ID for " + wordsWithoutParseId.size() + " items.");
+
+        requestManager.pushDictionaryItems(wordsWithoutParseId,
+                                           buildLatchingWordListListener(latch, errors, null, null,
+                                                                         "Missing parse ID retrieval"));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void pushToRemote(ParseResponseListener listener)
+    public void pushToRemote(final ParseResponseListener listener)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
+        // If update is successful, this timestamp is used as the reference for
+        // the last submission after completion
+        final Date updateTime = new Date();
 
+        // Create a list to hold all accumulated errors across all async tasks.
+        // This *SHOULD* be threadsafe without having to specifically define it, as it
+        // should only be modified on the UI thread, in theory.  This is something to keep an eye on
+        // Reference = http://stackoverflow.com/questions/31119277/is-android-asynct-http-library-coupled-with-ui-thread
+        List<NetworkError> errors = new ArrayList<>();
+
+        // Start a latch to track completion of all asynchronous tasks
+        final CountDownLatch latch = new CountDownLatch(3);
+
+        // Get a map of all sessions to all interactions
+        Map<SessionObject, List<InterxObject>> sessionInteractionMap =
+                mapInteractionsToSessions();
+
+        // Filter out sessions that occurred entirely before the last submission time, as well
+        // as sessions that are not yet completed.
+        Date lastSubmission = svManager.getLastSubmission();
+        List<SessionObject> sessionsToRemove = new ArrayList<>();
+        for (SessionObject session : sessionInteractionMap.keySet())
+        {
+            if (!session.isFinished() || session.getEnd().before(lastSubmission))
+                sessionsToRemove.add(session);
+        }
+        for (SessionObject session : sessionsToRemove)
+            sessionInteractionMap.remove(session);
+
+
+        // Collect a set of words that were modified since the last submission time
+        Set<VocObject> wordsToUpdate = new HashSet<>();
+        for (List<InterxObject> interxList : sessionInteractionMap.values())
+        {
+            for (InterxObject interx : interxList)
+            {
+                wordsToUpdate.add(interx.getWord() == null
+                                  ? dbManager.getWordPairById(interx.getWordId())
+                                  : interx.getWord());
+            }
+        }
+
+
+        // Push all session data that has been updated since the last data submission
+        requestManager.pushSessions(user, sessionInteractionMap,
+                                    buildLatchingListener(latch, errors, null, null,
+                                                          "Session submission"));
+        // Push all user word data that has been updated since the last data submission
+        requestManager.pushUserWordInfo(user, wordsToUpdate,
+                                        buildLatchingListener(latch, errors, null, null,
+                                                              "User word info submission"));
+        // Push all user data that has been updated since the last data submission
+        requestManager.pushUserInfo(user, buildLatchingListener(latch, errors, null, null,
+                                                                "User info submission"));
+
+        // Start an ASyncTask that will wait on the countdown latch, then report success or failure
+        waitForActionsTask(latch, errors, new ParseResponseListener()
+        {
+            @Override
+            public void onResponse(NetworkError error)
+            {
+                svManager.storeLastSubmission(updateTime);
+                Log.d(LOG_TAG, "Successfully pushed all info, storing new last submission time: " +
+                               DBHandler.ISO_DATE.format(updateTime));
+                if (listener != null)
+                    listener.onResponse(error);
+            }
+        }).execute();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void pushToRemoteAndForget()
     {
@@ -659,8 +746,9 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        // TODO:  Implement
+        throw new UnsupportedOperationException("This has not yet been implemented.");
     }
+
 
     /**
      * {@inheritDoc}
@@ -677,29 +765,69 @@ public class ACTRModel implements LearnModel
         final Date updateTime = new Date();
 
         // Create a list to hold all accumulated errors across all async tasks.
-        // TODO:  This *SHOULD* be threadsafe without having to specifically define it, as it
-        // TODO:  should only be modified on the UI thread, in theory.  This is something to keep an eye on
-        // TODO:  Reference = http://stackoverflow.com/questions/31119277/is-android-asynct-http-library-coupled-with-ui-thread
-        List<NetworkError> errorList = new ArrayList<>();
+        // This *SHOULD* be threadsafe without having to specifically define it, as it
+        // should only be modified on the UI thread, in theory.  This is something to keep an eye on
+        // Reference = http://stackoverflow.com/questions/31119277/is-android-asynct-http-library-coupled-with-ui-thread
+        List<NetworkError> errors = new ArrayList<>();
 
         // Start a latch to track completion of all 4 asynchronous tasks
         final CountDownLatch latch = new CountDownLatch(4);
 
-        // Find all dictionary items that have been modified since the last update
-        pullDictionaryItems(errorList, latch);
+        // Construct a listener to use whenever the completion of a request should result in an
+        // update of the model's collection of word data
+        WordListSuccessListener wordListUpdate = new WordListSuccessListener()
+        {
+            @Override
+            public void onSuccess(List<VocObject> words)
+            {
+                // Replace all words in the word ID map and interactions map with the new
+                // word objects
+                for (VocObject word : words)
+                {
+                    wordIdMap.put(word.getId(), word);
 
-        // Find all model parameters that have been modified since the last update
-        pullConstants(errorList, latch);
+                    // REMINDER:  VocObject.equals(), and thus the Map.containsKey() check,
+                    // is based SOLELY on the word's database ID
+                    if (interactions.containsKey(word))
+                        interactions.put(word, interactions.get(word));
+                    else
+                        interactions.put(word, new ArrayList<InterxObject>());
+                }
+            }
+        };
 
-        // Find all user info that has been modified since the last update
-        pullUserInfo(errorList, latch);
+        Date lastUpdate = svManager.getLastUpdate();
 
-        // Find all user word info that has been modified since the last update
-        pullUserWordInfo(errorList, latch);
+        // Get all dictionary items that have been modified since the last update
+        requestManager.getDictionaryItems(lastUpdate,
+                                          buildLatchingWordListListener(latch, errors,
+                                                                        wordListUpdate, null,
+                                                                        "Dictionary info retrieval"));
+
+        // Get all model parameters that have been modified since the last update
+        requestManager.updateConstants(lastUpdate,
+                                       buildLatchingListener(latch, errors, new SuccessListener()
+                                       {
+                                           @Override
+                                           public void onSuccess()
+                                           {
+                                               svManager.saveConstants();
+                                           }
+                                       }, null, "Parameter retrieval"));
+
+        // Get all user info
+        requestManager.updateUserInfo(user, buildLatchingListener(latch, errors, null, null,
+                                                                  "User info retrieval"));
+
+        // Get all user word info that has been modified since the last update
+        requestManager.updateUserWordInfo(
+                lastUpdate, user,
+                buildLatchingWordListListener(latch, errors, wordListUpdate, null,
+                                              "Dictionary info retrieval"));
 
 
         // Start an ASyncTask that will wait on the countdown latch, then report success or failure
-        waitForActionsTask(latch, errorList, new ParseResponseListener()
+        waitForActionsTask(latch, errors, new ParseResponseListener()
         {
             @Override
             public void onResponse(NetworkError error)
@@ -715,238 +843,48 @@ public class ACTRModel implements LearnModel
 
 
     /**
-     * Queries the remote database for all dictionary values that have been modified since the
-     * last known update.
+     * Generates a map that links all sessions to the interactions that occurred within them.
      *
-     * @param errors List of errors to keep track of
-     * @param latch Latch to decrement whenever the request completes
+     * @return The generated map.
      */
-    private void pullDictionaryItems(final List<NetworkError> errors,
-                                     final CountDownLatch latch)
-    {
-        requestManager.getDictionaryItems(svManager.getLastUpdate(), new WordListUpdateListener()
-        {
-            @Override
-            public void onSuccess(List<VocObject> words)
-            {
-                latch.countDown();
-
-                // Replace all words in the word ID map and interactions map with the new
-                // word objects
-                for (VocObject word : words)
-                {
-                    wordIdMap.put(word.getId(), word);
-
-                    // REMINDER:  VocObject.equals(), and thus the Map.containsKey() check,
-                    // is based SOLELY on database ID
-                    if (interactions.containsKey(word))
-                        interactions.put(word, interactions.get(word));
-                    else
-                        interactions.put(word, new ArrayList<InterxObject>());
-                }
-                Log.d(LOG_TAG, "Retrieved dictionary info from remote server.");
-            }
-
-            @Override
-            public void onRemoteFailure(NetworkError error)
-            {
-                Log.e(LOG_TAG, "Word retrieval error: " + error.toString());
-                errors.add(error);
-                latch.countDown();
-            }
-
-            @Override
-            public void onLocalFailure(Throwable error)
-            {
-                Log.e(LOG_TAG, "Word retrieval error.", error);
-                errors.add(NetworkError.buildFromThrowable(error));
-                latch.countDown();
-            }
-        });
-    }
-
-    /**
-     * Queries the remote database for all parameter values that have been modified since the
-     * last known update.
-     *
-     * @param errors List of errors to keep track of
-     * @param latch Latch to decrement whenever the request completes
-     */
-    private void pullConstants(final List<NetworkError> errors,
-                               final CountDownLatch latch)
-    {
-        requestManager.updateConstants(svManager.getLastUpdate(), new GenericUpdateListener()
-        {
-            @Override
-            public void onSuccess()
-            {
-                Log.d(LOG_TAG, "Retrieved parameter info from remote server.");
-                latch.countDown();
-                svManager.saveConstants();
-            }
-
-            @Override
-            public void onRemoteFailure(NetworkError error)
-            {
-                Log.e(LOG_TAG, "Parameter retrieval error: " + error.toString());
-                errors.add(error);
-                latch.countDown();
-            }
-
-            @Override
-            public void onLocalFailure(Throwable error)
-            {
-                Log.e(LOG_TAG, "Parameter retrieval error.", error);
-                errors.add(NetworkError.buildFromThrowable(error));
-                latch.countDown();
-            }
-        });
-    }
-
-    /**
-     * Queries the remote database for all user values that have been modified since the
-     * last known update.
-     *
-     * @param errors List of errors to keep track of
-     * @param latch Latch to decrement whenever the request completes
-     */
-    private void pullUserInfo(final List<NetworkError> errors,
-                              final CountDownLatch latch)
-    {
-        requestManager.updateUserInfo(user, new GenericUpdateListener()
-        {
-            @Override
-            public void onSuccess()
-            {
-                Log.d(LOG_TAG, "Retrieved user info from remote server.");
-                latch.countDown();
-            }
-
-            @Override
-            public void onRemoteFailure(NetworkError error)
-            {
-                Log.e(LOG_TAG, "User info retrieval error: " + error.toString());
-                errors.add(error);
-                latch.countDown();
-            }
-
-            @Override
-            public void onLocalFailure(Throwable error)
-            {
-                Log.e(LOG_TAG, "User info retrieval error.", error);
-                errors.add(NetworkError.buildFromThrowable(error));
-                latch.countDown();
-            }
-        });
-    }
-
-    /**
-     * Queries the remote database for all user word values that have been modified since the
-     * last known update.
-     *
-     * @param errors List of errors to keep track of
-     * @param latch Latch to decrement whenever the request completes
-     */
-    private void pullUserWordInfo(final List<NetworkError> errors,
-                                  final CountDownLatch latch)
-    {
-        requestManager.updateUserWordInfo(svManager.getLastUpdate(), user, new WordListUpdateListener()
-        {
-            @Override
-            public void onSuccess(List<VocObject> words)
-            {
-                latch.countDown();
-                // Replace all words in the word ID map and interactions map with the new
-                // word objects
-                for (VocObject word : words)
-                {
-                    wordIdMap.put(word.getId(), word);
-
-                    // REMINDER:  VocObject.equals(), and thus the Map.containsKey() check,
-                    // is based SOLELY on database ID
-                    if (interactions.containsKey(word))
-                        interactions.put(word, interactions.get(word));
-                    else
-                        interactions.put(word, new ArrayList<InterxObject>());
-                }
-                Log.d(LOG_TAG, "Retrieved user word info from remote server.");
-            }
-
-            @Override
-            public void onRemoteFailure(NetworkError error)
-            {
-                Log.e(LOG_TAG, "User word info retrieval error: " + error.toString());
-                errors.add(error);
-                latch.countDown();
-            }
-
-            @Override
-            public void onLocalFailure(Throwable error)
-            {
-                Log.e(LOG_TAG, "User word info retrieval error.", error);
-                errors.add(NetworkError.buildFromThrowable(error));
-                latch.countDown();
-            }
-        });
-    }
-
-
-    /**
-     * Finds all words that are still missing a Parse ID, and queries the remote database to
-     * retrieve them.
-     *
-     * @param errors List of errors to keep track of
-     * @param latch Latch to decrement whenever the request completes
-     */
-    private void getMissingWordParseIDs(final List<NetworkError> errors,
-                                        final CountDownLatch latch)
-    {
-        List<VocObject> wordsWithoutParseId = new ArrayList<>();
-
-        // Find all words that are still missing Parse IDs
-        for (VocObject word : interactions.keySet())
-            if (!word.hasParseId())
-                wordsWithoutParseId.add(word);
-
-        Log.d(LOG_TAG, "Getting Parse ID for " + wordsWithoutParseId.size() + " items.");
-
-        requestManager.pushDictionaryItems(wordsWithoutParseId, new WordListUpdateListener()
-        {
-            @Override
-            public void onSuccess(List<VocObject> words)
-            {
-                latch.countDown();
-                // Shouldn't need to do anything, words will already be updated with their new
-                // Parse object IDs
-            }
-
-            @Override
-            public void onRemoteFailure(NetworkError error)
-            {
-                Log.e(LOG_TAG, "Word retrieval error: " + error.toString());
-                errors.add(error);
-                latch.countDown();
-            }
-
-            @Override
-            public void onLocalFailure(Throwable error)
-            {
-                Log.e(LOG_TAG, "Word retrieval error.", error);
-                errors.add(NetworkError.buildFromThrowable(error));
-                latch.countDown();
-            }
-        });
-    }
-
-
     private Map<SessionObject, List<InterxObject>> mapInteractionsToSessions()
     {
         Map<SessionObject, List<InterxObject>> returnMap = new HashMap<>();
 
+        for (SessionObject session : sessions)
+            returnMap.put(session, new ArrayList<InterxObject>());
 
-        // TODO:  IMPLEMENT THIS
-        // TODO:  Tip:  may want to add FOREIGN KEY column to interactions table that associates them?
-        // TODO:  Otherwise, this computation may get slow once there are many interactions.
+        for (List<InterxObject> interxList : interactions.values())
+        {
+            for (InterxObject interx : interxList)
+            {
+                // If the interaction is already associated with a particular session, simply use it
+                if (interx.getSessionId() != null)
+                {
+                    // As sessions are hashed based solely on their ID, create a placeholder
+                    // session from the interaction's session ID to identify it in the map
+                    returnMap.get(SessionObject.buildPlaceholder(interx.getSessionId())).add(interx);
+                    continue;
+                }
+
+                // Otherwise, the session that this interaction belongs to must be identified
+
+                // Iterate through all sessions and identify which one starts before the
+                // interaction's timestamp and ends after it.  If no such session is found, the
+                // interaction is not added to the map.
+                for (SessionObject session : sessions)
+                {
+                    // !after() and !before() are here to serve as >= and <= rather than > and <
+                    // Also, unfinished sessions are ignored
+                    if (!session.getStart().after(interx.getTimestamp()) &&
+                        (session.isFinished() &&
+                         (!session.getEnd().before(interx.getTimestamp()))))
+                    {
+                        returnMap.get(session).add(interx);
+                    }
+                }
+            }
+        }
 
 
         return returnMap;
@@ -956,8 +894,8 @@ public class ACTRModel implements LearnModel
      * Defines an asynchronous task designed to wait on the given latch, and then respond to
      * any errors in the given list (or lack thereof) through the given listener.
      *
-     * @param latch The countdown latch to wait on
-     * @param errors List of accumulated errors
+     * @param latch    The countdown latch to wait on
+     * @param errors   List of accumulated errors
      * @param listener Actions to perform upon completion
      * @return The constructed ASyncTask, which will not have yet been executed.
      */
@@ -1028,5 +966,115 @@ public class ACTRModel implements LearnModel
                     listener.onCompletion();
             }
         }.execute();
+    }
+
+    /**
+     * Builds a basic listener that handles errors through the given NetworkFailureListener,
+     * passes success to the given SuccessListener, and in all cases decrements the
+     * given latch and adds errors the given list.
+     *
+     * @param latch The latch to decrement upon response, whether success or failure.
+     * @param errors A list to collect errors in.
+     * @param success Additional actions to perform upon success.  May be left null.
+     * @param failure Additional actions to perform upon failure.  May be left null.
+     * @param action String describing action being performed, for logging.
+     * @return The newly constructed listener.
+     */
+    private GenericUpdateListener buildLatchingListener(final CountDownLatch latch,
+                                                        final List<NetworkError> errors,
+                                                        final SuccessListener success,
+                                                        final NetworkFailureListener failure,
+                                                        final String action)
+    {
+        return new GenericUpdateListener()
+        {
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                if (failure != null)
+                    failure.onRemoteFailure(error);
+                latch.countDown();
+
+
+                Log.e(LOG_TAG, String.format("%s error: %s", action, error.toString()));
+                errors.add(error);
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                if (failure != null)
+                    failure.onLocalFailure(error);
+                latch.countDown();
+
+                Log.e(LOG_TAG, String.format("%s error.", action), error);
+                errors.add(NetworkError.buildFromThrowable(error));
+            }
+
+            @Override
+            public void onSuccess()
+            {
+                if (success != null)
+                    success.onSuccess();
+                latch.countDown();
+
+                Log.v(LOG_TAG, String.format("%s successfully completed.", action));
+            }
+        };
+    }
+
+    /**
+     * Builds a basic listener that handles errors through the given NetworkFailureListener,
+     * passes success to the given WordListSuccessListener, and in all cases decrements the
+     * given latch and adds errors the given list.
+     *
+     * @param latch The latch to decrement upon response, whether success or failure.
+     * @param errors A list to collect errors in.
+     * @param success Additional actions to perform upon success.  May be left null.
+     * @param failure Additional actions to perform upon failure.  May be left null.
+     * @param action String describing action being performed, for logging.
+     * @return The newly constructed listener.
+     */
+    private WordListUpdateListener buildLatchingWordListListener(final CountDownLatch latch,
+                                                                 final List<NetworkError> errors,
+                                                                 final WordListSuccessListener success,
+                                                                 final NetworkFailureListener failure,
+                                                                 final String action)
+    {
+        return new WordListUpdateListener()
+        {
+            @Override
+            public void onRemoteFailure(NetworkError error)
+            {
+                if (failure != null)
+                    failure.onRemoteFailure(error);
+                latch.countDown();
+
+
+                Log.e(LOG_TAG, String.format("%s error: %s", action, error.toString()));
+                errors.add(error);
+            }
+
+            @Override
+            public void onLocalFailure(Throwable error)
+            {
+                if (failure != null)
+                    failure.onLocalFailure(error);
+                latch.countDown();
+
+                Log.e(LOG_TAG, String.format("%s error.", action), error);
+                errors.add(NetworkError.buildFromThrowable(error));
+            }
+
+            @Override
+            public void onSuccess(List<VocObject> words)
+            {
+                if (success != null)
+                    success.onSuccess(words);
+                latch.countDown();
+
+                Log.v(LOG_TAG, String.format("%s successfully completed.", action));
+            }
+        };
     }
 }
