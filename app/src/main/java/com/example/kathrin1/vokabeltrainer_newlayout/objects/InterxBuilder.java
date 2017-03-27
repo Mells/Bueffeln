@@ -30,7 +30,7 @@ public class InterxBuilder
     }
 
     /**
-     * Uses the current parameters to buildFromJSON a new interaction object, inserting it into the database
+     * Uses the current parameters to build a new interaction object, inserting it into the database
      * referenced by the given database manager.
      *
      * @param manager The manager for the database to insert the interaction into.
@@ -61,7 +61,7 @@ public class InterxBuilder
     }
 
     /**
-     * Uses the current parameters to buildFromJSON a new interaction object, but does not insert it into
+     * Uses the current parameters to build a new interaction object, but does not insert it into
      * the database.  The returned InterxObject will always have an ID of -1.
      *
      * @return The newly constructed InterxObject.
@@ -75,9 +75,9 @@ public class InterxBuilder
     }
 
     /**
-     * Tests if all fields are initialized, and thus the builder is ready to buildFromJSON.
+     * Tests if all fields are initialized, and thus the builder is ready to build.
      *
-     * @return Returns true if the builder is ready to buildFromJSON, false otherwise.
+     * @return Returns true if the builder is ready to build, false otherwise.
      */
     private boolean isReadyToBuild()
     {

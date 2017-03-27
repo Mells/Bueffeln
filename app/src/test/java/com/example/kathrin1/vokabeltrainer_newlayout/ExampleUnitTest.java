@@ -1,18 +1,5 @@
 package com.example.kathrin1.vokabeltrainer_newlayout;
 
-import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
-
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.List;
-
 /**
  * Example local unit test, which will execute on the development machine (host).
  *
@@ -20,7 +7,7 @@ import java.util.List;
  */
 public class ExampleUnitTest
 {
-
+/*
     public static final int CHAR_COUNT = 20;
 
     @Test
@@ -135,5 +122,5 @@ public class ExampleUnitTest
         float blah = 0;
 
     }
-
+*/
 }

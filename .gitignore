@@ -10,3 +10,8 @@
 .idea/
 /PROGRESSLOG.txt - Shortcut.lnk
 /sshTunnel.bat
+/gradle.properties
+/gradlew
+/settings.gradle
+/gradlew.bat
+/gradle/
