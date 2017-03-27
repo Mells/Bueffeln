@@ -13,29 +13,45 @@
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin">
 
-        <Button
-            android:id="@+id/btn_kartei"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:background="@drawable/ic_sprechblase_auswahl"
-            android:text="Blabla"
-            android:layout_marginTop="25dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignLeft="@+id/btn_open_kontext"
-            android:layout_alignStart="@+id/btn_open_kontext"
-            android:layout_alignRight="@+id/btn_open_kontext"
-            android:layout_alignEnd="@+id/btn_open_kontext" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_marginBottom="80dp">
 
-        <Button
-            android:id="@+id/btn_open_kontext"
-            android:layout_marginTop="75dp"
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:layout_below="@id/btn_kartei"
-            android:background="@drawable/ic_sprechblase_auswahl"
-            android:text="Kontext"
-            android:layout_marginLeft="5mm"
-            android:layout_marginRight="5mm"/>
+            <Button
+                android:id="@+id/btn_open_kartei"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginLeft="5mm"
+                android:layout_marginRight="5mm"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@drawable/ic_sprechblase_auswahl"
+                android:text="Blabla" />
+
+            <Button
+                android:id="@+id/btn_open_kontext"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginLeft="5mm"
+                android:layout_marginRight="5mm"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@drawable/ic_sprechblase_auswahl"
+                android:text="Kontext" />
+
+            <Button
+                android:id="@+id/btn_open_ex3"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
+                android:layout_marginLeft="5mm"
+                android:layout_marginRight="5mm"
+                android:layout_marginBottom="20dp"
+                android:layout_weight="1"
+                android:background="@drawable/ic_sprechblase_auswahl"
+                android:text="Chris" />
+        </LinearLayout>
 
     </RelativeLayout>
 
