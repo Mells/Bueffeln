@@ -76,7 +76,7 @@ public class AufgabeAuswahl extends AppCompatActivity {
         Button btn_kartei = (Button) findViewById(R.id.btn_open_kartei);
         Button btn_kontext = (Button) findViewById(R.id.btn_open_kontext);
         Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
-        Button btn_chris = (Button) findViewById(R.id.btn_open_ex3);
+        Button btn_exercise3 = (Button) findViewById(R.id.btn_open_ex3);
 
         btn_kartei.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,10 +96,10 @@ public class AufgabeAuswahl extends AppCompatActivity {
 
         });
 
-        btn_chris.setOnClickListener(new View.OnClickListener() {
+        btn_exercise3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(AufgabeAuswahl.this, Kontext.class);
+                Intent intent = new Intent(AufgabeAuswahl.this, Exercise3.class);
                 startActivity(intent);
             }
 
