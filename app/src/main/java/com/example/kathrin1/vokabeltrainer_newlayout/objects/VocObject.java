@@ -213,6 +213,7 @@ public class VocObject {
         vals.put(DBHandler.WORD_ALPHA, alpha);
         vals.put(DBHandler.WORD_SIGMA, sigma);
         vals.put(DBHandler.WORD_ACTIVATION, activation);
+        vals.put(DBHandler.WORD_USERINFO_PARSEID, userInfoParseId);
 
         return vals;
     }

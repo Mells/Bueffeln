@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Manages creating and updating all tables in the database.  Also contains static strings for
@@ -193,7 +194,7 @@ public class DBHandler extends SQLiteAssetHelper
     private static final String WORD_CSV = "databases/vocabulary.csv";
     private static final String SENT_CSV = "databases/sentences.csv";
 
-    // Date formats
+    // Date formats.  The timezones of these formats are set to UTC inside the constructor
     public static final SimpleDateFormat ISO_DATE =
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.GERMANY);
     public static final SimpleDateFormat SQL_DATE =
@@ -226,6 +227,9 @@ public class DBHandler extends SQLiteAssetHelper
         super(context, NAME, null, VERSION);
         this.c = context;
         setForcedUpgrade(FORCED_UPGRADE_VERSION);
+
+        ISO_DATE.setTimeZone(TimeZone.getTimeZone("UTC"));
+        SQL_DATE.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
 

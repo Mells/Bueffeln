@@ -24,6 +24,9 @@ public class DatabaseManager
 {
     public static final String LOG_TAG = "[DBManager]";
 
+    // Some dangerous operations can only be performed if this is true.
+    public static final boolean DEBUG_ENABLED = true;
+
     private DBHandler handler;
     private SQLiteDatabase db;
     private Context c;
@@ -429,6 +432,30 @@ public class DatabaseManager
 
         return db.insertWithOnConflict(DBHandler.SESSION_TABLENAME, null, vals,
                                        SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+
+    public void clearSessionsTable()
+    {
+        if (!DEBUG_ENABLED)
+        {
+            Log.e(LOG_TAG, "Cannot clear sessions if not in debug mode.");
+            return;
+        }
+
+        db.delete(DBHandler.SESSION_TABLENAME, null, null);
+    }
+
+    public void clearInteractionsTable()
+    {
+
+        if (!DEBUG_ENABLED)
+        {
+            Log.e(LOG_TAG, "Cannot clear sessions if not in debug mode.");
+            return;
+        }
+
+        db.delete(DBHandler.INTERX_TABLENAME, null, null);
     }
 
 

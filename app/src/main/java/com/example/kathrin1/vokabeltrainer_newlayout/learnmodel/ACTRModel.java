@@ -23,6 +23,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -195,7 +196,7 @@ public class ACTRModel implements LearnModel
         // The log-in attempt occurs asynchronously, and initialization does not depend
         // on it or its success.
 
-        logIn(null);
+        // logIn(null);
 
         try
         {
@@ -221,7 +222,7 @@ public class ACTRModel implements LearnModel
         // The log-in attempt occurs asynchronously, and initialization does not depend
         // on it or its success.
 
-        logIn(null);
+        // logIn(null);
 
         initTask(listener).execute();
     }
@@ -450,10 +451,12 @@ public class ACTRModel implements LearnModel
                     // Add the interaction to the model
                     interactions.get(word).add(interx);
 
+                    /*
                     // Insert the interaction into the database and get it's new ID
                     long id = dbManager.updateInteraction(interx);
                     // Set the ID of the interaction
                     interx.setId(id);
+                    */
 
                     float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
 
@@ -484,7 +487,7 @@ public class ACTRModel implements LearnModel
         {
             if (existingSession.getStart().equals(session.getStart()))
             {
-                Log.e(LOG_TAG, "Attempted to add session with starting time that matches an" +
+                Log.e(LOG_TAG, "Attempted to add session with starting time that matches an " +
                                "existing session.");
                 return;
             }
@@ -523,21 +526,28 @@ public class ACTRModel implements LearnModel
             {
                 // Update all words and interactions
 
+                // Mark the time to use as the update time upon completion
+                Date updateTime = new Date();
+
                 Log.d(LOG_TAG, "Saving database...");
 
-                for (Map.Entry<VocObject, List<InterxObject>> entry : interactions.entrySet())
+                Date lastSave = svManager.getLastDatabaseSave();
+
+                Map<SessionObject, List<InterxObject>> sessionMap =
+                        getSessionsAfterDate(lastSave, false);
+
+                for (Map.Entry<SessionObject, List<InterxObject>> entry : sessionMap.entrySet())
                 {
-                    dbManager.updateWordData(entry.getKey());
+                    entry.getKey().setId(dbManager.updateSession(entry.getKey()));
                     for (InterxObject interx : entry.getValue())
-                        dbManager.updateInteraction(interx);
+                        interx.setId(dbManager.updateInteraction(interx));
                 }
 
-                // Update all sessions
+                // Update all words
 
-                for (SessionObject session : sessions)
+                for (VocObject word : getWordsFromSessions(sessionMap))
                 {
-                    if (session.isFinished())
-                        dbManager.updateSession(session);
+                    dbManager.updateWordData(word);
                 }
 
                 if (user != null)
@@ -546,6 +556,9 @@ public class ACTRModel implements LearnModel
                 svManager.saveConstants();
 
                 Log.d(LOG_TAG, "Database saved.");
+
+                // Store the last save date
+                svManager.storeLastDatabaseSave(updateTime);
             }
 
         };
@@ -574,7 +587,7 @@ public class ACTRModel implements LearnModel
     {
         // TODO:  THIS SHOULD BE 'user = null', and better login flow should be developed.
         // TODO:  This way, user info is only used if it has been verified to be valid.
-        user = svManager.getUserInfo();
+        user = null;
 
         requestManager.logInUser(svManager.getUserInfo(), new UserUpdateListener()
         {
@@ -631,7 +644,6 @@ public class ACTRModel implements LearnModel
     }
 
 
-
     /**
      * Finds all words that are still missing a Parse ID, and queries the remote database to
      * retrieve them.
@@ -666,6 +678,32 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
+        // Check that a user is logged in.  If not, log in and try again.
+        if (user == null)
+        {
+            logIn(new UserUpdateListener()
+            {
+                @Override
+                public void onSuccess(UserObject user)
+                {
+                    pushToRemote(listener);
+                }
+
+                @Override
+                public void onRemoteFailure(NetworkError error)
+                {
+                    listener.onResponse(error);
+                }
+
+                @Override
+                public void onLocalFailure(Throwable error)
+                {
+                    listener.onResponse(NetworkError.buildFromThrowable(error));
+                }
+            });
+            return;
+        }
+
         // If update is successful, this timestamp is used as the reference for
         // the last submission after completion
         final Date updateTime = new Date();
@@ -679,34 +717,16 @@ public class ACTRModel implements LearnModel
         // Start a latch to track completion of all asynchronous tasks
         final CountDownLatch latch = new CountDownLatch(3);
 
-        // Get a map of all sessions to all interactions
-        Map<SessionObject, List<InterxObject>> sessionInteractionMap =
-                mapInteractionsToSessions();
-
         // Filter out sessions that occurred entirely before the last submission time, as well
         // as sessions that are not yet completed.
         Date lastSubmission = svManager.getLastSubmission();
-        List<SessionObject> sessionsToRemove = new ArrayList<>();
-        for (SessionObject session : sessionInteractionMap.keySet())
-        {
-            if (!session.isFinished() || session.getEnd().before(lastSubmission))
-                sessionsToRemove.add(session);
-        }
-        for (SessionObject session : sessionsToRemove)
-            sessionInteractionMap.remove(session);
 
+        // Get all sessions and interactions, filtered by the last submission time
+        Map<SessionObject, List<InterxObject>> sessionInteractionMap =
+                getSessionsAfterDate(lastSubmission, true);
 
-        // Collect a set of words that were modified since the last submission time
-        Set<VocObject> wordsToUpdate = new HashSet<>();
-        for (List<InterxObject> interxList : sessionInteractionMap.values())
-        {
-            for (InterxObject interx : interxList)
-            {
-                wordsToUpdate.add(interx.getWord() == null
-                                  ? dbManager.getWordPairById(interx.getWordId())
-                                  : interx.getWord());
-            }
-        }
+        // Get all words referred to by all of the interactions to submit
+        Collection<VocObject> wordsToUpdate = getWordsFromSessions(sessionInteractionMap);
 
 
         // Push all session data that has been updated since the last data submission
@@ -715,8 +735,8 @@ public class ACTRModel implements LearnModel
                                                           "Session submission"));
         // Push all user word data that has been updated since the last data submission
         requestManager.pushUserWordInfo(user, wordsToUpdate,
-                                        buildLatchingListener(latch, errors, null, null,
-                                                              "User word info submission"));
+                                        buildLatchingWordListListener(latch, errors, null, null,
+                                                                      "User word info submission"));
         // Push all user data that has been updated since the last data submission
         requestManager.pushUserInfo(user, buildLatchingListener(latch, errors, null, null,
                                                                 "User info submission"));
@@ -760,6 +780,32 @@ public class ACTRModel implements LearnModel
         if (!initialized)
             throw new ModelNotInitializedException();
 
+        // Check that a user is logged in.  If not, log in and try again.
+        if (user == null)
+        {
+            logIn(new UserUpdateListener()
+            {
+                @Override
+                public void onSuccess(UserObject user)
+                {
+                    pullFromRemote(listener);
+                }
+
+                @Override
+                public void onRemoteFailure(NetworkError error)
+                {
+                    listener.onResponse(error);
+                }
+
+                @Override
+                public void onLocalFailure(Throwable error)
+                {
+                    listener.onResponse(NetworkError.buildFromThrowable(error));
+                }
+            });
+            return;
+        }
+
         // If update is successful, this timestamp is used as the reference for update after
         // update completion
         final Date updateTime = new Date();
@@ -778,7 +824,7 @@ public class ACTRModel implements LearnModel
         WordListSuccessListener wordListUpdate = new WordListSuccessListener()
         {
             @Override
-            public void onSuccess(List<VocObject> words)
+            public void onSuccess(Collection<VocObject> words)
             {
                 // Replace all words in the word ID map and interactions map with the new
                 // word objects
@@ -891,6 +937,64 @@ public class ACTRModel implements LearnModel
     }
 
     /**
+     * Constructs a map of sessions to its corresponding interactions, filtering out any sessions
+     * that occurred before the given date.  If the given date is null, returns all sessions.  If
+     * 'filterSessionsWithParseId' is true, sessions with stored Parse IDs will also be filtered out.
+     *
+     * // TODO:  Maybe make filtered unfinished sessions optional too?
+     *
+     * @param date                      The date to filter sessions by.  May be left null.
+     * @param filterSessionsWithParseId Whether or not to filter out sessions with stored Parse IDs
+     * @return The map of sessions to corresponding interactions, filtered by the given date.
+     */
+    private Map<SessionObject, List<InterxObject>> getSessionsAfterDate(Date date,
+                                                                        boolean filterSessionsWithParseId)
+    {
+        // Get a map of all sessions to all interactions
+        Map<SessionObject, List<InterxObject>> sessionInteractionMap =
+                mapInteractionsToSessions();
+
+        List<SessionObject> sessionsToRemove = new ArrayList<>();
+        for (SessionObject session : sessionInteractionMap.keySet())
+        {
+            if ((filterSessionsWithParseId &&
+                 session.getParseId() != null
+                 && !session.getParseId().equals(""))
+                || !session.isFinished() || (date != null && session.getEnd().before(date)))
+            {
+                sessionsToRemove.add(session);
+            }
+        }
+        for (SessionObject session : sessionsToRemove)
+            sessionInteractionMap.remove(session);
+
+        return sessionInteractionMap;
+    }
+
+    /**
+     * Collects a set of all words that are referred to by the interactions in the given
+     * session/interaction map.
+     *
+     * @param sessionMap A map of sessions to all corresponding interactions
+     * @return A collection of all words referred to by the given sessions/interactions
+     */
+    private Collection<VocObject> getWordsFromSessions(Map<SessionObject, List<InterxObject>> sessionMap)
+    {
+        Set<VocObject> wordsToUpdate = new HashSet<>();
+        for (List<InterxObject> interxList : sessionMap.values())
+        {
+            for (InterxObject interx : interxList)
+            {
+                wordsToUpdate.add(interx.getWord() == null
+                                  ? dbManager.getWordPairById(interx.getWordId())
+                                  : interx.getWord());
+            }
+        }
+
+        return wordsToUpdate;
+    }
+
+    /**
      * Defines an asynchronous task designed to wait on the given latch, and then respond to
      * any errors in the given list (or lack thereof) through the given listener.
      *
@@ -973,11 +1077,11 @@ public class ACTRModel implements LearnModel
      * passes success to the given SuccessListener, and in all cases decrements the
      * given latch and adds errors the given list.
      *
-     * @param latch The latch to decrement upon response, whether success or failure.
-     * @param errors A list to collect errors in.
+     * @param latch   The latch to decrement upon response, whether success or failure.
+     * @param errors  A list to collect errors in.
      * @param success Additional actions to perform upon success.  May be left null.
      * @param failure Additional actions to perform upon failure.  May be left null.
-     * @param action String describing action being performed, for logging.
+     * @param action  String describing action being performed, for logging.
      * @return The newly constructed listener.
      */
     private GenericUpdateListener buildLatchingListener(final CountDownLatch latch,
@@ -1028,11 +1132,11 @@ public class ACTRModel implements LearnModel
      * passes success to the given WordListSuccessListener, and in all cases decrements the
      * given latch and adds errors the given list.
      *
-     * @param latch The latch to decrement upon response, whether success or failure.
-     * @param errors A list to collect errors in.
+     * @param latch   The latch to decrement upon response, whether success or failure.
+     * @param errors  A list to collect errors in.
      * @param success Additional actions to perform upon success.  May be left null.
      * @param failure Additional actions to perform upon failure.  May be left null.
-     * @param action String describing action being performed, for logging.
+     * @param action  String describing action being performed, for logging.
      * @return The newly constructed listener.
      */
     private WordListUpdateListener buildLatchingWordListListener(final CountDownLatch latch,
@@ -1067,7 +1171,7 @@ public class ACTRModel implements LearnModel
             }
 
             @Override
-            public void onSuccess(List<VocObject> words)
+            public void onSuccess(Collection<VocObject> words)
             {
                 if (success != null)
                     success.onSuccess(words);

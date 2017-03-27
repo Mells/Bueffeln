@@ -20,6 +20,7 @@ public class StoredValueManager
 
     public static final String LAST_UPDATE = "lastUpdate";
     public static final String LAST_SUBMISSION = "lastSubmission";
+    public static final String LAST_DATABASE_SAVE = "lastDatabaseSave";
 
     public static final String USER_OBJECTID = "user_objectid";
     public static final String USER_ANONID = "user_anonid";
@@ -91,6 +92,14 @@ public class StoredValueManager
     }
 
     /**
+     * Retrieve the timestamp of the latest local data save.
+     *
+     * @return The timestamp of the latest local data save.  If no such timestamp exists,
+     * or if it cannot be parsed, returns null.
+     */
+    public Date getLastDatabaseSave() { return getDate(LAST_DATABASE_SAVE); }
+
+    /**
      * Gets a stored preference that contains a timestamp, and converts that timestamp string into
      * a {@link Date} object.
      *
@@ -137,6 +146,19 @@ public class StoredValueManager
     {
         prefs.edit()
              .putString(LAST_SUBMISSION, DBHandler.ISO_DATE.format(update))
+             .apply();
+    }
+
+    /**
+     * Stores the timestamp of the latest submission of data.
+     * This value commit is performed asynchronously.
+     *
+     * @param update The timestamp to store.
+     */
+    public void storeLastDatabaseSave(Date update)
+    {
+        prefs.edit()
+             .putString(LAST_DATABASE_SAVE, DBHandler.ISO_DATE.format(update))
              .apply();
     }
 

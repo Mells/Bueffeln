@@ -102,7 +102,9 @@ public abstract class JSONHandler
             jObj.put(FIELD_UWINFO_WORDID, word.getParseId());
 
         jObj.put(FIELD_UWINFO_WORD, word.getVoc());
-        jObj.put(FIELD_UWINFO_ALPHA, word.getAlpha());
+        // TODO:  Is this negative infinity check necessary?  What's really going on here?
+        jObj.put(FIELD_UWINFO_ALPHA, word.getAlpha() == Float.NEGATIVE_INFINITY
+                                     ? ModelMath.ALPHA_DEFAULT : word.getAlpha());
         jObj.put(FIELD_UWINFO_BETA_SI, word.getBeta_si());
 
         return jObj;
@@ -276,6 +278,7 @@ public abstract class JSONHandler
 
         return wordObj;
     }
+
     /**
      * Extracts the label field from the given JSON object.
      *
@@ -299,11 +302,6 @@ public abstract class JSONHandler
     public static void parseWordInto(JSONObject jObj, VocObject into) throws JSONException
     {
         String objectId = jObj.getString(FIELD_OBJECTID);
-        String label = jObj.getString(FIELD_WORD_LABEL);
-
-        if (!label.equals(into.getLabel()))
-            throw new IllegalArgumentException(String.format("Mismatched word labels: %s and %s",
-                                                             label, into.getLabel()));
 
 
         if (jObj.has(FIELD_WORD_BETA_I) && jObj.has(FIELD_WORD_SIGMA))
@@ -313,6 +311,7 @@ public abstract class JSONHandler
             // float alpha_d = (float) jObj.getDouble(FIELD_WORD_ALPHA_D);
 
             into.setParameters(into.getBeta_si(), beta_i, into.getAlpha(), sigma_i);
+            into.setParseId(objectId);
         }
         else if (jObj.has(FIELD_UWINFO_ALPHA) && jObj.has(FIELD_UWINFO_BETA_SI))
         {
@@ -320,9 +319,16 @@ public abstract class JSONHandler
             float alpha_i = (float) jObj.getDouble(FIELD_UWINFO_ALPHA);
 
             into.setParameters(beta_si, into.getBeta_i(), alpha_i, into.getSigma());
+            into.setUserInfoParseId(objectId);
+        }
+        else
+        {
+            if (jObj.has(FIELD_UWINFO_WORDID))
+                into.setUserInfoParseId(objectId);
+            else
+                into.setParseId(objectId);
         }
 
-        into.setParseId(objectId);
     }
 
 

@@ -58,7 +58,7 @@ public class RequestManager
     public static final String URL_CONSTANTS = URL + "/data/params";
     public static final String URL_USER_INFO = URL + "/user/info";
     public static final String URL_USER_WORD_INFO = URL + "/user/words";
-    public static final String URL_USER_SESSION = "/user/session";
+    public static final String URL_USER_SESSION = URL + "/user/session";
 
 
     public static final String LOG_TAG = "[RequestManager]";
@@ -253,6 +253,12 @@ public class RequestManager
                              Map<SessionObject, List<InterxObject>> sessionInteractionMap,
                              final GenericUpdateListener responseHandler)
     {
+        if (sessionInteractionMap.size() == 0)
+        {
+            responseHandler.onSuccess();
+            return;
+        }
+
         if (!isNetworkReady())
         {
             responseHandler.onLocalFailure(new IllegalStateException("Unable to communicate on network."));
@@ -295,7 +301,7 @@ public class RequestManager
             return;
         }
 
-        SessionObject currSession = sessionList.get(index);
+        final SessionObject currSession = sessionList.get(index);
 
         // Convert the current session and interaction list into a JSON object
         StringEntity body;
@@ -321,9 +327,17 @@ public class RequestManager
             @Override
             public void onJSONReceived(JSONObject jObj)
             {
-                // Do nothing with the JSON
-                batchPushSessions(sessionInteractionMap, sessionList, index + 1,
-                                  headers, responseHandler);
+                try
+                {
+                    if (jObj.has(JSONHandler.FIELD_OBJECTID))
+                        currSession.setParseId(jObj.getString(JSONHandler.FIELD_OBJECTID));
+
+                    batchPushSessions(sessionInteractionMap, sessionList, index + 1,
+                                      headers, responseHandler);
+                } catch (Exception e)
+                {
+                    responseHandler.onLocalFailure(e);
+                }
             }
         }, responseHandler);
 
@@ -331,7 +345,6 @@ public class RequestManager
         // Perform the HTTP operation
         client.post(c, URL_USER_SESSION, headers, body, APPLICATION_JSON, loggingWrapper(handler));
     }
-
 
 
     public void pushUserInfo(UserObject user, final GenericUpdateListener responseHandler)
@@ -381,14 +394,19 @@ public class RequestManager
         }, responseHandler);
 
 
-
         // Perform the HTTP operation
         client.put(c, URL_USER_INFO, headers, body, APPLICATION_JSON, loggingWrapper(handler));
     }
 
     public void pushUserWordInfo(UserObject user, Collection<VocObject> words,
-                                 GenericUpdateListener responseHandler)
+                                 WordListUpdateListener responseHandler)
     {
+        if (words.size() == 0)
+        {
+            responseHandler.onSuccess(words);
+            return;
+        }
+
         if (!isNetworkReady())
         {
             responseHandler.onLocalFailure(new IllegalStateException("Unable to communicate on network."));
@@ -405,17 +423,17 @@ public class RequestManager
         Header objectId = new BasicHeader(HEADER_OBJECT_ID, user.getObjectId());
         Header[] headers = new Header[]{sessionToken, objectId};
 
-        batchPushUserWordInfo(new ArrayList<VocObject>(words), 0, headers, responseHandler);
+        batchPushUserWordInfo(new ArrayList<>(words), 0, headers, responseHandler);
     }
 
     private void batchPushUserWordInfo(final List<VocObject> allWords, final int index,
                                        final Header[] headers,
-                                       final GenericUpdateListener responseHandler)
+                                       final WordListUpdateListener responseHandler)
     {
         // BASE CASE:  If we've batched all list entries, return success
         if (index >= allWords.size())
         {
-            responseHandler.onSuccess();
+            responseHandler.onSuccess(allWords);
             return;
         }
 
@@ -427,7 +445,7 @@ public class RequestManager
         try
         {
             // Convert the sublist into a JSON object
-            JSONObject jObj = JSONHandler.getWordInfoJSONArray(words);
+            JSONObject jObj = JSONHandler.getUserWordInfoJSONArray(words);
 
             // Convert the JSON object into an HTTP body
             body = buildEntity(jObj);
@@ -445,11 +463,32 @@ public class RequestManager
             @Override
             public void onJSONReceived(JSONObject jObj)
             {
-                // Do nothing with JSON
-                batchPushUserWordInfo(allWords, index + BATCH_SIZE, headers, responseHandler);
+                try
+                {
+                    Map<String, VocObject> parseIdMap = new HashMap<>();
+                    for (VocObject word : words)
+                        parseIdMap.put(word.getParseId(), word);
+
+                    // Get the results from the JSON object
+                    List<JSONObject> results = JSONHandler.extractResults(jObj);
+
+                    // Iterate through all results, parse them, and use the values to update words
+                    for (int i = 0; i < results.size(); i++)
+                    {
+                        String parseId = results.get(i).getString(JSONHandler.FIELD_UWINFO_WORDID);
+                        if (parseIdMap.containsKey(parseId))
+                            JSONHandler.parseWordInto(results.get(i), parseIdMap.get(parseId));
+                        else
+                            Log.e(LOG_TAG, String.format("Word update skipped (parse ID = %s).", parseId));
+                    }
+
+                    batchPushUserWordInfo(allWords, index + BATCH_SIZE, headers, responseHandler);
+                } catch (Exception e)
+                {
+                    responseHandler.onLocalFailure(e);
+                }
             }
         }, responseHandler);
-
 
 
         // Perform the HTTP operation
@@ -688,7 +727,7 @@ public class RequestManager
      *                        AFTER this timestamp will be updated.  May be left null.
      * @param user            The user to receive updates for
      * @param responseHandler Actions to perform upon completion.  A list of all updated words
-     *                        is passed to {@link WordListUpdateListener#onSuccess(List)}.
+     *                        is passed to {@link WordListUpdateListener#onSuccess(Collection)}.
      */
     public void updateUserWordInfo(Date lastUpdate, UserObject user,
                                    final WordListUpdateListener responseHandler)

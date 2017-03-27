@@ -13,14 +13,14 @@ import java.util.Date;
  */
 public class SessionObject
 {
-    private int id;
+    private long id;
     private Date start, end;
     private String parseId;
 
     /**
      * Private constructor, use static constructor instead.
      */
-    private SessionObject(int id, Date start, Date end)
+    private SessionObject(long id, Date start, Date end)
     {
         if (start != null && end != null && !start.before(end))
             throw new IllegalArgumentException("Start time must be before ending time when" +
@@ -39,7 +39,7 @@ public class SessionObject
      * @param end   Ending timestamp of the session
      * @return The newly constructed SessionObject.
      */
-    public static SessionObject build(int id, Date start, Date end)
+    public static SessionObject build(long id, Date start, Date end)
     {
         return new SessionObject(id, start, end);
     }
@@ -54,7 +54,7 @@ public class SessionObject
      * @param start Starting timestamp of the session
      * @return The newly constructed SessionObject.
      */
-    public static SessionObject buildUnfinished(int id, Date start)
+    public static SessionObject buildUnfinished(long id, Date start)
     {
         return new SessionObject(id, start, null);
     }
@@ -66,7 +66,7 @@ public class SessionObject
      * @param id The id to set for this placeholder
      * @return The newly constructed placeholder SessionObject
      */
-    public static SessionObject buildPlaceholder(int id)
+    public static SessionObject buildPlaceholder(long id)
     {
         return new SessionObject(id, null, null);
     }
@@ -143,12 +143,12 @@ public class SessionObject
         return this;
     }
 
-    public int getId()
+    public long getId()
     {
         return id;
     }
 
-    public void setId(int id)
+    public void setId(long id)
     {
         this.id = id;
     }
@@ -195,11 +195,12 @@ public class SessionObject
         SessionObject that = (SessionObject) o;
 
         return id == that.id;
+
     }
 
     @Override
     public int hashCode()
     {
-        return id;
+        return (int) (id ^ (id >>> 32));
     }
 }
