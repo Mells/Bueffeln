@@ -267,28 +267,26 @@ public abstract class JSONHandler
      */
     public static VocObject parseWord(JSONObject jObj, DatabaseManager dm) throws JSONException
     {
-        String label = parseWordLabel(jObj);
+        VocObject wordObj;
+        if (jObj.has(FIELD_WORD_LABEL))
+        {
+            String label = jObj.getString(FIELD_WORD_LABEL);
 
-        if (label == null)
-            return null;
+            wordObj = dm.getWordPairByLabel(label);
+        }
+        else if (jObj.has(FIELD_UWINFO_WORDID))
+        {
+            String wordId = jObj.getString(FIELD_UWINFO_WORDID);
 
-        VocObject wordObj = dm.getWordPairByLabel(label);
+            wordObj = dm.getWordPairByParseID(wordId);
+        }
+        else
+            throw new IllegalArgumentException(String.format("JSON word object has neither '%s' nor '%s' fields.",
+                                                             FIELD_WORD_LABEL, FIELD_UWINFO_WORDID));
 
         parseWordInto(jObj, wordObj);
 
         return wordObj;
-    }
-
-    /**
-     * Extracts the label field from the given JSON object.
-     *
-     * @param jObj The JSON object to parse
-     * @return The label value contained in the JSON object
-     * @throws JSONException Throws exception if an error occurs while parsing JSON object
-     */
-    public static String parseWordLabel(JSONObject jObj) throws JSONException
-    {
-        return jObj.getString(FIELD_WORD_LABEL);
     }
 
     /**

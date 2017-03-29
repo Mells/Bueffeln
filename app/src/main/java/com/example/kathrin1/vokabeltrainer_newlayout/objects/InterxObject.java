@@ -29,7 +29,7 @@ public class InterxObject
     private final String result;
     private final int charCount;
     private final String exerciseType;
-    private Integer session;
+    private Long session;
 
     private Float activation; // Used for storing activation during activation calculations,
     // but is not stored in database.
@@ -172,9 +172,9 @@ public class InterxObject
         String exerciseType = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.INTERX_EXERCISE_TYPE));
 
         // Extract the session reference
-        Integer sessionId = cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION))
-                            ? null
-                            : cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION));
+        Long sessionId = cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION))
+                         ? null
+                         : cursor.getLong(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION));
 
 
         // Build the interaction object
@@ -222,7 +222,7 @@ public class InterxObject
         return exerciseType;
     }
 
-    public Integer getSessionId()
+    public Long getSessionId()
     {
         return session;
     }
@@ -234,7 +234,7 @@ public class InterxObject
      * @param session The session to reference.  May be left null.
      * @return This InterxObject.
      */
-    public InterxObject setSessionId(Integer session)
+    public InterxObject setSessionId(Long session)
     {
         this.session = session;
         return this;

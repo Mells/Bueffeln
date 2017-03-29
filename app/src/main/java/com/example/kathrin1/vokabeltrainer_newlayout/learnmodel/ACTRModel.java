@@ -24,6 +24,8 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +57,20 @@ public class ACTRModel implements LearnModel
     /**
      * Private constructor, use static constructor instead.
      */
+    private ACTRModel(Context c, DatabaseManager dm)
+    {
+        this.c = c;
+        interactions = new HashMap<>();
+        wordIdMap = new SparseArray<>();
+        sessions = new ArrayList<>();
+        dbManager = dm;
+        requestManager = RequestManager.build(c, dbManager);
+        svManager = StoredValueManager.build(c);
+    }
+
+    /**
+     * Private constructor, use static constructor instead.
+     */
     private ACTRModel(Context c)
     {
         this.c = c;
@@ -75,6 +91,18 @@ public class ACTRModel implements LearnModel
     public static ACTRModel build(Context c)
     {
         return new ACTRModel(c);
+    }
+
+    /**
+     * Static constructor, creates a new ACT-R model object and returns it.
+     *
+     * @param c         The context for this model to operate within.
+     * @param dbManager The database manager to use with this model.
+     * @return The newly constructed ACTRModel object.
+     */
+    public static ACTRModel build(Context c, DatabaseManager dbManager)
+    {
+        return new ACTRModel(c, dbManager);
     }
 
 
@@ -99,17 +127,22 @@ public class ACTRModel implements LearnModel
                && (unit == null || word.getChapter().contains("/" + unit));
     }
 
+
     /**
      * {@inheritDoc}
      */
     @Override
     public VocObject getNextWord(VocObject... ignoreWords)
     {
-        // Convert the given array to a set, for O(1) .contains() checks
-        // May actually perform worse, as the list is likely to be very small
-        // TODO:  Evaluate this
-        Set<VocObject> ignoreSet = new HashSet<>(Arrays.asList(ignoreWords));
+        return getNextWord(new HashSet<>(Arrays.asList(ignoreWords)));
+    }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public VocObject getNextWord(Collection<VocObject> ignoreWords)
+    {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
@@ -120,12 +153,12 @@ public class ACTRModel implements LearnModel
         for (VocObject word : interactions.keySet())
         {
             // If the word does not meet the requirements for presentation, ignore it
-            if (!meetsRestrictions(word) || ignoreSet.contains(word))
+            if (!meetsRestrictions(word) || ignoreWords.contains(word))
                 continue;
 
             // If the word has no alpha value, then it is a new word.  Note the first new word
             // encountered, in case a new word needs to be presented.
-            if (word.getActivation() == null)
+            if (word.getActivation() == null || word.getActivation() == Float.NEGATIVE_INFINITY)
             {
                 if (newWord == null)
                     newWord = word;
@@ -156,6 +189,15 @@ public class ACTRModel implements LearnModel
     @Override
     public VocObject calculateNextWord(VocObject... ignoreWords)
     {
+        return calculateNextWord(new HashSet<>(Arrays.asList(ignoreWords)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public VocObject calculateNextWord(Collection<VocObject> ignoreWords)
+    {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
@@ -168,8 +210,18 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
+    public void calculateNextWordASync(WordSelectionListener listener,
+                                       VocObject... ignoreWords)
+    {
+        calculateNextWordASync(listener, new HashSet<>(Arrays.asList(ignoreWords)));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void calculateNextWordASync(final WordSelectionListener listener,
-                                       final VocObject... ignoreWords)
+                                       final Collection<VocObject> ignoreWords)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
@@ -273,6 +325,7 @@ public class ACTRModel implements LearnModel
 
                 // Retrieves all study sessions from the database
                 sessions.addAll(dbManager.getAllStudySessions());
+                cleanSessions();
 
                 // Load all stored parameter values into ModelMath
                 svManager.loadConstants();
@@ -294,6 +347,27 @@ public class ACTRModel implements LearnModel
 
             }
         };
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void destroy()
+    {
+        SessionObject lastSession = sessions.get(sessions.size() - 1);
+        if (!lastSession.isFinished())
+        {
+            lastSession.finish(new Date());
+            dbManager.updateSession(lastSession);
+        }
+        dbManager.destroy();
+        requestManager.destroy();
+        interactions.clear();
+        wordIdMap.clear();
+        sessions.clear();
+
+        initialized = false;
     }
 
     /**
@@ -458,9 +532,12 @@ public class ACTRModel implements LearnModel
                     interx.setId(id);
                     */
 
-                    float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
+                    if (interactions.get(word).size() != 1)
+                    {
+                        float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
 
-                    word.setAlpha(newAlpha);
+                        word.setAlpha(newAlpha);
+                    }
                 }
 
                 return null;
@@ -483,8 +560,9 @@ public class ACTRModel implements LearnModel
     @Override
     public void addNewSession(SessionObject session)
     {
-        for (SessionObject existingSession : sessions)
+        for (int i = 0; i < sessions.size(); i++)
         {
+            SessionObject existingSession = sessions.get(i);
             if (existingSession.getStart().equals(session.getStart()))
             {
                 Log.e(LOG_TAG, "Attempted to add session with starting time that matches an " +
@@ -492,32 +570,39 @@ public class ACTRModel implements LearnModel
                 return;
             }
         }
+
         sessions.add(session);
+
+        cleanSessions();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void saveToDatabase()
+    public void saveToDatabase(boolean forceSaveAll)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        saveTask().run();
+        saveTask(forceSaveAll).run();
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void saveToDatabaseASync(CalcListener listener)
+    public void saveToDatabaseASync(boolean forceSaveAll, CalcListener listener)
     {
-        performASync(saveTask(), listener);
+        // Check that the model has been initialized, otherwise throw runtime exception
+        if (!initialized)
+            throw new ModelNotInitializedException();
+
+        performASync(saveTask(forceSaveAll), listener);
     }
 
-    private Runnable saveTask()
+    private Runnable saveTask(final boolean forceSaveAll)
     {
         return new Runnable()
         {
@@ -531,23 +616,43 @@ public class ACTRModel implements LearnModel
 
                 Log.d(LOG_TAG, "Saving database...");
 
-                Date lastSave = svManager.getLastDatabaseSave();
-
-                Map<SessionObject, List<InterxObject>> sessionMap =
-                        getSessionsAfterDate(lastSave, false);
-
-                for (Map.Entry<SessionObject, List<InterxObject>> entry : sessionMap.entrySet())
+                if (forceSaveAll)
                 {
-                    entry.getKey().setId(dbManager.updateSession(entry.getKey()));
-                    for (InterxObject interx : entry.getValue())
-                        interx.setId(dbManager.updateInteraction(interx));
+                    for (Map.Entry<VocObject, List<InterxObject>> entry : interactions.entrySet())
+                    {
+                        dbManager.updateWordData(entry.getKey());
+                        for (InterxObject interx : entry.getValue())
+                            dbManager.updateInteraction(interx);
+                    }
+
+                    // Update all sessions
+
+                    for (SessionObject session : sessions)
+                        dbManager.updateSession(session);
                 }
-
-                // Update all words
-
-                for (VocObject word : getWordsFromSessions(sessionMap))
+                else
                 {
-                    dbManager.updateWordData(word);
+                    Date lastSave = svManager.getLastDatabaseSave();
+
+                    Map<SessionObject, List<InterxObject>> sessionMap =
+                            getSessionsAfterDate(lastSave, false);
+
+                    for (Map.Entry<SessionObject, List<InterxObject>> entry : sessionMap.entrySet())
+                    {
+                        entry.getKey().setId(dbManager.updateSession(entry.getKey()));
+                        for (InterxObject interx : entry.getValue())
+                            interx.setId(dbManager.updateInteraction(interx));
+                    }
+
+                    // Update all words
+
+                    for (VocObject word : getWordsFromSessions(sessionMap))
+                    {
+                        dbManager.updateWordData(word);
+                    }
+
+                    // Store the last save date
+                    svManager.storeLastDatabaseSave(updateTime);
                 }
 
                 if (user != null)
@@ -556,9 +661,6 @@ public class ACTRModel implements LearnModel
                 svManager.saveConstants();
 
                 Log.d(LOG_TAG, "Database saved.");
-
-                // Store the last save date
-                svManager.storeLastDatabaseSave(updateTime);
             }
 
         };
@@ -628,7 +730,7 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
-    public void getUnknownParseIDs(ParseResponseListener listener)
+    public void getUnknownParseIDs(final ParseResponseListener listener)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
@@ -640,7 +742,32 @@ public class ACTRModel implements LearnModel
 
         getMissingWordParseIDs(errorList, latch);
 
-        waitForActionsTask(latch, errorList, listener).execute();
+        waitForActionsTask(latch, errorList, new ParseResponseListener()
+        {
+            @Override
+            public void onResponse(NetworkError error)
+            {
+                if (error == null)
+                {
+                    saveToDatabaseASync(true, new CalcListener()
+                    {
+                        @Override
+                        public void onCompletion()
+                        {
+                            if (listener != null)
+                                listener.onResponse(null);
+                        }
+                    });
+                }
+                else if (listener != null)
+                {
+                    if (error.isNoWorkDoneError())
+                        listener.onResponse(null);
+                    else
+                        listener.onResponse(error);
+                }
+            }
+        }).execute();
     }
 
 
@@ -654,18 +781,46 @@ public class ACTRModel implements LearnModel
     private void getMissingWordParseIDs(final List<NetworkError> errors,
                                         final CountDownLatch latch)
     {
-        List<VocObject> wordsWithoutParseId = new ArrayList<>();
+        // Perform this operation asynchronously
+        new AsyncTask<Void, Void, List<VocObject>>()
+        {
 
-        // Find all words that are still missing Parse IDs
-        for (VocObject word : interactions.keySet())
-            if (!word.hasParseId())
-                wordsWithoutParseId.add(word);
+            @Override
+            protected List<VocObject> doInBackground(Void... params)
+            {
+                List<VocObject> wordsWithoutParseId = new ArrayList<>();
 
-        Log.d(LOG_TAG, "Getting Parse ID for " + wordsWithoutParseId.size() + " items.");
+                // Find all words that are still missing Parse IDs
+                for (VocObject word : interactions.keySet())
+                    if (!word.hasParseId())
+                        wordsWithoutParseId.add(word);
 
-        requestManager.pushDictionaryItems(wordsWithoutParseId,
-                                           buildLatchingWordListListener(latch, errors, null, null,
-                                                                         "Missing parse ID retrieval"));
+                Log.d(LOG_TAG, "Getting Parse ID for " + wordsWithoutParseId.size() + " items.");
+
+                return wordsWithoutParseId;
+            }
+
+            @Override
+            protected void onPostExecute(List<VocObject> wordsWithoutParseId)
+            {
+                super.onPostExecute(wordsWithoutParseId);
+
+                if (wordsWithoutParseId.size() == 0)
+                {
+                    latch.countDown();
+                    Log.d(LOG_TAG, "Skipping network retrieval for unknown Parse IDs.");
+                    errors.add(NetworkError.buildNoWorkDoneError());
+                    return;
+                }
+
+                requestManager.pushDictionaryItems(
+                        wordsWithoutParseId,
+                        buildLatchingWordListListener(latch, errors, null, null,
+                                                      "Missing parse ID retrieval"));
+            }
+        }.execute();
+
+
     }
 
     /**
@@ -940,7 +1095,7 @@ public class ACTRModel implements LearnModel
      * Constructs a map of sessions to its corresponding interactions, filtering out any sessions
      * that occurred before the given date.  If the given date is null, returns all sessions.  If
      * 'filterSessionsWithParseId' is true, sessions with stored Parse IDs will also be filtered out.
-     *
+     * <p>
      * // TODO:  Maybe make filtered unfinished sessions optional too?
      *
      * @param date                      The date to filter sessions by.  May be left null.
@@ -957,10 +1112,18 @@ public class ACTRModel implements LearnModel
         List<SessionObject> sessionsToRemove = new ArrayList<>();
         for (SessionObject session : sessionInteractionMap.keySet())
         {
+            // Filter session out if one of the following is true:
+            // 1.)  We're filtering out sessions with Parse IDs, and the session has a Parse ID
+            // 2.)  The session isn't finished
+            // 3.)  We're not filtering out sessions with Parse IDs, and the session ends before
+            //      the given date (if filtering out sessions with Parse IDs, date is ignored,
+            //      meaning that finished sessions without Parse IDs will ALWAYS be submitted).
+
             if ((filterSessionsWithParseId &&
                  session.getParseId() != null
                  && !session.getParseId().equals(""))
-                || !session.isFinished() || (date != null && session.getEnd().before(date)))
+                || !session.isFinished()
+                || (!filterSessionsWithParseId && date != null && session.getEnd().before(date)))
             {
                 sessionsToRemove.add(session);
             }
@@ -969,6 +1132,137 @@ public class ACTRModel implements LearnModel
             sessionInteractionMap.remove(session);
 
         return sessionInteractionMap;
+    }
+
+    /**
+     * Cleans up the list of sessions, ensuring that all uses of the session list work as intended.
+     * <p>
+     * This method will: <br/>
+     * 1.)  Sort sessions into chronological order <br/>
+     * 2.)  Remove any non-final unfinished sessions <br/>
+     * 3.)  Combine any overlapping sessions <br/>
+     * 4.)  Identify any orphaned interactions, and create new sessions to accommodate them <br/>
+     * 5.)  // TODO:  Clean up empty sessions
+     * </p>
+     */
+    private void cleanSessions()
+    {
+        //  1.)  Sort sessions into chronological order
+        Collections.sort(sessions, new Comparator<SessionObject>()
+        {
+            @Override
+            public int compare(SessionObject o1, SessionObject o2)
+            {
+                return (o1.getStart().before(o2.getStart())) ? -1 : 1;
+            }
+        });
+
+
+        // 2.)  Remove any non-final unfinished sessions
+        // 3.)  Combine any overlapping sessions
+
+        for (int i = 0; i < sessions.size() - 1; i++)
+        {
+            SessionObject sesh = sessions.get(i);
+            SessionObject nextSesh = sessions.get(i + 1);
+
+            if (!sesh.isFinished())
+            {
+                dbManager.deleteSession(sesh, null);
+
+                sessions.remove(i);
+                i--;
+                Log.d(LOG_TAG, "Removed non-final unfinished session while cleaning sessions.");
+            }
+
+            if (!sesh.getEnd().before(nextSesh.getStart()))
+            {
+                nextSesh.setStart(sesh.getStart());
+
+                dbManager.deleteSession(sesh, nextSesh.getId());
+
+                sessions.remove(i);
+                i--;
+                Log.d(LOG_TAG, "Combined overlapping sessions while cleaning sessions.");
+            }
+        }
+
+
+        // 4a.)  Identify any orphaned interactions...
+        List<InterxObject> orphanedInteractions = new ArrayList<>();
+        for (List<InterxObject> interxList : interactions.values())
+        {
+            for (InterxObject interx : interxList)
+            {
+                if (interx.getSessionId() == null)
+                {
+                    orphanedInteractions.add(interx);
+                }
+            }
+        }
+
+        // If no interactions are orphaned, stop here
+        if (orphanedInteractions.size() == 0)
+            return;
+
+        // Sort the orphaned interactions chronologically
+        Collections.sort(orphanedInteractions, new Comparator<InterxObject>()
+        {
+            @Override
+            public int compare(InterxObject o1, InterxObject o2)
+            {
+                return (o1.getTimestamp().before(o2.getTimestamp())) ? -1 : 1;
+            }
+        });
+
+        //4b.) ...and create new sessions to accommodate them
+
+        // For grouping interactions inbetween existing sessions
+        Map<Date, List<InterxObject>> pseudoSessions = new HashMap<>();
+
+        // Start the first pseudo-session
+        Date currPseudoSessionStart = new Date(orphanedInteractions.get(0).getTimestamp().getTime());
+        for (InterxObject interx : orphanedInteractions)
+        {
+            for (SessionObject session : sessions)
+            {
+                if (session.getStart().after(interx.getTimestamp()))
+                    break;
+
+                // If the date marking the start of the current pseudo-session is before the
+                // start of this session, but the timestamp of this interaction is after the start
+                // of this session, then we need to start a new pseudo-session.
+                if (session.getStart().after(currPseudoSessionStart)
+                    && session.getStart().before(interx.getTimestamp()))
+                {
+                    currPseudoSessionStart = new Date(interx.getTimestamp().getTime());
+                    break;
+                }
+            }
+
+            if (!pseudoSessions.containsKey(currPseudoSessionStart))
+                pseudoSessions.put(currPseudoSessionStart, new ArrayList<InterxObject>());
+            pseudoSessions.get(currPseudoSessionStart).add(interx);
+        }
+
+        // Create new sessions out of the pseudo-sessions, using the timestamp of the first
+        // interaction as the start and the timestamp of the last interaction as the end
+        for (Map.Entry<Date, List<InterxObject>> entry : pseudoSessions.entrySet())
+        {
+            Date endTime = new Date(entry.getValue().get(entry.getValue().size() - 1).getTimestamp().getTime() + 1);
+            sessions.add(SessionObject.build(-1, entry.getKey(), endTime));
+        }
+
+        // Sort sessions chronologically again
+        Collections.sort(sessions, new Comparator<SessionObject>()
+        {
+            @Override
+            public int compare(SessionObject o1, SessionObject o2)
+            {
+                return (o1.getStart().before(o2.getStart())) ? -1 : 1;
+            }
+        });
+
     }
 
     /**
@@ -1015,30 +1309,28 @@ public class ACTRModel implements LearnModel
                 try
                 {
                     latch.await();
-
-                    if (listener == null)
-                        return null;
-
-                    if (errors.size() == 0)
-                        listener.onResponse(null);
-                    else
-                    {
-                        for (NetworkError error : errors)  // TODO:  Report all errors?  or combine?
-                            listener.onResponse(error);
-                    }
-
                 } catch (InterruptedException e)
                 {
-
-                    if (listener == null)
-                        return null;
-
                     errors.add(NetworkError.buildFromThrowable(e));
-                    for (NetworkError error : errors)
-                        listener.onResponse(error);
                 }
 
                 return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid)
+            {
+                super.onPostExecute(aVoid);
+
+                if (listener == null)
+                    return;
+
+                if (errors.size() == 0)
+                    listener.onResponse(null);
+                else if (errors.size() == 1)
+                    listener.onResponse(errors.get(0));
+                else
+                    listener.onResponse(NetworkError.buildMultiError(errors));
             }
         };
     }

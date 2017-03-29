@@ -3,10 +3,14 @@ package com.example.kathrin1.vokabeltrainer_newlayout.database;
 import android.util.Log;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +19,9 @@ import java.util.Map;
  */
 public abstract class DBUtils
 {
+
+    public static final String LOG_TAG = "[DBUtils]";
+
     /**
      * Creates a string array out of the given string which is formatted as a comma-separated,
      * bracket-enclosed list of elements.  This method ignores commas inside quotes, and also
@@ -117,6 +124,32 @@ public abstract class DBUtils
         return split;
     }
 
+    public static List<String> splitJSONListString(String listString)
+    {
+        List<String> split = new ArrayList<>();
+
+        try {
+            JSONArray jArr = new JSONArray(listString);
+
+            for (int i=0; i < jArr.length(); i++)
+            {
+                Object elem = jArr.get(i);
+                if (elem instanceof JSONArray)
+                    split.addAll(splitJSONListString(jArr.getString(i)));
+                else
+                    split.add(jArr.getString(i));
+            }
+
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Error parsing list string as JSON:  " + e.getMessage());
+        }
+
+
+        return split;
+    }
+
+
+
     /**
      * Takes the given string which is formatted for describing tags and generates a map
      * // TODO:  Better description here.. don't fully understand what the tags are about
@@ -147,6 +180,45 @@ public abstract class DBUtils
         }
 
         Log.d("The map", smap.toString());
+
+        return smap;
+    }
+
+    public static Map<String, List<String>> stringOfJSONTagsToMap(String jsonString)
+    {
+        Map<String, List<String>> smap = new HashMap<>();
+
+        try {
+            JSONObject jObj = new JSONObject(jsonString);
+
+            Iterator<?> keys = jObj.keys();
+
+            while (keys.hasNext())
+            {
+                String key = (String)keys.next();
+                if (jObj.get(key) instanceof JSONArray)
+                {
+                    JSONArray jArr = jObj.getJSONArray(key);
+                    List<String> tagList = new ArrayList<>();
+
+                    for (int i=0; i < jArr.length(); i++)
+                        tagList.add(jArr.getString(i));
+
+
+                    smap.put(key, tagList);
+                }
+                else
+                {
+                    Log.e(LOG_TAG, String.format("Malformed JSON tag string:  Key '%s' does not" +
+                                                 " have an array value (%s).",
+                                                 key, jObj.getString(key)));
+                }
+            }
+
+        } catch (JSONException e) {
+
+            Log.e(LOG_TAG, "Error parsing map string as JSON:  " + e.getMessage());
+        }
 
         return smap;
     }

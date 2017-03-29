@@ -11,7 +11,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
@@ -99,7 +98,7 @@ public class AufgabeAuswahl extends AppCompatActivity {
         btn_exercise3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(AufgabeAuswahl.this, Exercise3.class);
+                Intent intent = new Intent(AufgabeAuswahl.this, TrainAndTest.class);
                 startActivity(intent);
             }
 

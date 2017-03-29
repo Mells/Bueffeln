@@ -234,4 +234,18 @@ public class VocObject {
     {
         return id;
     }
+
+    @Override
+    public String toString()
+    {
+        return "VocObject{" +
+               "id=" + id +
+               ", voc='" + voc + '\'' +
+               ", lemma='" + lemma + '\'' +
+               ", label='" + label + '\'' +
+               ", parseId='" + parseId + '\'' +
+               ", alpha=" + alpha +
+               ", activation=" + activation +
+               '}';
+    }
 }

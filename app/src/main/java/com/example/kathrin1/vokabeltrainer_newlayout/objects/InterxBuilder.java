@@ -52,12 +52,13 @@ public class InterxBuilder
         vals.put(DBHandler.INTERX_RESULT, result);
         vals.put(DBHandler.INTERX_CHARCOUNT, charCount);
         vals.put(DBHandler.INTERX_EXERCISE_TYPE, exerciseType);
-        if (session != null)
-            vals.put(DBHandler.INTERX_SESSION, session.getId());
+        vals.put(DBHandler.INTERX_SESSION, session.getId());
 
         int id = (int)manager.getDatabase().insert(DBHandler.INTERX_TABLENAME, null, vals);
 
-        return InterxObject.build(id, word, latency, timestamp, result, charCount, exerciseType);
+        return InterxObject.build(id, word, latency, timestamp, result, charCount, exerciseType)
+                           .setSessionId(session.getId());
+
     }
 
     /**
@@ -71,7 +72,8 @@ public class InterxBuilder
         if (!isReadyToBuild())
             throw new IllegalStateException("Not all interaction fields were initialized in the InterxBuilder.");
 
-        return InterxObject.build(-1, word, latency, timestamp, result, charCount, exerciseType);
+        return InterxObject.build(-1, word, latency, timestamp, result, charCount, exerciseType)
+                           .setSessionId(session.getId());
     }
 
     /**
@@ -81,8 +83,8 @@ public class InterxBuilder
      */
     private boolean isReadyToBuild()
     {
-        return !(word == null || latency <= 0 || timestamp == null || result == null ||
-                charCount <= 0 || exerciseType == null);
+        return !(word == null || latency < 0 || timestamp == null || result == null ||
+                charCount < 0 || exerciseType == null || session == null);
     }
 
 
@@ -109,6 +111,20 @@ public class InterxBuilder
     public InterxBuilder setLatency(int latency)
     {
         this.latency = latency;
+        return this;
+    }
+
+    /**
+     * Sets the latency value for the InterxObject to build by finding the difference beteween the
+     * given time and an already-set timestamp value.  Will throw an exception if timestamp has
+     * not yet been set.  Returns this builder in order to facilitate chaining.
+     *
+     * @param inputTime The time to calculate latency for.
+     * @return This InterxBuilder object.
+     */
+    public InterxBuilder markLatency(Date inputTime)
+    {
+        this.latency = (int)(inputTime.getTime() - timestamp.getTime());
         return this;
     }
 

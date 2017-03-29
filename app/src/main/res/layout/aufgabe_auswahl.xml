@@ -50,7 +50,7 @@
                 android:layout_marginBottom="20dp"
                 android:layout_weight="1"
                 android:background="@drawable/ic_sprechblase_auswahl"
-                android:text="Chris" />
+                android:text="@string/Exercise_TrainAndTest" /> <!-- TODO: Give German-friendly title -->
         </LinearLayout>
 
     </RelativeLayout>

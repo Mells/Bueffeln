@@ -1,9 +1,12 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.network;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  */
@@ -15,6 +18,8 @@ public class NetworkError
     public static final String DETAILS = "details";
 
     public static final String LOG_TAG = "[NetworkError]";
+    public static final String NO_WORK_DONE = "NO WORK DONE";
+    public static final String LOCAL_ERROR = "LOCAL ERROR";
 
 
     public final int httpStatus;
@@ -93,8 +98,36 @@ public class NetworkError
 
     public static NetworkError buildFromThrowable(Throwable throwable)
     {
-        return build(-1, 0, "LOCAL ERROR", "Some non-network related error occurred while" +
-                                           "performing network operations.", throwable.getMessage());
+        return build(-1, 0, LOCAL_ERROR, "Some non-network related error occurred while" +
+                                         "performing network operations.", throwable.getMessage());
+    }
+
+    public static NetworkError buildMultiError(NetworkError... errors)
+    {
+        return build(-1, 0, "MULTIPLE ERRORS", "Multiple errors while performing network operations.",
+                     TextUtils.join("\n", errors));
+    }
+
+    public static NetworkError buildMultiError(List<NetworkError> errors)
+    {
+        return build(-1, 0, "MULTIPLE ERRORS", "Multiple errors while performing network operations.",
+                     TextUtils.join("\n", errors));
+    }
+
+    public static NetworkError buildNoWorkDoneError()
+    {
+        return build(-1, 1, NO_WORK_DONE, "Attempted to perform network action that was unnecessary.",
+                     "");
+    }
+
+    public boolean isNoWorkDoneError()
+    {
+        return message.equals(NO_WORK_DONE);
+    }
+
+    public boolean isLocalError()
+    {
+        return message.equals(LOCAL_ERROR);
     }
 
     @Override

@@ -56,7 +56,8 @@ public class DatabaseManager
      */
     public void destroy()
     {
-        db.close();
+        if (db.isOpen())
+            db.close();
     }
 
     /**
@@ -318,6 +319,30 @@ public class DatabaseManager
     }
 
     /**
+     * Retrieves the word with the given Parse ID from the word database.
+     *
+     * @param parseId Parse ID of the word to retrieve.
+     * @return The retrieved word.
+     */
+    public VocObject getWordPairByParseID(String parseId)
+    {
+        Cursor cursor = db.query(DBHandler.WORD_TABLENAME, DBHandler.WORD_COLUMNS,
+                                 String.format("%s = '%s'", DBHandler.WORD_PARSEID, parseId),
+                                 null, null, null, null);
+
+        if (cursor.getCount() != 1)
+            throw new NoSuchElementException("Word with the given Parse ID [" + parseId + "] not found.");
+
+        cursor.moveToFirst();
+
+        VocObject returnObj = new VocObject(cursor);
+
+        cursor.close();
+
+        return returnObj;
+    }
+
+    /**
      * Gets all words in the database that match the given book, chapter, unit, and level.
      *
      * @param book    Book to filter words by
@@ -428,10 +453,39 @@ public class DatabaseManager
      */
     public long updateSession(SessionObject session)
     {
+        if (!session.isFinished())
+            return -1;
+
         ContentValues vals = session.getContentVals();
 
         return db.insertWithOnConflict(DBHandler.SESSION_TABLENAME, null, vals,
                                        SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    /**
+     * Removes the given session from the database, if it exists.  If the second argument is
+     * not null, any interactions that would be orphaned by this deletion are instead linked
+     * to the given session ID.
+     *
+     * @param session              The session to remove from the database.
+     * @param newIdForInteractions The session ID to apply to any orphaned interactions.
+     *                             May be left null.
+     */
+    public void deleteSession(SessionObject session, Long newIdForInteractions)
+    {
+        db.delete(DBHandler.SESSION_TABLENAME,
+                  String.format("%s = %d", DBHandler.SESSION_ID, session.getId()),
+                  null);
+
+        ContentValues vals = new ContentValues();
+        if (newIdForInteractions == null)
+            vals.putNull(DBHandler.INTERX_SESSION);
+        else
+            vals.put(DBHandler.INTERX_SESSION, newIdForInteractions);
+
+        db.update(DBHandler.INTERX_TABLENAME, vals,
+                  String.format("%s = %d", DBHandler.INTERX_SESSION, session.getId()),
+                  null);
     }
 
 

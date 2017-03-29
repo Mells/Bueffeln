@@ -66,6 +66,9 @@ public abstract class ModelMath
      */
     public static float predictedRT(int charCount, float activation)
     {
+        if (activation == Float.NEGATIVE_INFINITY)
+            return 0;
+
         // RT_max = Fe^(-m_i,j) + f
         return (RT_SCALAR * (float) Math.exp(-activation)) + reactionTimeCharDiscount(charCount);
     }

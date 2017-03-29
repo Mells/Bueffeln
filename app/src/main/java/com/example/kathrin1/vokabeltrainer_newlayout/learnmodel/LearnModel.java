@@ -5,6 +5,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -24,6 +25,22 @@ public interface LearnModel
      * @param unit    The unit to restrict to.
      */
     void setRestrictions(String book, String chapter, String unit);
+
+    /**
+     * Allows the model to choose the next word to present based on the current state of the model.
+     * <p>
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete.  This
+     * argument is entirely optional.
+     * <p>
+     * <br/><br/>
+     * This does NOT force a recalculation of activation values, and should only be used after
+     * doing so for the selection to be meaningful.
+     *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
+     * @return The word most optimal to present, according to the model.
+     */
+    VocObject getNextWord(Collection<VocObject> ignoreWords);
 
     /**
      * Allows the model to choose the next word to present based on the current state of the model.
@@ -64,6 +81,26 @@ public interface LearnModel
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
+     * returning the chosen word.
+     * <p>
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete. Their
+     * activation values will still be computed, but they cannot be selected.  This
+     * argument is entirely optional.
+     * <p>
+     * <br/><br/>
+     * This method forces a full recalculation of all activation values, and does so
+     * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
+     * an instance, use {@link LearnModel#calculateNextWordASync(WordSelectionListener,
+     * VocObject...)} instead.
+     *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
+     * @return The word most optimal to present, according to the model.
+     */
+    VocObject calculateNextWord(Collection<VocObject> ignoreWords);
+
+    /**
+     * Recalculates all activation values, and allows the model to choose the next word to present,
      * calling the {@link WordSelectionListener#onSelection(VocObject)} method of the given
      * listener with the chosen word as an argument.
      * <p>
@@ -81,6 +118,26 @@ public interface LearnModel
      * @param listener    Listener that is invoked upon completion.  May be left null.
      */
     void calculateNextWordASync(WordSelectionListener listener, VocObject... ignoreWords);
+
+    /**
+     * Recalculates all activation values, and allows the model to choose the next word to present,
+     * calling the {@link WordSelectionListener#onSelection(VocObject)} method of the given
+     * listener with the chosen word as an argument.
+     * <p>
+     * The given words are ignored and will not be selected.  This is to allow moving onto the
+     * next word without having to wait for the post-interaction computation to complete.  Their
+     * activation values will still be computed, but they cannot be selected.  This
+     * argument is entirely optional.
+     * <p>
+     * <br/><br/>
+     * This method forces a full recalculation of all activation values, and does so
+     * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
+     * the calculation completes.
+     *
+     * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
+     * @param listener    Listener that is invoked upon completion.  May be left null.
+     */
+    void calculateNextWordASync(WordSelectionListener listener, Collection<VocObject> ignoreWords);
 
     /**
      * Initializes the model, extracting word data from the local database and setting up the
@@ -107,6 +164,11 @@ public interface LearnModel
      * @param listener Listener that is invoked upon completion.  May be left null.
      */
     void initializeASync(CalcListener listener);
+
+    /**
+     * Destroys the model, freeing all resources and closing all open connections.
+     */
+    void destroy();
 
     /**
      * Recalculates the activation value for all words.
@@ -163,8 +225,8 @@ public interface LearnModel
 
     /**
      * Adds the given session to the model.  This session is not written to the database until it
-     * is considered finished and {@link LearnModel#saveToDatabase()} or
-     * {@link LearnModel#saveToDatabaseASync(CalcListener)} is called to commit it.
+     * is considered finished and {@link LearnModel#saveToDatabase(boolean)} or
+     * {@link LearnModel#saveToDatabaseASync(boolean, CalcListener)} is called to commit it.
      *
      * @param session The session to add to the model
      */
@@ -175,9 +237,12 @@ public interface LearnModel
      * <p>
      * <br/><br/>
      * This method operates SYNCHRONOUSLY.  If the operations take very long, this will lag the
-     * UI thread.  In such an instance, use {@link LearnModel#saveToDatabaseASync(CalcListener)} instead.
+     * UI thread.  In such an instance, use {@link LearnModel#saveToDatabaseASync(boolean, CalcListener)} instead.
+     *
+     * @param forceSaveAll If true, forces a full save of all database items.  Otherwise, only saves
+     *                     items related to unsaved sessions.
      */
-    void saveToDatabase();
+    void saveToDatabase(boolean forceSaveAll);
 
     /**
      * Saves all values currently tracked by the model into the LOCAL database.
@@ -185,8 +250,12 @@ public interface LearnModel
      * <br/><br/>
      * This method operates ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the
      * UI to update whenever the calculation completes.
+     *
+     * @param forceSaveAll If true, forces a full save of all database items.  Otherwise, only saves
+     *                     items related to unsaved sessions.
+     * @param listener     Actions to perform upon completion
      */
-    void saveToDatabaseASync(CalcListener listener);
+    void saveToDatabaseASync(boolean forceSaveAll, CalcListener listener);
 
 
     /**
@@ -208,7 +277,7 @@ public interface LearnModel
      * Pushes all local data to the remote database.
      * Calls the {@link ParseResponseListener#onResponse(NetworkError)} method of the given listener
      * upon completion.
-     *
+     * <p>
      * <p>
      * In addition, a timestamp is stored of the time of the last successful data submission,
      * which is used to pre-populate the list of objects to update whenever the model is next
@@ -223,7 +292,7 @@ public interface LearnModel
      * Pushes all local data to the remote database whenever it is most convenient for the device
      * to do so.  This occurs at an indeterminate point in the future, and there is no callback
      * to report success or failure.
-     *
+     * <p>
      * <p>
      * A timestamp is stored of the time of the last successful data submission, which is used to
      * pre-populate the list of objects to update whenever the model is next initialized.

@@ -64,6 +64,10 @@ public class RequestManager
     public static final String LOG_TAG = "[RequestManager]";
 
     public static final int BATCH_SIZE = 50;
+    public static final int MAX_RETRIES = 1;
+    public static final int RETRY_TIMEOUT = 1000;
+    public static final int CONNECT_TIMEOUT = 3000;
+    public static final int RESPONSE_TIMEOUT = 10000;
 
 
     private AsyncHttpClient client = new AsyncHttpClient();
@@ -78,6 +82,9 @@ public class RequestManager
         this.c = c;
         this.dm = dm;
         client.addHeader(HEADER_APP_ID, APP_ID);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, RETRY_TIMEOUT);
     }
 
     /**
@@ -89,6 +96,16 @@ public class RequestManager
     public static RequestManager build(Context c, DatabaseManager dm)
     {
         return new RequestManager(c, dm);
+    }
+
+    /**
+     * Safely deconstructs this RequestManager, destroying the DatabaseManager and closing the HTTP
+     * client.
+     */
+    public void destroy()
+    {
+        dm.destroy();
+        client.cancelAllRequests(true);
     }
 
 
@@ -215,7 +232,7 @@ public class RequestManager
                     // Iterate through all results, parse them, and use the values to update words
                     for (int i = 0; i < results.size(); i++)
                     {
-                        String label = JSONHandler.parseWordLabel(results.get(i));
+                        String label = results.get(i).getString(JSONHandler.FIELD_WORD_LABEL);
                         if (labelMap.containsKey(label))
                             JSONHandler.parseWordInto(results.get(i), labelMap.get(label));
                         else
@@ -302,6 +319,14 @@ public class RequestManager
         }
 
         final SessionObject currSession = sessionList.get(index);
+
+        // If a session has no interactions, skip it
+        if (sessionInteractionMap.get(currSession).size() == 0)
+        {
+            batchPushSessions(sessionInteractionMap, sessionList, index + 1,
+                              headers, responseHandler);
+            return;
+        }
 
         // Convert the current session and interaction list into a JSON object
         StringEntity body;

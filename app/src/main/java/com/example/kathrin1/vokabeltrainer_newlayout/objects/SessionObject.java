@@ -163,6 +163,11 @@ public class SessionObject
         return end;
     }
 
+    public void setStart(Date start)
+    {
+        this.start = start;
+    }
+
     public String getParseId()
     {
         return parseId;
@@ -171,7 +176,7 @@ public class SessionObject
     public ContentValues getContentVals()
     {
         if (!isFinished())
-            throw new IllegalStateException("Session should be finished before saving into" +
+            throw new IllegalStateException("Session should be finished before saving into " +
                                             "database.");
 
         ContentValues vals = new ContentValues();

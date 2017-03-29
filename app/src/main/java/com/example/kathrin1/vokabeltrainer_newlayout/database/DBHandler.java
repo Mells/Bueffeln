@@ -70,6 +70,7 @@ public class DBHandler extends SQLiteAssetHelper
                                                  WORD_USERINFO_PARSEID};
 
     public static final String INDEX_WORD_LABEL = "index_word_label";
+    public static final String INDEX_WORD_PARSEID = "index_word_parseid";
 
     // NO LONGER USED
     final private static String CREATE_WORD_TABLE =
@@ -210,7 +211,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 5;
+    private static final int VERSION = 6;
     // ======================================
 
     private static final int FORCED_UPGRADE_VERSION = 5;
@@ -298,12 +299,19 @@ public class DBHandler extends SQLiteAssetHelper
         }
         */
 
+        // VERSION 6 UPGRADE
+        // ==================
+        if (oldVersion < 6 && newVersion >= 6)
+        {
+            db.execSQL(String.format("create unique index %s on %s (%s)",
+                                     INDEX_WORD_PARSEID, WORD_TABLENAME, WORD_PARSEID));
+
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
-        if (newVersion != 2
-            && newVersion != 3
-            && newVersion != 4
-            && newVersion != 5)
+        if (newVersion != 6)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
