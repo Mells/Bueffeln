@@ -54,6 +54,9 @@ public abstract class JSONHandler
     public static final String FIELD_INTERX_TIMESTAMP = "timestamp";
     public static final String FIELD_INTERX_RESULT = "result";
     public static final String FIELD_INTERX_LATENCY = "latency";
+    public static final String FIELD_INTERX_PREALPHA = "preAlpha";
+    public static final String FIELD_INTERX_POSTALPHA = "postAlpha";
+    public static final String FIELD_INTERX_PREACTIVATION = "preActivation";
 
     public static final String FIELD_USER_BETA_S = "beta_s";
     public static final String FIELD_USER_ANONID = "anonId";
@@ -234,6 +237,11 @@ public abstract class JSONHandler
         jObj.put(FIELD_INTERX_RESULT, interx.getResult());
         jObj.put(FIELD_INTERX_TIMESTAMP, interx.getTimestamp());
         jObj.put(FIELD_INTERX_WORD, interx.getWord().getVoc());
+        jObj.put(FIELD_INTERX_PREALPHA, interx.getPreAlpha());
+        jObj.put(FIELD_INTERX_POSTALPHA, interx.getPostAlpha() == null ? interx.getPreAlpha()
+                                                                       : interx.getPostAlpha());
+        jObj.put(FIELD_INTERX_PREACTIVATION, interx.getPreActivation() == Float.NEGATIVE_INFINITY
+                                             ? -999 : interx.getPreActivation());
         if (interx.getWord().getParseId() != null && !interx.getWord().getParseId().equals(""))
             jObj.put(FIELD_INTERX_WORDID, interx.getWord().getParseId());
 

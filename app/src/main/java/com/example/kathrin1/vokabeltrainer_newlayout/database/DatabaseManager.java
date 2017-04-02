@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
@@ -196,10 +197,6 @@ public class DatabaseManager
         String listString = word.getSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
-
-        Log.d("DE-SentenceList", sentenceList.toString());
-        Log.d("DE-SentenceSize", Integer.toString(sentenceList.size()));
-        // TODO - take gdex not random
 
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
@@ -510,6 +507,22 @@ public class DatabaseManager
         }
 
         db.delete(DBHandler.INTERX_TABLENAME, null, null);
+    }
+
+    public void wipeUserWordData()
+    {
+        if (!DEBUG_ENABLED)
+        {
+            Log.e(LOG_TAG, "Cannot clear word data if not in debug mode.");
+            return;
+        }
+
+        ContentValues vals = new ContentValues();
+        vals.putNull(DBHandler.WORD_ACTIVATION);
+        vals.put(DBHandler.WORD_ALPHA, ModelMath.ALPHA_DEFAULT);
+        vals.put(DBHandler.WORD_USERINFO_PARSEID, "");
+
+        db.update(DBHandler.WORD_TABLENAME, vals, null, null);
     }
 
 

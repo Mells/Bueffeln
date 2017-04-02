@@ -29,6 +29,8 @@ public class InterxObject
     private final String result;
     private final int charCount;
     private final String exerciseType;
+    private final float preAlpha, preActivation;
+    private Float postAlpha;
     private Long session;
 
     private Float activation; // Used for storing activation during activation calculations,
@@ -38,7 +40,8 @@ public class InterxObject
      * Private constructor, use static constructor instead.
      */
     private InterxObject(long id, VocObject word, int latency, Date timestamp, String result,
-                         int charCount, String exerciseType)
+                         int charCount, String exerciseType, float preAlpha,
+                         float preActivation)
     {
         this.id = id;
         this.word = word;
@@ -48,13 +51,16 @@ public class InterxObject
         this.result = result;
         this.charCount = charCount;
         this.exerciseType = exerciseType;
+        this.preAlpha = preAlpha;
+        this.preActivation = preActivation;
     }
 
     /**
      * Private constructor, use static constructor instead.
      */
     private InterxObject(long id, int wordId, int latency, Date timestamp, String result,
-                         int charCount, String exerciseType)
+                         int charCount, String exerciseType, float preAlpha,
+                         float preActivation)
     {
         this.id = id;
         this.word = null;
@@ -64,26 +70,32 @@ public class InterxObject
         this.result = result;
         this.charCount = charCount;
         this.exerciseType = exerciseType;
+        this.preAlpha = preAlpha;
+        this.preActivation = preActivation;
     }
 
     /**
      * Static constructor, creates a new word interaction object and returns it.
      *
-     * @param id           Local database ID of the interaction.  If this is a new interaction
-     *                     not yet in the database, this should be set to
-     *                     {@link InterxObject#NEW_INTERX_ID}.
-     * @param word         The word that was presented
-     * @param latency      The measured reaction time for the interaction
-     * @param timestamp    The timestamp of the moment the word was presented
-     * @param result       String describing the result of the interaction
-     * @param charCount    The number of characters in the context sentence for the presentation.
-     * @param exerciseType The type of exercise used for the presentation.
+     * @param id            Local database ID of the interaction.  If this is a new interaction
+     *                      not yet in the database, this should be set to
+     *                      {@link InterxObject#NEW_INTERX_ID}.
+     * @param word          The word that was presented
+     * @param latency       The measured reaction time for the interaction
+     * @param timestamp     The timestamp of the moment the word was presented
+     * @param result        String describing the result of the interaction
+     * @param charCount     The number of characters in the context sentence for the presentation.
+     * @param exerciseType  The type of exercise used for the presentation.
+     * @param preAlpha      The alpha value of the word before the interaction
+     * @param preActivation The activation of the item before the interaction
      * @return The newly constructed InterxObject object.
      */
     public static InterxObject build(long id, VocObject word, int latency, Date timestamp,
-                                     String result, int charCount, String exerciseType)
+                                     String result, int charCount, String exerciseType,
+                                     float preAlpha, float preActivation)
     {
-        return new InterxObject(id, word, latency, timestamp, result, charCount, exerciseType);
+        return new InterxObject(id, word, latency, timestamp, result, charCount, exerciseType,
+                                preAlpha, preActivation);
     }
 
     /**
@@ -101,12 +113,16 @@ public class InterxObject
      * @param result       String describing the result of the interaction
      * @param charCount    The number of characters in the context sentence for the presentation.
      * @param exerciseType The type of exercise used for the presentation.
+     * @param preAlpha      The alpha value of the word before the interaction
+     * @param preActivation The activation of the item before the interaction
      * @return The newly constructed InterxObject object.
      */
     public static InterxObject buildWithoutLink(long id, int wordId, int latency, Date timestamp,
-                                                String result, int charCount, String exerciseType)
+                                                String result, int charCount, String exerciseType,
+                                                float preAlpha, float preActivation)
     {
-        return new InterxObject(id, wordId, latency, timestamp, result, charCount, exerciseType);
+        return new InterxObject(id, wordId, latency, timestamp, result, charCount, exerciseType,
+                                preAlpha, preActivation);
     }
 
 
@@ -176,9 +192,14 @@ public class InterxObject
                          ? null
                          : cursor.getLong(cursor.getColumnIndexOrThrow(DBHandler.INTERX_SESSION));
 
+        float preAlpha = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.INTERX_PREALPHA));
+        float postAlpha = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.INTERX_POSTALPHA));
+        float preActivation = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.INTERX_PREACTIVATION));
+
 
         // Build the interaction object
-        return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType)
+        return buildWithoutLink(id, wordId, latency, timestamp, result, charCount, exerciseType,
+                                preAlpha, preActivation)
                        .setSessionId(sessionId);
     }
 
@@ -225,6 +246,27 @@ public class InterxObject
     public Long getSessionId()
     {
         return session;
+    }
+
+    public float getPreAlpha()
+    {
+        return preAlpha;
+    }
+
+    public Float getPostAlpha()
+    {
+        return postAlpha;
+    }
+
+    public InterxObject setPostAlpha(Float postAlpha)
+    {
+        this.postAlpha = postAlpha;
+        return this;
+    }
+
+    public float getPreActivation()
+    {
+        return preActivation;
     }
 
     /**

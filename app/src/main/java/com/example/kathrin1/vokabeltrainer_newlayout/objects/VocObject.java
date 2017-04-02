@@ -167,6 +167,10 @@ public class VocObject {
         this.alpha = alpha;
     }
 
+    public boolean isNew() {
+        return activation == null || activation == Float.NEGATIVE_INFINITY;
+    }
+
     /**
      * Sets all model parameters for this word.  Returns this object in order to facilitate chaining.
      *

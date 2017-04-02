@@ -172,7 +172,8 @@
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentLeft="true"
                 android:layout_marginRight="5dp"
-                android:background="@drawable/ic_button_exercise"/>
+                android:background="@drawable/ic_button_exercise"
+                android:onClick="onSolutionClicked"/>
 
             <Button
                 android:text="Hinweis"
@@ -183,7 +184,8 @@
                 android:layout_alignParentBottom="true"
                 android:layout_weight="1"
                 android:layout_marginRight="5dp"
-                android:layout_alignParentLeft="true"/>
+                android:layout_alignParentLeft="true"
+                android:onClick="onHintClicked"/>
 
             <Button
                 android:text="Nächstes"
@@ -193,7 +195,8 @@
                 android:layout_alignParentBottom="true"
                 android:layout_weight="1"
                 android:layout_alignParentLeft="true"
-                android:background="@drawable/ic_button_exercise"/>
+                android:background="@drawable/ic_button_exercise"
+                android:onClick="onNextClicked"/>
 
         </LinearLayout>
 

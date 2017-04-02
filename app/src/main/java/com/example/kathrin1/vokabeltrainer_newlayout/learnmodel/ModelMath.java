@@ -66,11 +66,13 @@ public abstract class ModelMath
      */
     public static float predictedRT(int charCount, float activation)
     {
+        float charDiscount = reactionTimeCharDiscount(charCount);
+
         if (activation == Float.NEGATIVE_INFINITY)
-            return 0;
+            return charDiscount;
 
         // RT_max = Fe^(-m_i,j) + f
-        return (RT_SCALAR * (float) Math.exp(-activation)) + reactionTimeCharDiscount(charCount);
+        return Math.min(maxRT(charCount), RT_SCALAR * (float) Math.exp(-activation) + charDiscount);
     }
 
     /**
@@ -88,20 +90,22 @@ public abstract class ModelMath
      * The modified reaction time based on the result of the presentation.
      *
      * @param charCount The number of characters in the context
-     * @param latency   The measured reaction time
+     * @param latency   The measured reaction time, in milliseconds.
      * @param result    String describing the result, {@link InterxObject#RESULT_SUCCESS} or
      *                  {@link InterxObject#RESULT_FAILURE}.
-     * @return The modified effective reaction time for the presentation.
+     * @return The modified effective reaction time for the presentation, in milliseconds.
      */
     public static float effectiveRT(int charCount, float latency, String result)
     {
+        float reactionTimeCharDiscount = reactionTimeCharDiscount(charCount);
+        float maxRT = maxRT(charCount);
         switch (result)
         {
             case InterxObject.RESULT_FAILURE:
-                return maxRT(charCount);
+                return maxRT;
             case InterxObject.RESULT_SUCCESS:
             default:
-                return Math.max(latency, reactionTimeCharDiscount(charCount) + 1);
+                return Math.min(maxRT, Math.max(latency, reactionTimeCharDiscount + 1));
         }
     }
 
@@ -131,6 +135,9 @@ public abstract class ModelMath
      */
     public static float recallProbability(float activation)
     {
+        if (activation == Float.NEGATIVE_INFINITY)
+            return 0;
+
         // p_r(m_i) = 1 / ( 1 + e^((tau - m_i) / s) )
         return 1 / (1 + (float) Math.exp((THRESHOLD - activation) / RECALL_PROB_NOISE_REDUCTION));
     }
@@ -157,9 +164,21 @@ public abstract class ModelMath
      */
     public static Date lookaheadTime(Date time)
     {
+        return advanceMilliseconds(time, LOOKAHEAD_TIME);
+    }
+
+    /**
+     * The modified time based on the given lookahead time.
+     *
+     * @param time         The time to calculate from.
+     * @param milliseconds The amount of milliseconds to shift the time by.
+     * @return The time shifted ahead by the given amount.
+     */
+    public static Date advanceMilliseconds(Date time, int milliseconds)
+    {
         GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(time);
-        cal.add(Calendar.MILLISECOND, LOOKAHEAD_TIME);
+        cal.add(Calendar.MILLISECOND, milliseconds);
         return cal.getTime();
     }
 
@@ -309,13 +328,19 @@ public abstract class ModelMath
     public static float latestAlpha(InterxObject latest, List<InterxObject> interactions,
                                     List<SessionObject> sessions)
     {
+        if (interactions.size() <= 2)
+            return ModelMath.ALPHA_DEFAULT;
+
         // Use a lookahead time for reference
-        Date time = lookaheadTime(latest.getTimestamp());
+        Date time = advanceMilliseconds(latest.getTimestamp(), 5000);
         VocObject word = latest.getWord();
 
+
+        // TODO:  The 'true' here ought to be 'false'... right?  But for some reason true works and false doesn't
+        // TODO:  It should be the activation without the latest, but using 'true' means it includes the latest
         // Calculate the activation as if the latest interaction didn't occur
         float activationWithoutLatest = activationRecursion(time, word, interactions, sessions,
-                                                            false, word.getAlpha());
+                                                            true, word.getAlpha());
 
 
         // Calculate the observed level of activation based on the measured reaction time
@@ -325,8 +350,8 @@ public abstract class ModelMath
 
         // Calculate the decay value for the latest interaction
         double timeDifference = effectiveTimeDifference(latest.getTimestamp(), time, sessions);
-        float lastDecay = (float) -logN(Math.exp(observedActivation) - activationWithoutLatest,
-                                        timeDifference);
+        double activationDifference = Math.exp(observedActivation) - activationWithoutLatest;
+        float lastDecay = (float) -logN(activationDifference, timeDifference);
 
         // TODO:  Clear activation cache in interactions list here?  Probably not
 
@@ -429,6 +454,11 @@ public abstract class ModelMath
             mid = (lower + upper) / 2;
         }
 
+        // TODO:  Remove this?
+        // Tames early alpha changes
+        if (interactions.size() <= 3)
+            mid = (mid + oldAlpha) / 2;
+
         // Return the optimized alpha value
         return mid;
 
@@ -497,7 +527,7 @@ public abstract class ModelMath
                         difference -= deltaInverse * (newer.getTime() -
                                                       previous.getEnd().getTime());
 
-                    // Older -> Previous end *-> Current start -> Newer
+                        // Older -> Previous end *-> Current start -> Newer
                     else
                         difference -= deltaInverse * (current.getStart().getTime() -
                                                       previous.getEnd().getTime());
@@ -508,7 +538,7 @@ public abstract class ModelMath
                     if (current.getStart().after(newer))
                         difference -= deltaInverse * (newer.getTime() -
                                                       older.getTime());
-                    // (Previous end) -> Older *-> Current start -> Newer
+                        // (Previous end) -> Older *-> Current start -> Newer
                     else
                         difference -= deltaInverse * (current.getStart().getTime() -
                                                       older.getTime());

@@ -7,6 +7,9 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -15,12 +18,18 @@ import java.util.Map;
  */
 public abstract class ExerciseUtils
 {
+    public enum Answer
+    {
+        CORRECT, INCORRECT, CLOSE
+    }
+
+
     /**
      * Generates the sentence to display on a screen using the given sentence, replacing the given
      * word in the sentence with a blank.
      *
-     * @param sentence          The sentence to replace words in
-     * @param word              The word (or words) to replace in the sentence
+     * @param sentence The sentence to replace words in
+     * @param word     The word (or words) to replace in the sentence
      * @return The generated string to display
      */
     public static String deleteWordFromSentence(SentObject sentence, VocObject word)
@@ -31,6 +40,8 @@ public abstract class ExerciseUtils
     /**
      * Generates the sentence to display on a screen using the given sentence, replacing the given
      * word in the sentence with the given string.
+     * // TODO:  This more or less gets the job done, but could use improvement.
+     * // TODO:  Example:  For the word/phrase 'a week' (in der Woche), all instances of 'a' get erroneously replaced
      *
      * @param sentence          The sentence to replace words in
      * @param word              The word (or words) to replace in the sentence
@@ -54,7 +65,7 @@ public abstract class ExerciseUtils
                 List<String> bla = smap.get(lemma);
                 for (String s : bla)
                 {
-                    sent = sent.replaceAll(s, replacementString.replace("%s", s));
+                    sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
                 }
             }
         }
@@ -84,18 +95,49 @@ public abstract class ExerciseUtils
 
     /**
      * Determines whether the given input string is correct for the given word.
-     * //TODO:  This could be greatly improved to be more flexible
+     * //TODO:  This could probably be improved
      *
-     * @param word   The word that the user is trying to get the correct answer for
-     * @param input  The user's input
-     * @param german True if the user is looking for the German translation, false otherwise.
+     * @param sentence The context sentence that the word was presented in
+     * @param word     The word that the user is trying to get the correct answer for
+     * @param input    The user's input
+     * @param german   True if the user is looking for the German translation, false otherwise.
      * @return Returns true if the answer is deemed correct, false otherwise.
      */
-    public static boolean isAnswerCorrect(VocObject word, String input, boolean german)
+    public static Answer isAnswerCorrect(SentObject sentence, VocObject word, String input, boolean german)
     {
-        String wordToMatch = german ? word.getTranslation()
-                                    : word.getVoc();
+        String wordString = german ? word.getTranslation()
+                                   : word.getVoc();
 
-        return wordToMatch.equals(input);
+
+        input = input.toLowerCase();
+
+        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getTagged());
+
+        List<String> wordsToMatch;
+        if (!german && smap.containsKey(wordString))
+            wordsToMatch = smap.get(wordString);
+        else
+            wordsToMatch = Collections.singletonList(wordString);
+
+        boolean foundClose = false;
+        for (String wordToMatch : wordsToMatch)
+        {
+            // Remove:
+            // 1.) Parentheses and all content inside them
+            // 2.) The 'to' in the infinitives of verbs
+            // 3.) Leading and trailing whitespace
+            // and force into lowercase // TODO:  Maybe want to do some case matching for proper nouns?
+            wordToMatch = wordToMatch.replaceAll("\\(.*\\)|^to\\s", "").trim().toLowerCase();
+
+
+            if (wordToMatch.equals(input))
+                return Answer.CORRECT;
+            else if (LevenshteinDistance.getDefaultInstance().apply(input, wordToMatch) <= 2)
+                foundClose = true;
+        }
+        if (foundClose)
+            return Answer.CLOSE;
+        else
+            return Answer.INCORRECT;
     }
 }

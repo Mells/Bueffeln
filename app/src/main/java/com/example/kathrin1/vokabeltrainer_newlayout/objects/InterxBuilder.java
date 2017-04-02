@@ -20,6 +20,7 @@ public class InterxBuilder
     private int charCount = -1;
     private String exerciseType;
     private SessionObject session;
+    private Float preAlpha, postAlpha, preActivation;
 
 
     /**
@@ -53,10 +54,14 @@ public class InterxBuilder
         vals.put(DBHandler.INTERX_CHARCOUNT, charCount);
         vals.put(DBHandler.INTERX_EXERCISE_TYPE, exerciseType);
         vals.put(DBHandler.INTERX_SESSION, session.getId());
+        vals.put(DBHandler.INTERX_PREALPHA, preAlpha);
+        vals.put(DBHandler.INTERX_POSTALPHA, postAlpha == null ? preAlpha : postAlpha);
+        vals.put(DBHandler.INTERX_PREACTIVATION, preActivation);
 
-        int id = (int)manager.getDatabase().insert(DBHandler.INTERX_TABLENAME, null, vals);
+        int id = (int) manager.getDatabase().insert(DBHandler.INTERX_TABLENAME, null, vals);
 
-        return InterxObject.build(id, word, latency, timestamp, result, charCount, exerciseType)
+        return InterxObject.build(id, word, latency, timestamp, result, charCount, exerciseType,
+                                  preAlpha, preActivation)
                            .setSessionId(session.getId());
 
     }
@@ -72,7 +77,8 @@ public class InterxBuilder
         if (!isReadyToBuild())
             throw new IllegalStateException("Not all interaction fields were initialized in the InterxBuilder.");
 
-        return InterxObject.build(-1, word, latency, timestamp, result, charCount, exerciseType)
+        return InterxObject.build(InterxObject.NEW_INTERX_ID, word, latency, timestamp, result,
+                                  charCount, exerciseType, preAlpha, preActivation)
                            .setSessionId(session.getId());
     }
 
@@ -84,7 +90,8 @@ public class InterxBuilder
     private boolean isReadyToBuild()
     {
         return !(word == null || latency < 0 || timestamp == null || result == null ||
-                charCount < 0 || exerciseType == null || session == null);
+                 charCount < 0 || exerciseType == null || session == null ||
+                 preAlpha == null || preActivation == null);
     }
 
 
@@ -124,7 +131,7 @@ public class InterxBuilder
      */
     public InterxBuilder markLatency(Date inputTime)
     {
-        this.latency = (int)(inputTime.getTime() - timestamp.getTime());
+        this.latency = (int) (inputTime.getTime() - timestamp.getTime());
         return this;
     }
 
@@ -179,6 +186,7 @@ public class InterxBuilder
         this.exerciseType = exerciseType;
         return this;
     }
+
     /**
      * Sets the session reference for the InterxObject to build.  Returns this builder in order
      * to facilitate chaining.
@@ -191,4 +199,45 @@ public class InterxBuilder
         this.session = session;
         return this;
     }
+
+    /** Sets the pre-alpha value for the InterxObject to build, which represents the alpha of the
+     * word before the interaction.
+     * Returns this builder in order to facilitate chaining.
+     *
+     * @param preAlpha The pre-alpha value to set.
+     * @return This InterxBuilder object.
+     */
+    public InterxBuilder setPreAlpha(float preAlpha)
+    {
+        this.preAlpha = preAlpha;
+        return this;
+    }
+
+    /** Sets the post-alpha value for the InterxObject to build, which represents the alpha of the
+     * word after the interaction.
+     * Returns this builder in order to facilitate chaining.
+     *
+     * @param postAlpha The üpst-alpha value to set.
+     * @return This InterxBuilder object.
+     */
+    public InterxBuilder setPostAlpha(float postAlpha)
+    {
+        this.postAlpha = postAlpha;
+        return this;
+    }
+
+    /** Sets the pre-activation value for the InterxObject to build, which represents the activation
+     * of the word before the interaction.
+     * Returns this builder in order to facilitate chaining.
+     *
+     * @param preActivation The pre-activation value to set.
+     * @return This InterxBuilder object.
+     */
+    public InterxBuilder setPreActivation(float preActivation)
+    {
+        this.preActivation = preActivation;
+        return this;
+    }
+
+
 }

@@ -168,10 +168,15 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String INTERX_CHARCOUNT = "charCount"; // Number of characters in context
     public static final String INTERX_EXERCISE_TYPE = "exerciseType"; // Type of exercise
     public static final String INTERX_SESSION = "session"; // Session of this interaction
+    public static final String INTERX_PREALPHA = "preAlpha"; // Alpha before interaction
+    public static final String INTERX_POSTALPHA = "postAlpha"; // Alpha after interaction
+    public static final String INTERX_PREACTIVATION = "preActivation"; // Activation before interaction
     public static final String[] INTERX_COLUMNS = {INTERX_ID, INTERX_WORD, INTERX_WORD_DBID,
                                                    INTERX_WORD_PARSEID, INTERX_LATENCY,
                                                    INTERX_TIME, INTERX_RESULT, INTERX_CHARCOUNT,
-                                                   INTERX_EXERCISE_TYPE, INTERX_SESSION};
+                                                   INTERX_EXERCISE_TYPE, INTERX_SESSION,
+                                                   INTERX_PREALPHA, INTERX_POSTALPHA,
+                                                   INTERX_PREACTIVATION};
 
     // NO LONGER USED
     private static final String CREATE_INTERX_TABLE =
@@ -187,6 +192,9 @@ public class DBHandler extends SQLiteAssetHelper
             INTERX_EXERCISE_TYPE + " TEXT, " +
             INTERX_RESULT + " TEXT, " +
             INTERX_SESSION + " INTEGER, " +
+            INTERX_PREALPHA + " DECIMAL, " +
+            INTERX_POSTALPHA + " DECIMAL, " +
+            INTERX_PREACTIVATION + " DECIMAL, " +
             "FOREIGN KEY (" + INTERX_SESSION + ") " +
             "REFERENCES " + SESSION_TABLENAME + "(" + SESSION_ID + ") )";
 
@@ -211,7 +219,7 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 6;
+    private static final int VERSION = 7;
     // ======================================
 
     private static final int FORCED_UPGRADE_VERSION = 5;
@@ -309,9 +317,30 @@ public class DBHandler extends SQLiteAssetHelper
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
+        // VERSION 7 UPGRADE
+        // ==================
+        if (oldVersion < 7 && newVersion >= 7)
+        {
+            db.execSQL(String.format("alter table %s add %s decimal",
+                                     INTERX_TABLENAME, INTERX_PREALPHA));
+            db.execSQL(String.format("update %s set %s = 0.0",
+                                     INTERX_TABLENAME, INTERX_PREALPHA));
+            db.execSQL(String.format("alter table %s add %s decimal",
+                                     INTERX_TABLENAME, INTERX_POSTALPHA));
+            db.execSQL(String.format("update %s set %s = 0.0",
+                                     INTERX_TABLENAME, INTERX_POSTALPHA));
+            db.execSQL(String.format("alter table %s add %s decimal",
+                                     INTERX_TABLENAME, INTERX_PREACTIVATION));
+            db.execSQL(String.format("update %s set %s = 0.0",
+                                     INTERX_TABLENAME, INTERX_PREACTIVATION));
+
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }
+
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
-        if (newVersion != 6)
+        if (newVersion != 6
+            && newVersion != 7)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);

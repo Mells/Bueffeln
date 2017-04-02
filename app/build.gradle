@@ -29,7 +29,7 @@ configurations {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -43,20 +43,18 @@ dependencies {
     // ui module
     compile 'net.qiujuer.genius:ui:2.0.0'
     compile 'net.qiujuer.genius:res:2.0.0'
-
     // use to bitmap blur and more
     compile 'net.qiujuer.genius:graphics:2.0.0'
-
     // ping/telnet/tracert/dns and run cmd
     compile 'net.qiujuer.genius:kit-cmd:2.0.0'
     // shuttle between ui-thread and child-thread
     compile 'net.qiujuer.genius:kit-handler:2.0.0'
     // calss reflect
     compile 'net.qiujuer.genius:kit-reflect:2.0.0'
-
     // Parsing csv files
-    compile group: 'com.opencsv', name: 'opencsv', version: '3.8'
-
+    compile 'com.opencsv:opencsv:3.8'
     // Making HTTP requests
     compile 'com.loopj.android:android-async-http:1.4.9'
+    // For Levenshtein distance
+    compile 'org.apache.commons:commons-text:1.0'
 }

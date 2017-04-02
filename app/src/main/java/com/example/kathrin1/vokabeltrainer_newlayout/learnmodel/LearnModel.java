@@ -6,6 +6,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -71,13 +72,15 @@ public interface LearnModel
      * <br/><br/>
      * This method forces a full recalculation of all activation values, and does so
      * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
-     * an instance, use {@link LearnModel#calculateNextWordASync(WordSelectionListener,
+     * an instance, use {@link LearnModel#calculateNextWordASync(Date, WordSelectionListener,
      * VocObject...)} instead.
      *
+     * @param time        The time to use as the 'current' time when calculating activation.
+     *                    If left null, uses the current time.
      * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @return The word most optimal to present, according to the model.
      */
-    VocObject calculateNextWord(VocObject... ignoreWords);
+    VocObject calculateNextWord(Date time, VocObject... ignoreWords);
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
@@ -91,13 +94,15 @@ public interface LearnModel
      * <br/><br/>
      * This method forces a full recalculation of all activation values, and does so
      * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
-     * an instance, use {@link LearnModel#calculateNextWordASync(WordSelectionListener,
-     * VocObject...)} instead.
+     * an instance, use {@link LearnModel#calculateNextWordASync(Date, WordSelectionListener,
+     * Collection)} instead.
      *
+     * @param time        The time to use as the 'current' time when calculating activation.
+     *                    If left null, uses the current time.
      * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @return The word most optimal to present, according to the model.
      */
-    VocObject calculateNextWord(Collection<VocObject> ignoreWords);
+    VocObject calculateNextWord(Date time, Collection<VocObject> ignoreWords);
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
@@ -114,10 +119,12 @@ public interface LearnModel
      * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
      * the calculation completes.
      *
+     * @param time        The time to use as the 'current' time when calculating activation.
+     *                    If left null, uses the current time.
      * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @param listener    Listener that is invoked upon completion.  May be left null.
      */
-    void calculateNextWordASync(WordSelectionListener listener, VocObject... ignoreWords);
+    void calculateNextWordASync(Date time, WordSelectionListener listener, VocObject... ignoreWords);
 
     /**
      * Recalculates all activation values, and allows the model to choose the next word to present,
@@ -134,10 +141,13 @@ public interface LearnModel
      * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
      * the calculation completes.
      *
+     * @param time        The time to use as the 'current' time when calculating activation.
+     *                    If left null, uses the current time.
      * @param ignoreWords Words to ignore (not select), even if they are optimal.  Optional.
      * @param listener    Listener that is invoked upon completion.  May be left null.
      */
-    void calculateNextWordASync(WordSelectionListener listener, Collection<VocObject> ignoreWords);
+    void calculateNextWordASync(Date time, WordSelectionListener listener,
+                                Collection<VocObject> ignoreWords);
 
     /**
      * Initializes the model, extracting word data from the local database and setting up the
@@ -176,9 +186,12 @@ public interface LearnModel
      * <br/><br/>
      * This method forces a full recalculation of all activation values, and does so
      * SYNCHRONOUSLY.  If the calculations take very long, this will lag the UI thread.  In such
-     * an instance, use {@link LearnModel#recalculateActivationASync(CalcListener)} instead.
+     * an instance, use {@link LearnModel#recalculateActivationASync(Date, CalcListener)} instead.
+     *
+     * @param time The time to use as the 'current' time when calculating activation.
+     *             If left null, uses the current time.
      */
-    void recalculateActivation();
+    void recalculateActivation(Date time);
 
 
     /**
@@ -190,13 +203,31 @@ public interface LearnModel
      * ASYNCHRONOUSLY.  This will not hold up the UI thread, allowing the UI to update whenever
      * the calculation completes.
      *
+     * @param time     The time to use as the 'current' time when calculating activation, plus
+     *                 the default lookahead time.
+     *                 If left null, uses the current time.
      * @param listener Listener that is invoked upon completion.  May be left null.
      */
-    void recalculateActivationASync(CalcListener listener);
+    void recalculateActivationASync(Date time, CalcListener listener);
+
+
+    /**
+     * Recalculates the activation value for a single word at a moment of the given time, plus
+     * the default lookahead time.  This does NOT set the activation value for the word, simply
+     * returns the value.
+     *
+     * @param time  The time to recalculate activation at
+     * @param word  The word to recalculate activation for
+     * @param alpha The alpha to use for the purposes of recalculation
+     * @return The calculated activation value
+     */
+    float recalcSingleActivation(Date time, VocObject word, float alpha);
 
     /**
      * Adds the given interaction to the model and the database, and uses it to adjust the
      * alpha value of the presented word.
+     * This method will also set the 'postAlpha' value of the given interaction with the newly
+     * calculated alpha.
      * <p>
      * <br/><br/>
      * This method performs a complete recalculation of an item's optimal alpha, and does so
@@ -211,6 +242,8 @@ public interface LearnModel
      * Adds the given interaction to the model and the database, and uses it to adjust the
      * alpha value of the presented word, calling the
      * {@link CalcListener#onCompletion()} method of the given listener upon completion.
+     * This method will also set the 'postAlpha' value of the given interaction with the newly
+     * calculated alpha.
      * <p>
      * <br/><br/>
      * This method performs a complete recalculation of an item's optimal alpha, and does so
@@ -225,12 +258,19 @@ public interface LearnModel
 
     /**
      * Adds the given session to the model.  This session is not written to the database until it
-     * is considered finished and {@link LearnModel#saveToDatabase(boolean)} or
-     * {@link LearnModel#saveToDatabaseASync(boolean, CalcListener)} is called to commit it.
+     * is considered finished and {@link LearnModel#saveToDatabase(boolean)},
+     * {@link LearnModel#saveToDatabaseASync(boolean, CalcListener)}, or
+     * {@link LearnModel#saveSessions()} is called to commit it.
      *
      * @param session The session to add to the model
      */
     void addNewSession(SessionObject session);
+
+    /**
+     * Saves all sessions in this model into the local database.  Sanitizes all sessions first to
+     * ensure the sessions are sensible and properly formatted.
+     */
+    void saveSessions();
 
     /**
      * Saves all values currently tracked by the model into the LOCAL database.

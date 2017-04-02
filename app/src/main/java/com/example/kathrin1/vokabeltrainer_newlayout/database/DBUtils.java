@@ -179,8 +179,6 @@ public abstract class DBUtils
             smap.put(keyVal[0], Arrays.asList(keyVal[1].split(",")));
         }
 
-        Log.d("The map", smap.toString());
-
         return smap;
     }
 

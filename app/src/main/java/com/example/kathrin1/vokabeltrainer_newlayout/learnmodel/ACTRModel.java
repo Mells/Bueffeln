@@ -122,9 +122,10 @@ public class ACTRModel implements LearnModel
      */
     private boolean meetsRestrictions(VocObject word)
     {
+        String unitRegex = ".*[" + unit.replaceAll("\\s", "") + "].*";
         return (book == null || word.getBook().equals(book))
                && (chapter == null || word.getChapter().startsWith(chapter))
-               && (unit == null || word.getChapter().contains("/" + unit));
+               && (unit == null || word.getChapter().matches(unitRegex));
     }
 
 
@@ -155,10 +156,12 @@ public class ACTRModel implements LearnModel
             // If the word does not meet the requirements for presentation, ignore it
             if (!meetsRestrictions(word) || ignoreWords.contains(word))
                 continue;
+            if (word.getActivation() != null && word.getActivation() > 0)
+                continue;
 
-            // If the word has no alpha value, then it is a new word.  Note the first new word
+            // If the word has no activation value, then it is a new word.  Note the first new word
             // encountered, in case a new word needs to be presented.
-            if (word.getActivation() == null || word.getActivation() == Float.NEGATIVE_INFINITY)
+            if (word.isNew())
             {
                 if (newWord == null)
                     newWord = word;
@@ -175,7 +178,7 @@ public class ACTRModel implements LearnModel
         // 3. If there are no new words, the word with the lowest activation
 
         if (min == null) // Should only happen if no words meet the requirements
-            return null;
+            return newWord == null ? null : newWord;  // Redundant
         else if (min.getActivation() < ModelMath.THRESHOLD || newWord == null)
             return min;
         else
@@ -187,22 +190,22 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
-    public VocObject calculateNextWord(VocObject... ignoreWords)
+    public VocObject calculateNextWord(Date time, VocObject... ignoreWords)
     {
-        return calculateNextWord(new HashSet<>(Arrays.asList(ignoreWords)));
+        return calculateNextWord(time, new HashSet<>(Arrays.asList(ignoreWords)));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public VocObject calculateNextWord(Collection<VocObject> ignoreWords)
+    public VocObject calculateNextWord(Date time, Collection<VocObject> ignoreWords)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        recalculateActivation();
+        recalculateActivation(time);
         return getNextWord(ignoreWords);
     }
 
@@ -210,24 +213,24 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
-    public void calculateNextWordASync(WordSelectionListener listener,
+    public void calculateNextWordASync(Date time, WordSelectionListener listener,
                                        VocObject... ignoreWords)
     {
-        calculateNextWordASync(listener, new HashSet<>(Arrays.asList(ignoreWords)));
+        calculateNextWordASync(time, listener, new HashSet<>(Arrays.asList(ignoreWords)));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void calculateNextWordASync(final WordSelectionListener listener,
+    public void calculateNextWordASync(Date time, final WordSelectionListener listener,
                                        final Collection<VocObject> ignoreWords)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        recalculateActivationASync(new CalcListener()
+        recalculateActivationASync(time, new CalcListener()
         {
             @Override
             public void onCompletion()
@@ -374,7 +377,7 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
-    public void recalculateActivation()
+    public void recalculateActivation(Date time)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
@@ -384,7 +387,7 @@ public class ACTRModel implements LearnModel
         {
             // .get() forces this thread to wait until the asynctask completes,
             // essentially making it synchronous.
-            recalcTask(null).execute().get();
+            recalcTask(time, null).execute().get();
         } catch (Exception e)
         {
             Log.e(LOG_TAG, "Error occurred while recalculating activation of items in model.", e);
@@ -396,13 +399,13 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
-    public void recalculateActivationASync(CalcListener listener)
+    public void recalculateActivationASync(Date time, CalcListener listener)
     {
         // Check that the model has been initialized, otherwise throw runtime exception
         if (!initialized)
             throw new ModelNotInitializedException();
 
-        recalcTask(listener).execute();
+        recalcTask(time, listener).execute();
     }
 
 
@@ -414,10 +417,12 @@ public class ACTRModel implements LearnModel
      * // TODO:  This also stores activation values in the database as soon as they are calculated.
      * // TODO:  May not want to do this, and force local sync manually later instead.
      *
+     * @param time     The time to use as the 'current' time when calculating activation.
+     *                 If left null, uses the current time.
      * @param listener The listener object to call upon completion.  May be left null.
      * @return The constructed ASyncTask, which has not yet been executed.
      */
-    private AsyncTask<Void, Void, Void> recalcTask(final CalcListener listener)
+    private AsyncTask<Void, Void, Void> recalcTask(final Date time, final CalcListener listener)
     {
         // The meat occurs inside the doInBackground() method of this object
         return new AsyncTask<Void, Void, Void>()
@@ -425,11 +430,11 @@ public class ACTRModel implements LearnModel
             @Override
             protected Void doInBackground(Void... params)
             {
-                Date time = new Date();
+                Date eTime = time == null ? new Date() : time;
 
                 for (Map.Entry<VocObject, List<InterxObject>> entry : interactions.entrySet())
                 {
-                    float activation = ModelMath.activation(time, entry.getKey(), entry.getValue(),
+                    float activation = ModelMath.activation(eTime, entry.getKey(), entry.getValue(),
                                                             sessions, entry.getKey().getAlpha());
                     entry.getKey().setActivation(activation);
 
@@ -454,6 +459,15 @@ public class ACTRModel implements LearnModel
                     listener.onCompletion();
             }
         };
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public float recalcSingleActivation(Date time, VocObject word, float alpha)
+    {
+        return ModelMath.activation(time, word, interactions.get(word),
+                                    sessions, alpha);
     }
 
     /**
@@ -537,7 +551,10 @@ public class ACTRModel implements LearnModel
                         float newAlpha = ModelMath.newAlpha(interx, interactions.get(word), sessions);
 
                         word.setAlpha(newAlpha);
+                        interx.setPostAlpha(newAlpha);
                     }
+                    else
+                        interx.setPostAlpha(interx.getPreAlpha());
                 }
 
                 return null;
@@ -574,6 +591,42 @@ public class ACTRModel implements LearnModel
         sessions.add(session);
 
         cleanSessions();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void saveSessions()
+    {
+        cleanSessions();
+        saveSessionsWithoutCleaning();
+    }
+
+    /**
+     * FOR DEBUGGING ONLY
+     * @param newSessions
+     */
+    public void forceAddSessions(List<SessionObject> newSessions)
+    {
+        for (List<InterxObject> interxList : interactions.values())
+            interxList.clear();
+        sessions.clear();
+        sessions.addAll(newSessions);
+        saveSessionsWithoutCleaning();
+    }
+
+    /**
+     * Saves all sessions into the local database without sanitizing the sessions first.  Use
+     * with caution.
+     */
+    private void saveSessionsWithoutCleaning()
+    {
+        for (SessionObject sesh : sessions)
+        {
+            long id = dbManager.updateSession(sesh);
+            sesh.setId(id);
+        }
     }
 
     /**
@@ -1060,7 +1113,7 @@ public class ACTRModel implements LearnModel
             for (InterxObject interx : interxList)
             {
                 // If the interaction is already associated with a particular session, simply use it
-                if (interx.getSessionId() != null)
+                if (interx.getSessionId() != null && interx.getSessionId() > 0)
                 {
                     // As sessions are hashed based solely on their ID, create a placeholder
                     // session from the interaction's session ID to identify it in the map
@@ -1082,6 +1135,7 @@ public class ACTRModel implements LearnModel
                          (!session.getEnd().before(interx.getTimestamp()))))
                     {
                         returnMap.get(session).add(interx);
+                        interx.setSessionId(session.getId());
                     }
                 }
             }
@@ -1173,6 +1227,7 @@ public class ACTRModel implements LearnModel
                 sessions.remove(i);
                 i--;
                 Log.d(LOG_TAG, "Removed non-final unfinished session while cleaning sessions.");
+                continue;
             }
 
             if (!sesh.getEnd().before(nextSesh.getStart()))

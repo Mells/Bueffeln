@@ -32,6 +32,8 @@ public class LoadingBarView extends RelativeLayout
 
     private Handler handler;
 
+    // TODO:  DOCUMENT
+
     public LoadingBarView(Context context)
     {
         super(context);
@@ -70,17 +72,17 @@ public class LoadingBarView extends RelativeLayout
 
     public void activate(String text)
     {
+        isActive = true;
         destroyTimer();
         if (text != null)
             setText(text);
-        isActive = true;
         show();
     }
 
     public void deactivate()
     {
-        destroyTimer();
         isActive = false;
+        destroyTimer();
         hide();
     }
 
@@ -109,11 +111,12 @@ public class LoadingBarView extends RelativeLayout
                         @Override
                         public void run()
                         {
-                            activate(text);
+                            if (isActive)
+                                activate(text);
+                            destroyTimer();
                         }
                     });
                 }
-                destroyTimer();
             }
         }, delay);
     }

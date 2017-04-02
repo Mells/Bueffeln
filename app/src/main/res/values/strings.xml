@@ -15,9 +15,10 @@
     <string name="TrainTest_LoadingModel">Loading model…</string>
     <string name="TrainTest_CalculatingWord">Finding next word…</string>
     <string name="TrainText_InitialDownload">Performing first-time setup…</string>
-    <string name="TrainTest_MissingWord">Es gibt keine Vokabeln, die diese Kriterien beinhalten.</string>
-    <string name="TrainTest_Answer"><![CDATA[Das korrekte Übersetzung für <b><i>%1$s</i></b> ist <b><i>%2$s</i></b>]]></string>
-    <string name="TrainText_Incorrect"><![CDATA[Es tut mir leid, aber <i><b>%1$s</b></i> ist nicht korrekt.]]></string>
+    <string name="TrainTest_MissingWord">Es gibt keinen Wörter mehr!</string>
+    <string name="TrainTest_Answer"><![CDATA[Das korrekte Übersetzung für <b><i>%1$s</i></b> ist <b><i>%2$s</i></b>.]]></string>
+    <string name="TrainTest_Close"><![CDATA[Fast! Das korrekte Übersetzung für <b><i>%1$s</i></b> ist nicht <b><i>%2$s</i></b>, sondern <b><i>%3$s</i></b>.]]></string>
+    <string name="TrainText_Incorrect"><![CDATA[Es tut mir leid, aber <i><b>%1$s</b></i> ist nicht korrekt.  Das korrekte Wort ist <i><b>%2$s</b></i>.]]></string>
     <string name="TrainText_Correct">Gratulation, das ist korrekt.</string>
 
 </resources>
