@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 import static com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils.stringOfTagsToMap;
 
@@ -83,7 +82,7 @@ public class Translation extends AppCompatActivity {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 Log.d("TAB", String.valueOf(tab.getText()));
-                updateBook(tab);
+                ExerciseUtils.updateBook(Translation.this, tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -273,20 +272,6 @@ public class Translation extends AppCompatActivity {
             }
         });
 
-    }
-
-    private void updateBook(TabLayout.Tab tab) {
-        String b = "I";
-        switch (tab.getText().toString()){
-            case "Book 1": b = "I";
-                break;
-            case "Book 2": b = "II";
-                break;
-            case "Book 3": b = "III";
-                break;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).edit()
-                .putString("book", b).commit();
     }
 
     private void setBookValues() {

@@ -10,13 +10,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.TrainAndTest;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
@@ -321,6 +321,8 @@ public class Book3 extends Fragment {
             }
             else if (className.equals(AufgabeAuswahl.class.getSimpleName())) {
                 mSlidingLayer = ((AufgabeAuswahl) a).getSlidingLayer();
+            } else if (className.equals(TrainAndTest.class.getSimpleName())) {
+                mSlidingLayer = ((TrainAndTest) a).getSlidingLayer();
             }
         }
 

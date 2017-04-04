@@ -77,7 +77,7 @@ public class Kontext extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                updateBook(tab);
+                ExerciseUtils.updateBook(Kontext.this, tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -208,20 +208,6 @@ public class Kontext extends AppCompatActivity {
                 return handled;
             }
         });
-    }
-
-    private void updateBook(TabLayout.Tab tab) {
-        String b = "I";
-        switch (tab.getText().toString()){
-            case "Book 1": b = "I";
-                break;
-            case "Book 2": b = "II";
-                break;
-            case "Book 3": b = "III";
-                break;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).edit()
-                .putString("book", b).commit();
     }
 
     private void setBookValues() {

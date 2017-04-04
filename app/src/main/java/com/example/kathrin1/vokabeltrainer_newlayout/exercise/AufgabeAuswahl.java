@@ -49,6 +49,7 @@ public class AufgabeAuswahl extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                ExerciseUtils.updateBook(AufgabeAuswahl.this, tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 

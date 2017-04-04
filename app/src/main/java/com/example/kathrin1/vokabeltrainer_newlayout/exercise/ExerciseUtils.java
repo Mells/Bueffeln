@@ -1,5 +1,8 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
+import android.content.Context;
+import android.preference.PreferenceManager;
+import android.support.design.widget.TabLayout;
 import android.text.Html;
 import android.text.Spanned;
 
@@ -139,5 +142,26 @@ public abstract class ExerciseUtils
             return Answer.CLOSE;
         else
             return Answer.INCORRECT;
+    }
+
+    /**
+     * Determines the current tab of the given tab layout, saving the book associated with the tab
+     * as the currently selected book.
+     *
+     * @param c Context within which to perform the operation
+     * @param tab The tab layout tab to use to determine the selected book
+     */
+    public static void updateBook(Context c, TabLayout.Tab tab) {
+        String b = "I";
+        switch (tab.getText().toString()){
+            case "Book 1": b = "I";
+                break;
+            case "Book 2": b = "II";
+                break;
+            case "Book 3": b = "III";
+                break;
+        }
+        PreferenceManager.getDefaultSharedPreferences(c).edit()
+                         .putString("book", b).commit();
     }
 }

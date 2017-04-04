@@ -785,6 +785,7 @@ public class TrainAndTest extends AppCompatActivity
             @Override
             public void onTabSelected(TabLayout.Tab tab)
             {
+                ExerciseUtils.updateBook(TrainAndTest.this, tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 

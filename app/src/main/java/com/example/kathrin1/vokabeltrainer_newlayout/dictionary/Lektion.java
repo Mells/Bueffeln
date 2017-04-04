@@ -25,6 +25,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
@@ -84,7 +85,7 @@ public class Lektion extends AppCompatActivity {
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                updateBook(tab);
+                ExerciseUtils.updateBook(Lektion.this, tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -206,20 +207,6 @@ public class Lektion extends AppCompatActivity {
                 });
             }
         });
-    }
-
-    private void updateBook(TabLayout.Tab tab) {
-        String b = "I";
-        switch (tab.getText().toString()){
-            case "Book 1": b = "I";
-                break;
-            case "Book 2": b = "II";
-                break;
-            case "Book 3": b = "III";
-                break;
-        }
-        PreferenceManager.getDefaultSharedPreferences(this).edit()
-                .putString("book", b).commit();
     }
 
     public void setVocabulary() {
