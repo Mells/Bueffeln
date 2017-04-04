@@ -100,7 +100,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap0;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -108,9 +108,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap0;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "Welcome").commit();
             }
@@ -120,7 +117,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap1;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -128,9 +125,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap1;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "1").commit();
             }
@@ -140,7 +134,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap2;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -148,9 +142,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap2;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "2").commit();
             }
@@ -160,7 +151,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap3;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -168,9 +159,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap3;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "3").commit();
             }
@@ -180,7 +168,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap4;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -188,9 +176,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap4;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "4").commit();
             }
@@ -200,7 +185,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap5;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -208,9 +193,6 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap5;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "5").commit();
             }
@@ -220,7 +202,7 @@ public class Book3 extends Fragment {
             @Override
             public void onClick(View view) {
                 now = btn_chap6;
-                now.setBackgroundColor(99999);
+                now.setBackgroundResource(R.drawable.ic_button_rot);
                 if(previous != null && previous != now){
                     previous.setBackgroundResource(R.drawable.ic_button_exercise);
                     previous = now;
@@ -228,23 +210,16 @@ public class Book3 extends Fragment {
                 else{
                     previous = btn_chap6;
                 }
-
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("book", "III").commit();
                 PreferenceManager.getDefaultSharedPreferences(a).edit()
                         .putString("chapter", "6").commit();
             }
         });
 
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(a)
-                .getString("book", "0");
-        // todo set shared preferences on book
-
         String pref_chapter = PreferenceManager.getDefaultSharedPreferences(a)
                 .getString("chapter", "0");
 
         now = stringToButton(pref_chapter);
-        now.setBackgroundColor(99999);
+        now.setBackgroundResource(R.drawable.ic_button_rot);
         if(previous != null && previous != now) {
             previous.setBackgroundResource(R.drawable.ic_button_exercise);
             previous = now;

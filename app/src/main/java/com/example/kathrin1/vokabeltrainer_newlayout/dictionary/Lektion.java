@@ -47,6 +47,16 @@ public class Lektion extends AppCompatActivity {
     private TextView swipeText;
     private TextToSpeech convertToSpeech;
 
+    private TextView txt_lemma;
+    private TextView txt_status;
+    private TextView txt_wortart;
+    private TextView txt_bsp;
+    private TextView txt_fundort;
+    private TextView txt_voc_de;
+    private TextView txt_voc_en;
+    
+    private int len_vocabulary;
+
     private String book;
     private String chapter;
     private String unit;
@@ -74,6 +84,7 @@ public class Lektion extends AppCompatActivity {
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                updateBook(tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -99,26 +110,49 @@ public class Lektion extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(Lektion.this);
 
-        setBookValues();
-
-        allVocabulary = dbManager.getWordsByBookChapter(book, chapter, unit);
-
-        final int len_vocabulary = allVocabulary.size()-1;
-
-        final TextView txt_voc_de = (TextView) findViewById(R.id.txt_voc_de);
-        final TextView txt_voc_en = (TextView) findViewById(R.id.txt_voc_en);
+        txt_voc_de = (TextView) findViewById(R.id.txt_voc_de);
+        txt_voc_en = (TextView) findViewById(R.id.txt_voc_en);
         Button btn_listen = (Button) findViewById(R.id.btn_listen);
         Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
-        final TextView txt_lemma = (TextView) findViewById(R.id.txt_lemma_answer);
-        final TextView txt_status = (TextView) findViewById(R.id.txt_status_answer);
-        final TextView txt_wortart = (TextView) findViewById(R.id.txt_wortart_answer);
-        final TextView txt_bsp = (TextView) findViewById(R.id.txt_example_answer);
-        final TextView txt_fundort = (TextView) findViewById(R.id.txt_fundort_answer);
+        txt_lemma = (TextView) findViewById(R.id.txt_lemma_answer);
+        txt_status = (TextView) findViewById(R.id.txt_status_answer);
+        txt_wortart = (TextView) findViewById(R.id.txt_wortart_answer);
+        txt_bsp = (TextView) findViewById(R.id.txt_example_answer);
+        txt_fundort = (TextView) findViewById(R.id.txt_fundort_answer);
         RelativeLayout lay_dict = (RelativeLayout) findViewById(R.id.lay_dict);
 
-        vocable = allVocabulary.get(position);
+        //Log.d("Number of voc", String.valueOf(len_vocabulary));
 
-        setEntryText(vocable, txt_voc_de, txt_voc_en, txt_bsp, txt_fundort, txt_lemma, txt_status, txt_wortart);
+        setBookValues();
+
+        setVocabulary();
+
+        mSlidingLayer.setOnInteractListener(new SlidingLayer.OnInteractListener() {
+            @Override
+            public void onOpen() { }
+            @Override
+            public void onShowPreview() { }
+
+            @Override
+            public void onClose() {
+                Toast.makeText(getApplicationContext(), "on fragment detached (close)", Toast.LENGTH_LONG).show();
+                setBookValues();
+
+                setVocabulary();
+            }
+
+            @Override
+            public void onOpened() { }
+
+            @Override
+            public void onPreviewShowed() { }
+
+            @Override
+            public void onClosed() {
+                Toast.makeText(getApplicationContext(), "on fragment detached (closed)", Toast.LENGTH_LONG).show();
+
+            }
+        });
 
         lay_dict.setOnTouchListener(new OnSwipeTouchListener(Lektion.this) {
             public void onSwipeRight() {
@@ -144,6 +178,7 @@ public class Lektion extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 mSlidingLayer.openLayer(true);
+                setBookValues();
 
             }
 
@@ -173,7 +208,34 @@ public class Lektion extends AppCompatActivity {
         });
     }
 
-    private void setBookValues() {
+    private void updateBook(TabLayout.Tab tab) {
+        String b = "I";
+        switch (tab.getText().toString()){
+            case "Book 1": b = "I";
+                break;
+            case "Book 2": b = "II";
+                break;
+            case "Book 3": b = "III";
+                break;
+        }
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putString("book", b).commit();
+    }
+
+    public void setVocabulary() {
+        allVocabulary = dbManager.getWordsByBookChapter(book, chapter, unit);
+
+        len_vocabulary = allVocabulary.size()-1;
+
+        if (len_vocabulary > -1){
+
+            vocable = allVocabulary.get(position);
+
+            setEntryText(vocable, txt_voc_de, txt_voc_en, txt_bsp, txt_fundort, txt_lemma, txt_status, txt_wortart);
+        }
+    }
+
+    public void setBookValues() {
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString("book", "0");
 
@@ -237,10 +299,8 @@ public class Lektion extends AppCompatActivity {
     private int setCurrentBook() {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+                .getString("book", "I");
         switch (pref_book){
-            case "0": tab = 0;
-                break;
             case "I": tab = 0;
                 break;
             case "II": tab = 1;

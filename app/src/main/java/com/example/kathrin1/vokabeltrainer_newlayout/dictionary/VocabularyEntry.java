@@ -33,6 +33,7 @@ import java.util.Random;
 public class VocabularyEntry extends AppCompatActivity {
 
     private TextToSpeech convertToSpeech;
+    private DatabaseManager dbManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,15 +64,26 @@ public class VocabularyEntry extends AppCompatActivity {
         //txt_bsp.setText();
         txt_fundort.setText(vocable.getChapter()+" / "+vocable.getBook());
 
+        dbManager = DatabaseManager.build(VocabularyEntry.this);
+
         List<String> sentenceList = new ArrayList<String>(Arrays.asList(vocable.getSentences().substring(1, vocable.getSentences().length() - 1).split(", ")));
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());
-        int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-        SentObject sentence = databaseQuery.getSentence(numberSentence);
-        // TODO - highlight the word in bsp
-        txt_bsp.setText(sentence.getSentence());
-        
+        try {
+            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
+            SentObject sentence = dbManager.getSentence(numberSentence);
+            // TODO - highlight the word in bsp
+            txt_bsp.setText(sentence.getSentence());
+        } catch (NumberFormatException e) // Thrown if there if the string could not be parsed as an int
+        {
+            // If the sentence list value cannot be parsed as an integer, just display it
+            // TODO: THIS IS JUST FOR DEBUGGING
+            txt_bsp.setText(R.string.Sent_Missing);
+        }
+        //SentObject sentence = databaseQuery.getSentence(numberSentence);
+
+
 
         btn_listen.setOnClickListener(new View.OnClickListener() {
             @Override

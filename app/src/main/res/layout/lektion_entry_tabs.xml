@@ -192,6 +192,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginRight="20dp"
                 android:layout_marginTop="10dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
                 android:background="@drawable/ic_eingabe_hg"
                 android:id="@+id/lay_entry">
 
@@ -225,7 +227,8 @@
                     android:textSize="25sp"
                     android:layout_below="@+id/v_divider"
                     android:layout_marginBottom="20dp"
-                    android:layout_centerHorizontal="true"/>
+                    android:layout_centerHorizontal="true"
+                    android:gravity="center"/>
 
                 <TextView
                     android:text="Deutsch"
@@ -235,7 +238,8 @@
                     android:layout_centerHorizontal="true"
                     android:id="@+id/txt_voc_de"
                     android:layout_marginTop="20dp"
-                    android:textSize="25sp" />
+                    android:textSize="25sp"
+                    android:gravity="center"/>
             </RelativeLayout>
         </RelativeLayout>
     </RelativeLayout>

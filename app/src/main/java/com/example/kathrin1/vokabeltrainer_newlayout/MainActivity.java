@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                updateBook(tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -148,13 +149,25 @@ public class MainActivity extends AppCompatActivity {
         //*/
     }
 
+    private void updateBook(TabLayout.Tab tab) {
+        String b = "I";
+        switch (tab.getText().toString()){
+            case "Book 1": b = "I";
+                break;
+            case "Book 2": b = "II";
+                break;
+            case "Book 3": b = "III";
+                break;
+        }
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putString("book", b).commit();
+    }
+
     private int setCurrentBook() {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+                .getString("book", "I");
         switch (pref_book){
-            case "0": tab = 0;
-                break;
             case "I": tab = 0;
                 break;
             case "II": tab = 1;

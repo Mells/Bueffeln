@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 import static com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils.stringOfTagsToMap;
 
@@ -78,9 +79,11 @@ public class Translation extends AppCompatActivity {
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(setCurrentBook());
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                Log.d("TAB", String.valueOf(tab.getText()));
+                updateBook(tab);
                 viewPager.setCurrentItem(tab.getPosition());
             }
 
@@ -130,7 +133,6 @@ public class Translation extends AppCompatActivity {
         }
 
         mSlidingLayer.setOnInteractListener(new SlidingLayer.OnInteractListener() {
-
             @Override
             public void onOpen() { }
             @Override
@@ -138,19 +140,8 @@ public class Translation extends AppCompatActivity {
 
             @Override
             public void onClose() {
-            }
-
-            @Override
-            public void onOpened() { }
-
-            @Override
-            public void onPreviewShowed() { }
-
-            @Override
-            public void onClosed() {
-                Toast.makeText(getApplicationContext(), "on fragment detached", Toast.LENGTH_LONG).show();
-
-                // todo keep allVocabulary if nothing has changed
+                Toast.makeText(getApplicationContext(), "on fragment detached (close)", Toast.LENGTH_LONG).show();
+                // todo keep allVocabulary as is if nothing has changed
                 setBookValues();
 
                 allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
@@ -161,6 +152,18 @@ public class Translation extends AppCompatActivity {
                 else {
                     getVocabularyGerman();
                 }
+            }
+
+            @Override
+            public void onOpened() { }
+
+            @Override
+            public void onPreviewShowed() { }
+
+            @Override
+            public void onClosed() {
+                Toast.makeText(getApplicationContext(), "on fragment detached (closed)", Toast.LENGTH_LONG).show();
+
             }
         });
 
@@ -218,7 +221,7 @@ public class Translation extends AppCompatActivity {
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
-                                // todo - schreib zu datenbank
+                                // write to database
                                 if (voc.getId() > 6) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
@@ -231,7 +234,7 @@ public class Translation extends AppCompatActivity {
                             if (edit_solution.getText().toString().equals(voc.getVoc())) {
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
-                                // todo - schreib zu datenbank
+                                // write to database
                                 if (voc.getId() > 6) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
@@ -272,22 +275,26 @@ public class Translation extends AppCompatActivity {
 
     }
 
+    private void updateBook(TabLayout.Tab tab) {
+        String b = "I";
+        switch (tab.getText().toString()){
+            case "Book 1": b = "I";
+                break;
+            case "Book 2": b = "II";
+                break;
+            case "Book 3": b = "III";
+                break;
+        }
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .putString("book", b).commit();
+    }
+
     private void setBookValues() {
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+        book = PreferenceManager.getDefaultSharedPreferences(this)
+                .getString("book", "I");
 
-        if (!pref_book.equals("0")){
-            book = pref_book;
-        }
-        else{
-            book = "I";
-        }
-
-        String pref_chapter = PreferenceManager.getDefaultSharedPreferences(this)
+        chapter = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString("chapter", "Welcome");
-
-
-        chapter = pref_chapter;
 
         Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean("unit_A", true);
@@ -343,10 +350,8 @@ public class Translation extends AppCompatActivity {
     private int setCurrentBook() {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+                .getString("book", "I");
         switch (pref_book){
-            case "0": tab = 0;
-                break;
             case "I": tab = 0;
                 break;
             case "II": tab = 1;

@@ -93,7 +93,7 @@ public class DatabaseManager
         List<String> words = new ArrayList<>();
 
         Cursor cursor = db.query(table, new String[]{fieldName},
-                                 null, null, null, null, fieldName);
+                                 null, null, null, null, null);
 
         while (cursor.moveToNext())
             words.add(cursor.getString(cursor.getColumnIndexOrThrow(fieldName)));
@@ -355,12 +355,23 @@ public class DatabaseManager
 
         chapter = formatChapterForQuery(chapter, unit);
 
-        String query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
-                                     DBHandler.WORD_TABLENAME,
-                                     DBHandler.WORD_BOOK, book,
-                                     DBHandler.WORD_CHAPTER, chapter,
-                                     DBHandler.WORD_LEVEL, level);
+        String query;
 
+        if (chapter.equals("Welcome")){
+            query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
+                    DBHandler.WORD_TABLENAME,
+                    DBHandler.WORD_BOOK, book,
+                    DBHandler.WORD_CHAPTER, chapter,
+                    DBHandler.WORD_LEVEL, level);
+            Log.d("Query", query);
+        }else {
+            query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
+                    DBHandler.WORD_TABLENAME,
+                    DBHandler.WORD_BOOK, book,
+                    DBHandler.WORD_CHAPTER, chapter,
+                    DBHandler.WORD_LEVEL, level);
+            Log.d("Query", query);
+        }
         Cursor cursor = db.rawQuery(query, null);
 
         if (!cursor.isAfterLast())
