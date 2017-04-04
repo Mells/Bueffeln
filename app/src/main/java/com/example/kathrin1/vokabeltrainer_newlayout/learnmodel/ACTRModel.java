@@ -614,6 +614,13 @@ public class ACTRModel implements LearnModel
         sessions.clear();
         sessions.addAll(newSessions);
         saveSessionsWithoutCleaning();
+
+        HashSet<VocObject> toRemove = new HashSet<>();
+        for (VocObject word : interactions.keySet())
+            if (!meetsRestrictions(word))
+                toRemove.add(word);
+        for (VocObject word : toRemove)
+            interactions.remove(word);
     }
 
     /**
@@ -900,13 +907,15 @@ public class ACTRModel implements LearnModel
                 @Override
                 public void onRemoteFailure(NetworkError error)
                 {
-                    listener.onResponse(error);
+                    if (listener != null)
+                        listener.onResponse(error);
                 }
 
                 @Override
                 public void onLocalFailure(Throwable error)
                 {
-                    listener.onResponse(NetworkError.buildFromThrowable(error));
+                    if (listener != null)
+                        listener.onResponse(NetworkError.buildFromThrowable(error));
                 }
             });
             return;

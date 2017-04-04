@@ -679,10 +679,12 @@ public class TrainAndTest extends AppCompatActivity
                                 ? InterxObject.RESULT_SUCCESS
                                 : InterxObject.RESULT_FAILURE;
 
-                Log.d(LOG_TAG, String.format("SIM [%s](%s): RT_p= %f, RT_obs= %f, " +
-                                             "R%%= %f, Model m= %f, Real m= %f, Pre-alpha= %f, Result= %s",
-                                             currExerciseType, currentWord.getVoc(), predictedRT, latency, correctProb,
-                                             measuredActivation, actualActivation, preAlpha, result));
+
+                Log.d(LOG_TAG, String.format("SIM [%s](%s): R%%= %f, Model m= %f, Real m= %f," +
+                                             " Pre-alpha= %f, Result= %s",
+                                             currExerciseType, currentWord.getVoc(), correctProb,
+                                             measuredActivation, actualActivation, preAlpha,
+                                             result));
 
                 final InterxObject interx =
                         new InterxBuilder()
@@ -822,9 +824,9 @@ public class TrainAndTest extends AppCompatActivity
         Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
                                                .getBoolean("unit_A", true);
         Boolean pref_unit_B = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getBoolean("unit_A", false);
+                                               .getBoolean("unit_B", false);
         Boolean pref_unit_C = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getBoolean("unit_A", false);
+                                               .getBoolean("unit_C", false);
 
         if (pref_unit_A)
         {

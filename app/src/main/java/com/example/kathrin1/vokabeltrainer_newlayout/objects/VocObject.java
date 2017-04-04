@@ -168,7 +168,7 @@ public class VocObject {
     }
 
     public boolean isNew() {
-        return activation == null || activation == Float.NEGATIVE_INFINITY;
+        return activation == null || Float.isInfinite(activation);
     }
 
     /**

@@ -68,7 +68,7 @@ public abstract class ModelMath
     {
         float charDiscount = reactionTimeCharDiscount(charCount);
 
-        if (activation == Float.NEGATIVE_INFINITY)
+        if (Float.isInfinite(activation))
             return charDiscount;
 
         // RT_max = Fe^(-m_i,j) + f
@@ -119,7 +119,7 @@ public abstract class ModelMath
      */
     public static float decay(float activation, float alpha)
     {
-        if (activation == Float.NEGATIVE_INFINITY)
+        if (Float.isInfinite(activation))
             return alpha;
 
         // d_i,j = ce^(m_i(t_j)) + alpha_i
@@ -135,7 +135,7 @@ public abstract class ModelMath
      */
     public static float recallProbability(float activation)
     {
-        if (activation == Float.NEGATIVE_INFINITY)
+        if (Float.isInfinite(activation))
             return 0;
 
         // p_r(m_i) = 1 / ( 1 + e^((tau - m_i) / s) )
@@ -278,11 +278,14 @@ public abstract class ModelMath
         // Initialize the running sum
         float runningSum = 0;
 
-        int limit = interactions.size() - (doLast ? 0 : 1);
+        int limit = interactions.size();// - (doLast ? 0 : 1);
 
         // Iterate through all interactions before the current time
         for (int i = 0; i < limit && interactions.get(i).getTimestamp().before(time); i++)
         {
+            if (!doLast && (i >= limit - 1 || !interactions.get(i + 1).getTimestamp().before(time)))
+                break;
+
             InterxObject interx = interactions.get(i);
 
             // Get the values for b_j and (t - t_j)
@@ -301,7 +304,9 @@ public abstract class ModelMath
         }
 
         // m_i(t) = sigma_i + beta_s + beta_s,i + beta_i + ln( sum(...) )
-        return (doLast ? activationModifiers(word) : 0) + (float) Math.log(runningSum);
+        return doLast
+               ? activationModifiers(word) + (float) Math.log(runningSum)
+               : runningSum;
     }
 
     /**
@@ -332,15 +337,14 @@ public abstract class ModelMath
             return ModelMath.ALPHA_DEFAULT;
 
         // Use a lookahead time for reference
-        Date time = advanceMilliseconds(latest.getTimestamp(), 5000);
+        Date time = latest.getTimestamp();
+        Date previousTime = interactions.get(interactions.size() - 2).getTimestamp();
         VocObject word = latest.getWord();
 
-
-        // TODO:  The 'true' here ought to be 'false'... right?  But for some reason true works and false doesn't
-        // TODO:  It should be the activation without the latest, but using 'true' means it includes the latest
         // Calculate the activation as if the latest interaction didn't occur
-        float activationWithoutLatest = activationRecursion(time, word, interactions, sessions,
-                                                            true, word.getAlpha());
+        float activationWithoutLatest = (float) Math.exp(activationRecursion(time, word, interactions, sessions,
+                                                                             false, word.getAlpha()));
+
 
 
         // Calculate the observed level of activation based on the measured reaction time
@@ -349,23 +353,23 @@ public abstract class ModelMath
         // TODO:  Should activation modifiers be included here?
 
         // Calculate the decay value for the latest interaction
-        double timeDifference = effectiveTimeDifference(latest.getTimestamp(), time, sessions);
+        double timeDifference = effectiveTimeDifference(previousTime, time, sessions);
         double activationDifference = Math.exp(observedActivation) - activationWithoutLatest;
         float lastDecay = (float) -logN(activationDifference, timeDifference);
 
         // TODO:  Clear activation cache in interactions list here?  Probably not
 
         // Calculate the activation for the word in the instant before the latest encounter
-        float activationBeforeLatest = activationRecursion(latest.getTimestamp(),
-                                                           word,
-                                                           interactions, sessions,
-                                                           true, word.getAlpha());
+        float activationBeforePrevious = activationRecursion(previousTime,
+                                                             word,
+                                                             interactions, sessions,
+                                                             true, word.getAlpha());
 
         // Clear the stored activation values
         clearCachedActivation(interactions);
 
         // Calculate the alpha that fits the latest interaction
-        return lastDecay - (float) (DECAY_SCALAR * Math.exp(activationBeforeLatest));
+        return lastDecay - (float) (DECAY_SCALAR * Math.exp(activationBeforePrevious));
     }
 
     /**
@@ -395,7 +399,7 @@ public abstract class ModelMath
             clearCachedActivation(interactions);
 
             // If this was the first encounter, ignore it
-            if (activation == Float.NEGATIVE_INFINITY)
+            if (Float.isInfinite(activation))
                 continue;
 
             // Calculate the predicted reaction time based on the calculated activation
@@ -454,10 +458,6 @@ public abstract class ModelMath
             mid = (lower + upper) / 2;
         }
 
-        // TODO:  Remove this?
-        // Tames early alpha changes
-        if (interactions.size() <= 3)
-            mid = (mid + oldAlpha) / 2;
 
         // Return the optimized alpha value
         return mid;
@@ -475,6 +475,7 @@ public abstract class ModelMath
      * @return The effective time difference between the two given times based on the given
      * sessions, in seconds.
      */
+
     public static double effectiveTimeDifference(Date older, Date newer, List<SessionObject> sessions)
     {
         if (newer.before(older))

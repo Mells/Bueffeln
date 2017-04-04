@@ -106,7 +106,7 @@ public abstract class JSONHandler
 
         jObj.put(FIELD_UWINFO_WORD, word.getVoc());
         // TODO:  Is this negative infinity check necessary?  What's really going on here?
-        jObj.put(FIELD_UWINFO_ALPHA, word.getAlpha() == Float.NEGATIVE_INFINITY
+        jObj.put(FIELD_UWINFO_ALPHA, Float.isInfinite(word.getAlpha())
                                      ? ModelMath.ALPHA_DEFAULT : word.getAlpha());
         jObj.put(FIELD_UWINFO_BETA_SI, word.getBeta_si());
 
@@ -240,7 +240,7 @@ public abstract class JSONHandler
         jObj.put(FIELD_INTERX_PREALPHA, interx.getPreAlpha());
         jObj.put(FIELD_INTERX_POSTALPHA, interx.getPostAlpha() == null ? interx.getPreAlpha()
                                                                        : interx.getPostAlpha());
-        jObj.put(FIELD_INTERX_PREACTIVATION, interx.getPreActivation() == Float.NEGATIVE_INFINITY
+        jObj.put(FIELD_INTERX_PREACTIVATION, Float.isInfinite(interx.getPreActivation())
                                              ? -999 : interx.getPreActivation());
         if (interx.getWord().getParseId() != null && !interx.getWord().getParseId().equals(""))
             jObj.put(FIELD_INTERX_WORDID, interx.getWord().getParseId());
