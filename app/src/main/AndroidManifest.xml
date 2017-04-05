@@ -22,7 +22,6 @@
         <activity android:name=".exercise.AufgabeAuswahl"></activity>
         <activity android:name=".dictionary.VocabularyEntry"></activity>
         <activity android:name=".dictionary.Lektion"></activity>
-        <activity android:name=".buch.BuchAuswahl_Deprecated"></activity>
         <activity android:name=".exercise.TrainAndTest"></activity>
         <activity android:name=".Help"></activity>
     </application>
