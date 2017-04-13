@@ -13,7 +13,9 @@ public abstract class ModelMath
 {
     public static float THRESHOLD = -0.8f;
     public static float ALPHA_DEFAULT = 0.3f;
-    public static float DECAY_SCALAR = 0.25f;
+    public static float ALPHA_MAX = 0.45f;
+    public static float ALPHA_MIN = 0.1f;
+    public static float DECAY_SCALAR = 0.21f;
     public static float RT_SCALAR = 1000f;
     public static float RECALL_PROB_NOISE_REDUCTION = 0.255f;
     public static float TRAIN_FACTOR = 0.8f;
@@ -342,22 +344,25 @@ public abstract class ModelMath
         VocObject word = latest.getWord();
 
         // Calculate the activation as if the latest interaction didn't occur
-        float activationWithoutLatest = (float) Math.exp(activationRecursion(time, word, interactions, sessions,
-                                                                             false, word.getAlpha()));
-
+        float activationWithoutLatest = activationRecursion(time, word, interactions, sessions,
+                                                            false, word.getAlpha());
 
 
         // Calculate the observed level of activation based on the measured reaction time
         float observedActivation = observedActivation(latest.getCharCount(), effectiveRT(latest))
                                    - activationModifiers(word);
-        // TODO:  Should activation modifiers be included here?
+        // Should activation modifiers be included here?
 
         // Calculate the decay value for the latest interaction
         double timeDifference = effectiveTimeDifference(previousTime, time, sessions);
         double activationDifference = Math.exp(observedActivation) - activationWithoutLatest;
+
+        if (activationDifference <= 0)
+            return ALPHA_MAX;
+
         float lastDecay = (float) -logN(activationDifference, timeDifference);
 
-        // TODO:  Clear activation cache in interactions list here?  Probably not
+        // Clear activation cache in interactions list here?  Probably not
 
         // Calculate the activation for the word in the instant before the latest encounter
         float activationBeforePrevious = activationRecursion(previousTime,
@@ -460,7 +465,7 @@ public abstract class ModelMath
 
 
         // Return the optimized alpha value
-        return mid;
+        return bindValue(mid, ALPHA_MIN, ALPHA_MAX);
 
     }
 
@@ -594,6 +599,20 @@ public abstract class ModelMath
     public static double logN(double value, double n)
     {
         return Math.log(value) / Math.log(n);
+    }
+
+    /**
+     * Returns the given value, bound by the given lower and upper bounds.  If the value is within
+     * the given bounds, then it is not changed.
+     *
+     * @param value The value to bind.
+     * @param lowerBound The minimum value.
+     * @param upperBound The maximum value.
+     * @return The value, bound by the given bounds.
+     */
+    public static float bindValue(float value, float lowerBound, float upperBound)
+    {
+        return Math.min(Math.max(value, lowerBound), upperBound);
     }
 
 }

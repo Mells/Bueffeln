@@ -27,7 +27,9 @@ public class StoredValueManager
     public static final String USER_SESSION_TOKEN = "user_sessiontoken";
 
     public static final String CONST_THRESHOLD = "const_threshold";
-    public static final String CONST_ALPHA_D = "const_slpha_d";
+    public static final String CONST_ALPHA_D = "const_alpha_d";
+    public static final String CONST_ALPHA_MIN = "const_alpha_min";
+    public static final String CONST_ALPHA_MAX = "const_alpha_max";
     public static final String CONST_DECAY_SCALAR = "const_decay_scalar";
     public static final String CONST_RT_SCALAR = "const_rt_scalar";
     public static final String CONST_RECALL_NOISE = "const_prob_noise_reduction";
@@ -234,6 +236,8 @@ public class StoredValueManager
         ModelMath.BETA_S = prefs.getFloat(CONST_BETA_S, ModelMath.BETA_S);
         ModelMath.ALPHA_CONVERGENCE_ITERATIONS = prefs.getFloat(CONST_ALPHA_ITERS, ModelMath.ALPHA_CONVERGENCE_ITERATIONS);
         ModelMath.RT_MAX_MULT = prefs.getFloat(CONST_RT_MAX_MULT, ModelMath.RT_MAX_MULT);
+        ModelMath.ALPHA_MIN = prefs.getFloat(CONST_ALPHA_MIN, ModelMath.ALPHA_MIN);
+        ModelMath.ALPHA_MAX = prefs.getFloat(CONST_ALPHA_MAX, ModelMath.ALPHA_MAX);
     }
 
     /**
@@ -258,6 +262,8 @@ public class StoredValueManager
              .putFloat(CONST_BETA_S, ModelMath.BETA_S)
              .putFloat(CONST_ALPHA_ITERS, ModelMath.ALPHA_CONVERGENCE_ITERATIONS)
              .putFloat(CONST_RT_MAX_MULT, ModelMath.RT_MAX_MULT)
+             .putFloat(CONST_ALPHA_MIN, ModelMath.ALPHA_MIN)
+             .putFloat(CONST_ALPHA_MAX, ModelMath.ALPHA_MAX)
              .apply();
     }
 }

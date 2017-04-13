@@ -1,6 +1,7 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
 import android.content.ContentValues;
+import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -122,7 +123,7 @@ public class InterxBuilder
     }
 
     /**
-     * Sets the latency value for the InterxObject to build by finding the difference beteween the
+     * Sets the latency value for the InterxObject to build by finding the difference between the
      * given time and an already-set timestamp value.  Will throw an exception if timestamp has
      * not yet been set.  Returns this builder in order to facilitate chaining.
      *
@@ -131,7 +132,11 @@ public class InterxBuilder
      */
     public InterxBuilder markLatency(Date inputTime)
     {
-        this.latency = (int) (inputTime.getTime() - timestamp.getTime());
+        if (latency > 0)
+            Log.d("[InterxBuilder]", "Latency already marked.");
+        else
+            this.latency = (int) (inputTime.getTime() - timestamp.getTime());
+
         return this;
     }
 

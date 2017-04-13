@@ -9,8 +9,7 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -50,8 +49,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
@@ -188,7 +189,7 @@ public class TrainAndTest extends AppCompatActivity
         model = ACTRModel.build(this, dbManager);
 
         // Show the loading bar
-        loadingBar.activateWithDelay(getString(R.string.TrainText_InitializeModel));
+        loadingBar.activateWithDelay(getString(R.string.TrainTest_InitializeModel));
 
         // First, initialize the model.  Then set the restrictions for word selection, and
         // check that the Parse ID is known for all words in the dictionary, and retrieve any
@@ -209,7 +210,7 @@ public class TrainAndTest extends AppCompatActivity
                 model.addNewSession(currentSession);
 
                 // Change the text on the loading bar
-                loadingBar.activateWithDelay(getString(R.string.TrainText_InitialDownload));
+                loadingBar.activateWithDelay(getString(R.string.TrainTest_InitialDownload));
 
                 // Find any missing Parse IDs, and query for the server for any found
                 model.getUnknownParseIDs(new LearnModel.ParseResponseListener()
@@ -351,9 +352,10 @@ public class TrainAndTest extends AppCompatActivity
 
     private void toggleOptionalUIElements(int visibility)
     {
+        hideFeedback(); // Always hide feedback until displayed
+
         //btn_hint.setVisibility(visibility);
         btn_solution.setVisibility(visibility);
-        feedbackLayout.setVisibility(visibility);
         inputLayout.setVisibility(visibility);
         btn_next.setVisibility(visibility == View.VISIBLE ? View.INVISIBLE : View.VISIBLE);
 
@@ -410,26 +412,16 @@ public class TrainAndTest extends AppCompatActivity
         });
 
 
-        edit_solution.addTextChangedListener(new TextWatcher()
+        edit_solution.setOnClickListener(new View.OnClickListener()
         {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after)
+            public void onClick(View v)
             {
-                // TODO:  Accommodate for situations in which the field is erased after entering
-                if (s.length() == 0 && after > 0 && currInterx != null)
+                if (currInterx != null)
+                {
                     currInterx.markLatency(new Date());
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count)
-            {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s)
-            {
-
+                    Log.d(LOG_TAG, "Marked interaction latency.");
+                }
             }
         });
 
@@ -488,7 +480,7 @@ public class TrainAndTest extends AppCompatActivity
         if (currentWord == null)
             return;
 
-        txt_feedback.setText(ExerciseUtils.fromHtml(
+       showFeedback(ExerciseUtils.fromHtml(
                 getString(R.string.TrainTest_Answer,
                           currentWord.getTranslation(),
                           currentWord.getVoc())));
@@ -540,7 +532,7 @@ public class TrainAndTest extends AppCompatActivity
         switch (ExerciseUtils.isAnswerCorrect(currSentence, currentWord, input, false))
         {
             case CORRECT:
-                txt_feedback.setText(R.string.TrainText_Correct);
+                showFeedback(R.string.TrainText_Correct);
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_SUCCESS);
 
@@ -548,7 +540,7 @@ public class TrainAndTest extends AppCompatActivity
                 break;
 
             case CLOSE:
-                txt_feedback.setText(ExerciseUtils.fromHtml(
+               showFeedback(ExerciseUtils.fromHtml(
                         getString(R.string.TrainTest_Close, currentWord.getTranslation(), input, currentWord.getVoc())));
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_SUCCESS);
@@ -557,7 +549,7 @@ public class TrainAndTest extends AppCompatActivity
                 break;
 
             case INCORRECT:
-                txt_feedback.setText(ExerciseUtils.fromHtml(
+                showFeedback(ExerciseUtils.fromHtml(
                         getString(R.string.TrainText_Incorrect, currentWord.getTranslation(), currentWord.getVoc())));
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_FAILURE);
@@ -576,12 +568,36 @@ public class TrainAndTest extends AppCompatActivity
 
     }
 
+
+    private void showFeedback(int text)
+    {
+        showFeedback(getString(text));
+    }
+
+    private void showFeedback(String text)
+    {
+        feedbackLayout.setVisibility(View.VISIBLE);
+        txt_feedback.setText(text);
+    }
+
+    private void showFeedback(Spanned text)
+    {
+        feedbackLayout.setVisibility(View.VISIBLE);
+        txt_feedback.setText(text);
+    }
+
+    private void hideFeedback()
+    {
+        feedbackLayout.setVisibility(View.INVISIBLE);
+    }
+
     // Standard deviation of simulated reaction time's variance from the predicted reaction time
-    public static final float RT_STDDEV = 250;  // in milliseconds
+    public static final float RT_STDDEV = 300;  // in milliseconds
     public static final int INPUT_TIME = 2500;
     public boolean simEnabled = false;
     private List<SimInterxObject> simList = new ArrayList<>();
     private List<SessionObject> simSessions = new ArrayList<>();
+    private Map<VocObject, Float> targetAlphas = new HashMap<>();
 
     /**
      * Runs a simulation, pretending to operate as a user and generating data.
@@ -600,7 +616,10 @@ public class TrainAndTest extends AppCompatActivity
         endCalendar.add(Calendar.HOUR, 24);
         simSessions.add(SessionObject.build(-1, startCalendar.getTime(), endCalendar.getTime()));
 
-        ((ACTRModel)model).forceAddSessions(simSessions);
+        ((ACTRModel) model).forceAddSessions(simSessions);
+
+        for (VocObject voc : dbManager.getWordsByBookChapter(book, chapter, unit))
+            targetAlphas.put(voc, ((float)r.nextGaussian() * 0.08f) + ModelMath.ALPHA_DEFAULT);
 
         simLoop(calendar, r);
     }
@@ -643,11 +662,10 @@ public class TrainAndTest extends AppCompatActivity
                 }
 
 
-
                 float actualActivation = model.recalcSingleActivation(
                         ModelMath.advanceMilliseconds(cal.getTime(), -ModelMath.LOOKAHEAD_TIME),
                         vocObject,
-                        ModelMath.ALPHA_DEFAULT);
+                        targetAlphas.get(vocObject));
                 float measuredActivation = model.recalcSingleActivation(
                         ModelMath.advanceMilliseconds(cal.getTime(), -ModelMath.LOOKAHEAD_TIME),
                         vocObject,
@@ -680,10 +698,11 @@ public class TrainAndTest extends AppCompatActivity
                                 : InterxObject.RESULT_FAILURE;
 
 
-                Log.d(LOG_TAG, String.format("SIM [%s](%s): R%%= %f, Model m= %f, Real m= %f," +
-                                             " Pre-alpha= %f, Result= %s",
-                                             currExerciseType, currentWord.getVoc(), correctProb,
-                                             measuredActivation, actualActivation, preAlpha,
+                Log.d(LOG_TAG, String.format("SIM [%s](%s): Pre-alpha= %f, Target alpha= %f, " +
+                                             "R%%= %f, Model m= %f, Real m= %f, Result= %s",
+                                             currExerciseType, currentWord.getVoc(), preAlpha,
+                                             targetAlphas.get(vocObject), correctProb,
+                                             measuredActivation, actualActivation,
                                              result));
 
                 final InterxObject interx =
@@ -717,7 +736,7 @@ public class TrainAndTest extends AppCompatActivity
                             @Override
                             public void onCompletion()
                             {
-                                simList.add(SimInterxObject.build(interx, ModelMath.ALPHA_DEFAULT));
+                                simList.add(SimInterxObject.build(interx, targetAlphas.get(vocObject)));
                                 simLoop(cal, r);
                             }
                         });
@@ -746,15 +765,13 @@ public class TrainAndTest extends AppCompatActivity
             interxWriter.close();
 
 
-
-
             File seshFile = new File(dir, sessionFilename);
             CSVWriter seshWriter = new CSVWriter(new FileWriter(seshFile));
 
             for (SessionObject sesh : simSessions)
             {
-                String[] fields = new String[] {DBHandler.ISO_DATE.format(sesh.getStart()),
-                                                DBHandler.ISO_DATE.format(sesh.getEnd())};
+                String[] fields = new String[]{DBHandler.ISO_DATE.format(sesh.getStart()),
+                                               DBHandler.ISO_DATE.format(sesh.getEnd())};
                 seshWriter.writeNext(fields);
             }
             seshWriter.close();

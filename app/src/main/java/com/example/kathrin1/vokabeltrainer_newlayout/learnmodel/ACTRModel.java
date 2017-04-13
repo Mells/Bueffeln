@@ -414,8 +414,6 @@ public class ACTRModel implements LearnModel
      * and returns it.
      * This task will not yet have been executed.
      * <p>
-     * // TODO:  This also stores activation values in the database as soon as they are calculated.
-     * // TODO:  May not want to do this, and force local sync manually later instead.
      *
      * @param time     The time to use as the 'current' time when calculating activation.
      *                 If left null, uses the current time.
@@ -747,8 +745,6 @@ public class ACTRModel implements LearnModel
      */
     private void logIn(final UserUpdateListener listener)
     {
-        // TODO:  THIS SHOULD BE 'user = null', and better login flow should be developed.
-        // TODO:  This way, user info is only used if it has been verified to be valid.
         user = null;
 
         requestManager.logInUser(svManager.getUserInfo(), new UserUpdateListener()

@@ -80,6 +80,8 @@ public abstract class JSONHandler
     public static final String CONST_BETA_S = "beta_s";
     public static final String CONST_ALPHA_ITERS = "alpha_convergence_iters";
     public static final String CONST_RT_MAX_MULT = "rt_max_mult";
+    public static final String CONST_ALPHA_MIN = "alpha_min";
+    public static final String CONST_ALPHA_MAX = "alpha_max";
 
 
     public static final String LOG_TAG = "[JSONHandler]";
@@ -427,6 +429,12 @@ public abstract class JSONHandler
                     break;
                 case CONST_TEST_FACTOR:
                     ModelMath.TEST_FACTOR = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_ALPHA_MIN:
+                    ModelMath.ALPHA_MIN = (float) param.getDouble(FIELD_CONST_VALUE);
+                    break;
+                case CONST_ALPHA_MAX:
+                    ModelMath.ALPHA_MAX = (float) param.getDouble(FIELD_CONST_VALUE);
                     break;
             }
         }
