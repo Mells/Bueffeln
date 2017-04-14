@@ -603,7 +603,6 @@ public class ACTRModel implements LearnModel
 
     /**
      * FOR DEBUGGING ONLY
-     * @param newSessions
      */
     public void forceAddSessions(List<SessionObject> newSessions)
     {

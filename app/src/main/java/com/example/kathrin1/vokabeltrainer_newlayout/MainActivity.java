@@ -114,40 +114,6 @@ public class MainActivity extends AppCompatActivity {
                         mSlidingLayer.openLayer(true);
             }
         });
-
-
-        /*
-        FOR TESTING //TODO: REMOVE
-        ==========================
-         */
-
-
-        /*
-        DatabaseManager dm = DatabaseManager.build(this);
-        dm.clearSessionsTable();
-        dm.clearInteractionsTable();
-        //*/
-
-        /*
-        final LearnModel model = ACTRModel.build(this);
-
-        model.initialize();
-
-        //model.addNewSession(SessionObject.build(-1, new Date(1490599800000l), new Date(1490603400000l)));
-
-        //model.addNewInteraction(InterxObject.buildWithoutLink(-1, 1, 2200, new Date(1490601600000l), InterxObject.RESULT_SUCCESS, 30, InterxObject.EXERCISE_TEST));
-
-
-        model.pushToRemote(new LearnModel.ParseResponseListener()
-        {
-            @Override
-            public void onResponse(NetworkError error)
-            {
-                if (error == null)
-                    model.saveToDatabaseASync(null);
-            }
-        });
-        //*/
     }
 
     private int setCurrentBook() {

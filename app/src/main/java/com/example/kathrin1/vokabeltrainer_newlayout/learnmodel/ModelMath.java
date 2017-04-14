@@ -327,7 +327,7 @@ public abstract class ModelMath
      * The alpha value that best fits the last interaction based on it's observed reaction time.
      *
      * @param latest       The latest interaction.  This item should be the final item in the given
-     *                     list.  // TODO:  Probably doesn't need to be it's own argument
+     *                     list.
      * @param interactions The list of all interactions for the word
      * @param sessions     List of all study sessions, in order to scale the time between them.
      * @return The alpha value that fits the latest interaction
@@ -425,7 +425,7 @@ public abstract class ModelMath
      * latest interaction.
      *
      * @param latest       The latest interaction.  This item should be the final item in the given
-     *                     list.  // TODO:  Probably doesn't need to be it's own argument
+     *                     list.
      * @param interactions The list of all interactions for the word
      * @param sessions     List of all study sessions, in order to scale the time between them.
      * @return The new alpha value that best fits the word's interactions

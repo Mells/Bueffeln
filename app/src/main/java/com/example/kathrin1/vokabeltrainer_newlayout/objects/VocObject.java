@@ -16,7 +16,7 @@ public class VocObject {
     private String pos;
     private String lemma;
     private String sentences;
-    private int tested; // TODO: Remove this eventually
+    private int tested;
     private String label; // Unique label for this word, for synchronizing between local and remote databases
 
     // For use with the learning model
@@ -68,7 +68,7 @@ public class VocObject {
         pos = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_POS));
         lemma = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_VOCLEMMA));
         sentences = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_SENTID));
-        tested = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEVEL)); // TODO: remove
+        tested = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEVEL));
         parseId = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_PARSEID));
         beta_si = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_si));
         beta_i = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_i));
@@ -209,7 +209,7 @@ public class VocObject {
         vals.put(DBHandler.WORD_CHAPTER, chapter);
         vals.put(DBHandler.WORD_POS, pos);
         vals.put(DBHandler.WORD_SENTID, sentences);
-        vals.put(DBHandler.WORD_LEVEL, tested); // TODO: Remove
+        vals.put(DBHandler.WORD_LEVEL, tested);
         vals.put(DBHandler.WORD_LABEL, label);
         vals.put(DBHandler.WORD_PARSEID, parseId);
         vals.put(DBHandler.WORD_BETA_si, beta_si);

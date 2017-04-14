@@ -1,6 +1,7 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.network;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -820,8 +821,13 @@ public class RequestManager
      */
     public boolean isNetworkReady()
     {
-        // TODO:  Implement
-        return true;
+        ConnectivityManager conMgr =
+                (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        // ARE WE CONNECTED TO THE NET
+        return (conMgr.getActiveNetworkInfo() != null
+                && conMgr.getActiveNetworkInfo().isAvailable()
+                && conMgr.getActiveNetworkInfo().isConnected());
     }
 
     /**

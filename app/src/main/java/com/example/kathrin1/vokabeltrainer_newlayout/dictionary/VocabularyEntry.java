@@ -78,7 +78,6 @@ public class VocabularyEntry extends AppCompatActivity {
         } catch (NumberFormatException e) // Thrown if there if the string could not be parsed as an int
         {
             // If the sentence list value cannot be parsed as an integer, just display it
-            // TODO: THIS IS JUST FOR DEBUGGING
             txt_bsp.setText(R.string.Sent_Missing);
         }
         //SentObject sentence = databaseQuery.getSentence(numberSentence);

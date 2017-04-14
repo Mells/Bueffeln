@@ -9,7 +9,6 @@
     <string name="DBHandler_ProgressDialog_Title">Database Update</string>
     <string name="DBHandler_ProgressDialog_Message">Loading updated data…</string>
 
-    <!-- TODO:  Probably give German translations where missing -->
     <!-- <string name="Exercise_TrainAndTest">Train&amp;Test</string> -->
     <string name="Exercise_TrainAndTest">Lernen&amp;Testen</string>
     <!-- <string name="TrainText_InitializeModel">Initializing model…</string> -->

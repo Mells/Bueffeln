@@ -50,7 +50,7 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_TAGGED = "Tagged";
     public static final String WORD_LEMMA = "Lemma";
     public static final String WORD_SENTID = "SentId";
-    public static final String WORD_LEVEL = "Tested"; // TODO: Remove eventually
+    public static final String WORD_LEVEL = "Tested";
     public static final String WORD_LABEL = "label"; // Unique identifier for synchronization
     public static final String WORD_PARSEID = "ParseId"; // ID of word in Parse database
     public static final String WORD_USERINFO_PARSEID = "userInfoParseId"; // ID of user+word info in Parse database
@@ -356,8 +356,8 @@ public class DBHandler extends SQLiteAssetHelper
      */
     public void syncWithCSV(final SQLiteDatabase db)
     {
-        // TODO:  Evidently ProgressDialog is pseudo-deprecated and discouraged, but I didn't
-        // TODO:  feel like figuring out a different solution
+        // Evidently ProgressDialog is pseudo-deprecated and discouraged, but I didn't
+        // feel like figuring out a different solution
 
         Log.d(LOG_TAG, "Loading CSV files asynchronously...");
 

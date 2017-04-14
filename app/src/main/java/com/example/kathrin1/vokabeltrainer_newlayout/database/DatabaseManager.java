@@ -549,7 +549,6 @@ public class DatabaseManager
 
     /**
      * Updates the tested count for the given word id with the given value
-     * TODO:  Eventually get rid of this
      *
      * @param value Value to set
      * @param id    ID of the word to update

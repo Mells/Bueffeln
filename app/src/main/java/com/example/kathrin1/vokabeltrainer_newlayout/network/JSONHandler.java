@@ -107,7 +107,7 @@ public abstract class JSONHandler
             jObj.put(FIELD_UWINFO_WORDID, word.getParseId());
 
         jObj.put(FIELD_UWINFO_WORD, word.getVoc());
-        // TODO:  Is this negative infinity check necessary?  What's really going on here?
+        // Is this negative infinity check necessary?  What's really going on here?
         jObj.put(FIELD_UWINFO_ALPHA, Float.isInfinite(word.getAlpha())
                                      ? ModelMath.ALPHA_DEFAULT : word.getAlpha());
         jObj.put(FIELD_UWINFO_BETA_SI, word.getBeta_si());
