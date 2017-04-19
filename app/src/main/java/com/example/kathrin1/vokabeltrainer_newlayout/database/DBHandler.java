@@ -227,10 +227,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 12;
+    private static final int VERSION = 13;
     // ======================================
 
-    private static final int FORCED_UPGRADE_VERSION = 12;
+    private static final int FORCED_UPGRADE_VERSION = 13;
 
 
     private final Context c;
@@ -351,7 +351,8 @@ public class DBHandler extends SQLiteAssetHelper
                 && newVersion != 9
                 && newVersion != 10
                 && newVersion != 11
-                && newVersion != 12)
+                && newVersion != 12
+                && newVersion != 13)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
