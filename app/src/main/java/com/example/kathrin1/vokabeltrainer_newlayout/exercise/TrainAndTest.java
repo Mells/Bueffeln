@@ -295,7 +295,7 @@ public class TrainAndTest extends AppCompatActivity
             Log.v(LOG_TAG, "Word to display = " + word.toString());
 
             // Find a suitable example sentence for the word
-            currSentence = dbManager.getExampleLearnerSentence(word);
+            currSentence = dbManager.getExampleGDEXSentence(word);
 
             Date currTime = new Date();
             float preActivation = model.recalcSingleActivation(

@@ -198,7 +198,7 @@ public class DatabaseManager
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
-        return pickSentence(sentenceList);
+        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME);
     }
 
     /**
@@ -215,7 +215,24 @@ public class DatabaseManager
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
-        return pickSentence(sentenceList);
+        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME);
+    }
+
+    /**
+     * Gets a random legacy sentence for the given word object.  If no sentence is found,
+     * returns an empty error sentence.
+     *
+     * @param word The word to get an example sentence for
+     * @return Example sentence for the given word, or an empty sentence if no example sentence
+     * is found
+     */
+    public SentObject getExampleOldSentence(VocObject word)
+    {
+        String listString = word.getOldSentences();
+
+        List<String> sentenceList = DBUtils.splitListString(listString);
+
+        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME_OLD);
     }
 
     /**
@@ -225,14 +242,14 @@ public class DatabaseManager
      * @param sentenceList List of IDs to select from
      * @return The selected sentence object
      */
-    private SentObject pickSentence(List<String> sentenceList)
+    private SentObject pickSentence(List<String> sentenceList, String tableName)
     {
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
 
         try
         {
-            return getSentence(Integer.parseInt(sentenceList.get(index)));
+            return getSentence(Integer.parseInt(sentenceList.get(index)), tableName);
         } catch (NumberFormatException e)
         {
             Log.e(LOG_TAG,
@@ -241,6 +258,39 @@ public class DatabaseManager
 
             return SentObject.emptySentence(c);
         }
+    }
+    /**
+     * Retrieves the legacy sentence with the given ID from the sentence database, with the ID given as a
+     * string.  Attempts to parse the string as an integer, and returns an error sentence if the
+     * string could not be successfully parsed.
+     *
+     * @param id ID of the sentence to retrieve.
+     * @return The retrieved sentence.
+     */
+    public SentObject getOldSentence(String id)
+    {
+        try
+        {
+            return getOldSentence(Integer.parseInt(id));
+        } catch (NumberFormatException e)
+        {
+            Log.e(LOG_TAG,
+                  String.format("Error parsing integer string (%s).  Returning default sentence instead.",
+                                id));
+
+            return SentObject.emptySentence(c);
+        }
+    }
+    /**
+     * Retrieves the legacy sentence with the given ID from the sentence database.  If the ID is not found
+     * in the database, returns an error sentence.
+     *
+     * @param id ID of the sentence to retrieve.
+     * @return The retrieved sentence.
+     */
+    public SentObject getOldSentence(int id)
+    {
+        return getSentence(id, DBHandler.SENT_TABLENAME_OLD);
     }
 
 
@@ -276,7 +326,20 @@ public class DatabaseManager
      */
     public SentObject getSentence(int id)
     {
-        Cursor cursor = db.query(DBHandler.SENT_TABLENAME, DBHandler.SENT_COLUMNS,
+        return getSentence(id, DBHandler.SENT_TABLENAME);
+    }
+
+    /**
+     * Retrieves the sentence with the given ID from the given sentence table.  If the ID is not found
+     * in the database, returns an error sentence.
+     *
+     * @param id        ID of the sentence to retrieve.
+     * @param tableName Name of the table to retrieve sentence data from.
+     * @return The retrieved sentence.
+     */
+    private SentObject getSentence(int id, String tableName)
+    {
+        Cursor cursor = db.query(tableName, DBHandler.SENT_COLUMNS,
                                  DBHandler.SENT_ID + " = " + id,
                                  null, null, null, null);
 
@@ -386,19 +449,22 @@ public class DatabaseManager
 
         String query;
 
-        if (chapter.equals("Welcome")){
+        if (chapter.equals("Welcome"))
+        {
             query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
-                    DBHandler.WORD_TABLENAME,
-                    DBHandler.WORD_BOOK, book,
-                    DBHandler.WORD_CHAPTER, chapter,
-                    DBHandler.WORD_LEVEL, level);
+                                  DBHandler.WORD_TABLENAME,
+                                  DBHandler.WORD_BOOK, book,
+                                  DBHandler.WORD_CHAPTER, chapter,
+                                  DBHandler.WORD_LEVEL, level);
             Log.d("Query", query);
-        }else {
+        }
+        else
+        {
             query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
-                    DBHandler.WORD_TABLENAME,
-                    DBHandler.WORD_BOOK, book,
-                    DBHandler.WORD_CHAPTER, chapter,
-                    DBHandler.WORD_LEVEL, level);
+                                  DBHandler.WORD_TABLENAME,
+                                  DBHandler.WORD_BOOK, book,
+                                  DBHandler.WORD_CHAPTER, chapter,
+                                  DBHandler.WORD_LEVEL, level);
             Log.d("Query", query);
         }
         Cursor cursor = db.rawQuery(query, null);

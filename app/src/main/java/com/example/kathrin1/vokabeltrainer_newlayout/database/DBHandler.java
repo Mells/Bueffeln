@@ -111,6 +111,7 @@ public class DBHandler extends SQLiteAssetHelper
      * ======================================================================
      */
     public static final String SENT_TABLENAME = "sentences";
+    public static final String SENT_TABLENAME_OLD = "sentences_old";
     public static final String SENT_ID = "_id";
     public static final String SENT_BOOK = "Book";
     public static final String SENT_PAGE = "Page";
@@ -226,10 +227,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 10;
+    private static final int VERSION = 12;
     // ======================================
 
-    private static final int FORCED_UPGRADE_VERSION = 10;
+    private static final int FORCED_UPGRADE_VERSION = 12;
 
 
     private final Context c;
@@ -346,7 +347,11 @@ public class DBHandler extends SQLiteAssetHelper
 
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
-        if (newVersion != 8)
+        if (newVersion != 8
+                && newVersion != 9
+                && newVersion != 10
+                && newVersion != 11
+                && newVersion != 12)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
@@ -534,6 +539,7 @@ public class DBHandler extends SQLiteAssetHelper
 
         public DatabaseHandlerException()
         {
+            super();
         }
 
         public DatabaseHandlerException(String error)

@@ -42,7 +42,7 @@ public class RequestManager
 {
     public static final String APP_ID = "asdf";
     public static final int PORT = 1449;
-    public static final String URL = "http://rhodos.sfs.uni-tuebingen.de:" + PORT;
+    public static final String URL = "http://sprelf.com";
 
     public static final String APPLICATION_JSON = "application/json";
 

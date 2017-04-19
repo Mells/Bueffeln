@@ -15,6 +15,7 @@ public class VocObject {
     private String chapter;
     private String pos;
     private String lemma;
+    private String sentences_old;
     private String sentences_gdex;
     private String sentences_learner;
     private int tested;
@@ -31,7 +32,7 @@ public class VocObject {
 
 
     public VocObject(int id, String voc, String translation, String status, String book,
-                     String chapter, String pos, String sentences_gdex,
+                     String chapter, String pos, String sentences_old, String sentences_gdex,
                      String sentences_learner, int tested, String lemma,
                      String label) {
         this.id = id;
@@ -42,6 +43,7 @@ public class VocObject {
         this.book = book;
         this.chapter = chapter;
         this.pos = pos;
+        this.sentences_old = sentences_old;
         this.sentences_gdex = sentences_gdex;
         this.sentences_learner = sentences_learner;
         this.tested = tested;
@@ -70,6 +72,7 @@ public class VocObject {
         chapter = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_CHAPTER));
         pos = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_POS));
         lemma = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_VOCLEMMA));
+        sentences_old = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_SENTID));
         sentences_gdex = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_GDEX));
         sentences_learner = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEARNER));
         tested = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEVEL));
@@ -110,6 +113,8 @@ public class VocObject {
     public String getPOS() {
         return pos;
     }
+
+    public String getOldSentences() { return sentences_old; }
 
     public String getGDEXSentences() {
         return sentences_gdex;
@@ -214,6 +219,7 @@ public class VocObject {
         vals.put(DBHandler.WORD_BOOK, book);
         vals.put(DBHandler.WORD_CHAPTER, chapter);
         vals.put(DBHandler.WORD_POS, pos);
+        vals.put(DBHandler.WORD_SENTID, sentences_old);
         vals.put(DBHandler.WORD_GDEX, sentences_gdex);
         vals.put(DBHandler.WORD_LEARNER, sentences_learner);
         vals.put(DBHandler.WORD_LEVEL, tested);

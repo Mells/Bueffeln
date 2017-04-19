@@ -56,7 +56,7 @@ public abstract class ExerciseUtils
     public static String replaceWordInSentence(SentObject sentence, VocObject word,
                                                String replacementString)
     {
-        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getTagged());
+        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getMapped());
 
         List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemma());
         String sent = sentence.getSentence();
