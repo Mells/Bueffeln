@@ -50,6 +50,8 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_TAGGED = "Tagged";
     public static final String WORD_LEMMA = "Lemma";
     public static final String WORD_SENTID = "SentId";
+    public static final String WORD_GDEX = "GDEX";
+    public static final String WORD_LEARNER = "Learner";
     public static final String WORD_LEVEL = "Tested";
     public static final String WORD_LABEL = "label"; // Unique identifier for synchronization
     public static final String WORD_PARSEID = "ParseId"; // ID of word in Parse database
@@ -63,6 +65,7 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String[] WORD_COLUMNS = {WORD_ID, WORD_WORD, WORD_TRANSLATION,
                                                  WORD_VOCLEMMA, WORD_STATUS, WORD_BOOK,
                                                  WORD_CHAPTER, WORD_POS, WORD_SENTID,
+                                                 WORD_GDEX, WORD_LEARNER,
                                                  WORD_PARSEID, WORD_BETA_si, WORD_BETA_i,
                                                  WORD_ALPHA, WORD_SIGMA, WORD_LABEL,
                                                  WORD_EXAMPLE, WORD_NOTE, WORD_TAGGED,
@@ -89,6 +92,8 @@ public class DBHandler extends SQLiteAssetHelper
             WORD_TAGGED + " TEXT, " +
             WORD_LEMMA + " TEXT, " +
             WORD_SENTID + " TEXT, " +
+            WORD_GDEX + " TEXT, " +
+            WORD_LEARNER + " TEXT, " +
             WORD_LABEL + " TEXT, " +
             WORD_LEVEL + " INTEGER DEFAULT 0, " +
             WORD_PARSEID + " TEXT DEFAULT '', " +
@@ -219,10 +224,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 7;
+    private static final int VERSION = 10;
     // ======================================
 
-    private static final int FORCED_UPGRADE_VERSION = 5;
+    private static final int FORCED_UPGRADE_VERSION = 10;
 
 
     private final Context c;
@@ -266,7 +271,6 @@ public class DBHandler extends SQLiteAssetHelper
             db.execSQL(String.format("alter table %s add %s text",
                                      INTERX_TABLENAME, INTERX_EXERCISE_TYPE));
 
-            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
 
@@ -305,7 +309,6 @@ public class DBHandler extends SQLiteAssetHelper
         {
 
         }
-        */
 
         // VERSION 6 UPGRADE
         // ==================
@@ -337,14 +340,17 @@ public class DBHandler extends SQLiteAssetHelper
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }
 
+        */
+
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
-        if (newVersion != 6
-            && newVersion != 7)
+        if (newVersion != 8)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
         }
+
+        Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
     }
 
 

@@ -185,19 +185,48 @@ public class DatabaseManager
     }
 
     /**
-     * Gets a random example sentence for the given word object.  If no sentence is found,
+     * Gets a random learner sentence for the given word object.  If no sentence is found,
      * returns an empty error sentence.
      *
      * @param word The word to get an example sentence for
      * @return Example sentence for the given word, or an empty sentence if no example sentence
      * is found
      */
-    public SentObject getExampleSentence(VocObject word)
+    public SentObject getExampleLearnerSentence(VocObject word)
     {
-        String listString = word.getSentences();
+        String listString = word.getLearnerSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
+        return pickSentence(sentenceList);
+    }
+
+    /**
+     * Gets a random GDEX sentence for the given word object.  If no sentence is found,
+     * returns an empty error sentence.
+     *
+     * @param word The word to get an example sentence for
+     * @return Example sentence for the given word, or an empty sentence if no example sentence
+     * is found
+     */
+    public SentObject getExampleGDEXSentence(VocObject word)
+    {
+        String listString = word.getGDEXSentences();
+
+        List<String> sentenceList = DBUtils.splitListString(listString);
+
+        return pickSentence(sentenceList);
+    }
+
+    /**
+     * Randomly elects a sentence from the given list of sentence IDs, and returns its
+     * corresponding sentence object.
+     *
+     * @param sentenceList List of IDs to select from
+     * @return The selected sentence object
+     */
+    private SentObject pickSentence(List<String> sentenceList)
+    {
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
 

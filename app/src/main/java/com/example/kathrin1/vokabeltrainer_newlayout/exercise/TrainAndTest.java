@@ -295,7 +295,7 @@ public class TrainAndTest extends AppCompatActivity
             Log.v(LOG_TAG, "Word to display = " + word.toString());
 
             // Find a suitable example sentence for the word
-            currSentence = dbManager.getExampleSentence(word);
+            currSentence = dbManager.getExampleLearnerSentence(word);
 
             Date currTime = new Date();
             float preActivation = model.recalcSingleActivation(
@@ -678,7 +678,7 @@ public class TrainAndTest extends AppCompatActivity
                 currExerciseType = vocObject.isNew()
                                    ? InterxObject.EXERCISE_TRAIN
                                    : InterxObject.EXERCISE_TEST;
-                int sentenceLength = dbManager.getExampleSentence(vocObject).getSentence().length();
+                int sentenceLength = dbManager.getExampleLearnerSentence(vocObject).getSentence().length();
 
                 float predictedRT = ModelMath.predictedRT(sentenceLength,
                                                           actualActivation);

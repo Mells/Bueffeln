@@ -362,7 +362,8 @@ public class Translation extends AppCompatActivity {
             txt_voc.setText(voc.getTranslation());
 
 
-            SentObject sentence = dbManager.getExampleSentence(voc);
+            // TODO:  CHANGE SENTENCE TYPE HERE
+            SentObject sentence = dbManager.getExampleGDEXSentence(voc);
             // TODO - delete the word from bsp
 
             Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
@@ -401,7 +402,8 @@ public class Translation extends AppCompatActivity {
             voc = allVocabulary.get(index);
             txt_voc.setText(voc.getVoc());
 
-            SentObject sentence = dbManager.getExampleSentence(voc);
+            // TODO:  CHANGE SENTENCE TYPE HERE
+            SentObject sentence = dbManager.getExampleGDEXSentence(voc);
 
 
             // TODO - highlight the word in bsp

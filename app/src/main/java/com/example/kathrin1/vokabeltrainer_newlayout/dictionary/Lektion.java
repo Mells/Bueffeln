@@ -309,7 +309,8 @@ public class Lektion extends AppCompatActivity {
         //txt_bsp.setText();
         txt_fundort.setText(vocable.getChapter()+" / "+vocable.getBook());
 
-        List<String> sentenceList = DBUtils.splitListString(vocable.getSentences());
+        // TODO:  CHANGE SENTENCE TYPE HERE
+        List<String> sentenceList = DBUtils.splitListString(vocable.getGDEXSentences());
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());

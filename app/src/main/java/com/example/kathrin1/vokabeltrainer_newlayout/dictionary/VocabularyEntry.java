@@ -66,7 +66,8 @@ public class VocabularyEntry extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(VocabularyEntry.this);
 
-        List<String> sentenceList = new ArrayList<String>(Arrays.asList(vocable.getSentences().substring(1, vocable.getSentences().length() - 1).split(", ")));
+        // TODO:  CHANGE SENTENCE TYPE HERE
+        List<String> sentenceList = new ArrayList<String>(Arrays.asList(vocable.getGDEXSentences().substring(1, vocable.getGDEXSentences().length() - 1).split(", ")));
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());

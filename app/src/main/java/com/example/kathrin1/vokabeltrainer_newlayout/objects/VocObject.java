@@ -15,7 +15,8 @@ public class VocObject {
     private String chapter;
     private String pos;
     private String lemma;
-    private String sentences;
+    private String sentences_gdex;
+    private String sentences_learner;
     private int tested;
     private String label; // Unique label for this word, for synchronizing between local and remote databases
 
@@ -30,7 +31,8 @@ public class VocObject {
 
 
     public VocObject(int id, String voc, String translation, String status, String book,
-                     String chapter, String pos, String sentences, int tested, String lemma,
+                     String chapter, String pos, String sentences_gdex,
+                     String sentences_learner, int tested, String lemma,
                      String label) {
         this.id = id;
         this.voc = voc;
@@ -40,7 +42,8 @@ public class VocObject {
         this.book = book;
         this.chapter = chapter;
         this.pos = pos;
-        this.sentences = sentences;
+        this.sentences_gdex = sentences_gdex;
+        this.sentences_learner = sentences_learner;
         this.tested = tested;
         this.label = label;
     }
@@ -67,7 +70,8 @@ public class VocObject {
         chapter = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_CHAPTER));
         pos = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_POS));
         lemma = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_VOCLEMMA));
-        sentences = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_SENTID));
+        sentences_gdex = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_GDEX));
+        sentences_learner = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEARNER));
         tested = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEVEL));
         parseId = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_PARSEID));
         beta_si = cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_BETA_si));
@@ -107,9 +111,11 @@ public class VocObject {
         return pos;
     }
 
-    public String getSentences() {
-        return sentences;
+    public String getGDEXSentences() {
+        return sentences_gdex;
     }
+
+    public String getLearnerSentences() { return sentences_learner; }
 
     public int getTested() { return tested; }
 
@@ -208,7 +214,8 @@ public class VocObject {
         vals.put(DBHandler.WORD_BOOK, book);
         vals.put(DBHandler.WORD_CHAPTER, chapter);
         vals.put(DBHandler.WORD_POS, pos);
-        vals.put(DBHandler.WORD_SENTID, sentences);
+        vals.put(DBHandler.WORD_GDEX, sentences_gdex);
+        vals.put(DBHandler.WORD_LEARNER, sentences_learner);
         vals.put(DBHandler.WORD_LEVEL, tested);
         vals.put(DBHandler.WORD_LABEL, label);
         vals.put(DBHandler.WORD_PARSEID, parseId);

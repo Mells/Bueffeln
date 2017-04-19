@@ -302,7 +302,8 @@ public class Kontext extends AppCompatActivity {
             Log.d("TRANSLATION:", Integer.toString(allVocabulary.size()));
             voc = allVocabulary.get(index);
 
-            List<String> sentenceList = DBUtils.splitListString(voc.getSentences());
+            // TODO:  CHANGE SENTENCE TYPE HERE
+            List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
             
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
             // TODO - take gdex not random
