@@ -17,15 +17,17 @@ public class SentObject {
     private String chapter;
     private String sentence;
     private String tagged;
+    private String mapped;
     private String lemma;
 
-    public SentObject(int id, String book, String chapter, String sentence, String tagged, String lemma) {
+    public SentObject(int id, String book, String chapter, String sentence, String tagged, String mapped, String lemma) {
 
         this.id = id;
         this.book = book;
         this.chapter = chapter;
         this.sentence = sentence;
         this.tagged = tagged;
+        this.mapped = mapped;
         this.lemma = lemma;
     }
 
@@ -48,6 +50,7 @@ public class SentObject {
         chapter = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.SENT_CHAPTER));
         sentence = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.SENT_SENTENCE));
         tagged = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.SENT_TAGGED));
+        mapped = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.SENT_MAPPED));
         lemma = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.SENT_LEMMA));
     }
 
@@ -59,7 +62,7 @@ public class SentObject {
      */
     public static SentObject emptySentence(Context c)
     {
-        return new SentObject(-1, "-", "-", c.getString(R.string.Sent_Missing), "", "");
+        return new SentObject(-1, "-", "-", c.getString(R.string.Sent_Missing), "", "", "");
     }
 
     /**
@@ -71,7 +74,7 @@ public class SentObject {
      */
     public static SentObject emptySentence()
     {
-        return new SentObject(-1, "-", "-", ":SENTENCE MISSING:", "", "");
+        return new SentObject(-1, "-", "-", ":SENTENCE MISSING:", "", "", "");
     }
 
     public int getId() {
@@ -89,6 +92,8 @@ public class SentObject {
     public String getSentence() { return sentence; }
 
     public String getTagged() { return tagged; }
+
+    public String getMapped() { return mapped; }
 
     public String getLemma() { return lemma; }
 

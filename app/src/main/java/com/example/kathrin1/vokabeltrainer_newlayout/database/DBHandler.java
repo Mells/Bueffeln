@@ -117,9 +117,10 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String SENT_CHAPTER = "Chapter";
     public static final String SENT_SENTENCE = "Sentence";
     public static final String SENT_TAGGED = "Tagged";
+    public static final String SENT_MAPPED = "Mapped";
     public static final String SENT_LEMMA = "Lemma";
     public static final String[] SENT_COLUMNS = {SENT_ID, SENT_BOOK, SENT_CHAPTER, SENT_PAGE,
-                                                 SENT_SENTENCE, SENT_TAGGED, SENT_LEMMA};
+                                                 SENT_SENTENCE, SENT_TAGGED, SENT_MAPPED, SENT_LEMMA};
 
     // NO LONGER USED
     final private static String CREATE_SENT_TABLE =
@@ -131,6 +132,7 @@ public class DBHandler extends SQLiteAssetHelper
             SENT_PAGE + " INTEGER, " +
             SENT_SENTENCE + " TEXT, " +
             SENT_TAGGED + " TEXT, " +
+            SENT_MAPPED + " TEXT, " +
             SENT_LEMMA + " TEXT, " +
             "PRIMARY KEY (" + SENT_ID + ") )";
 
