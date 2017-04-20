@@ -2,6 +2,7 @@ package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -10,7 +11,8 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
  * Created by kathrin1 on 30.01.17.
  */
 
-public class SentObject {
+public class SentObject
+{
 
     private int id;
     private String book;
@@ -20,7 +22,10 @@ public class SentObject {
     private String mapped;
     private String lemma;
 
-    public SentObject(int id, String book, String chapter, String sentence, String tagged, String mapped, String lemma) {
+    private boolean isEmpty = false;
+
+    public SentObject(int id, String book, String chapter, String sentence, String tagged, String mapped, String lemma)
+    {
 
         this.id = id;
         this.book = book;
@@ -62,7 +67,8 @@ public class SentObject {
      */
     public static SentObject emptySentence(Context c)
     {
-        return new SentObject(-1, "-", "-", c.getString(R.string.Sent_Missing), "", "", "");
+        return new SentObject(-1, "-", "-", c.getString(R.string.Sent_Missing), "", "", "")
+                       .setEmpty(true);
     }
 
     /**
@@ -74,27 +80,73 @@ public class SentObject {
      */
     public static SentObject emptySentence()
     {
-        return new SentObject(-1, "-", "-", ":SENTENCE MISSING:", "", "", "");
+        return new SentObject(-1, "-", "-", ":SENTENCE MISSING:", "", "", "")
+                       .setEmpty(true);
     }
 
-    public int getId() {
+    /**
+     * Builds a sentence object from the given string, assuming it is a single word.  This is used
+     * as a last resort to display as a "sentence" in the case that no other suitable sentence
+     * has been found for a word, rather than displaying "SENTENCE MISSING" message.
+     *
+     * @param word The word to build into a sentence object.
+     * @return The newly constructed sentence object.
+     */
+    public static SentObject buildForSingleWord(String word)
+    {
+        if (word.contains(" "))
+            Log.e("[SentObject]", "WARNING:  Method 'buildForSingleWord()' should only be given a " +
+                                  "single word.  Otherwise, may result in undefined behavior.");
+
+        return new SentObject(-1, "-", "-", word,
+                              String.format("[('%s', 'UNK')]", word),
+                              String.format("{'%s': ['%s']}", word, word),
+                              String.format("['%s']", word));
+    }
+
+    public int getId()
+    {
         return id;
     }
 
-    public String getBook() {
+    public String getBook()
+    {
         return book;
     }
 
-    public String getChapter() {
+    public String getChapter()
+    {
         return chapter;
     }
 
-    public String getSentence() { return sentence; }
+    public String getSentence()
+    {
+        return sentence;
+    }
 
-    public String getTagged() { return tagged; }
+    public String getTagged()
+    {
+        return tagged;
+    }
 
-    public String getMapped() { return mapped; }
+    public String getMapped()
+    {
+        return mapped;
+    }
 
-    public String getLemma() { return lemma; }
+    public String getLemma()
+    {
+        return lemma;
+    }
 
+    private SentObject setEmpty(boolean empty)
+    {
+        isEmpty = empty;
+        return this;
+    }
+
+    public boolean isEmpty()
+    {
+        return isEmpty;
+    }
 }

@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
@@ -309,7 +308,7 @@ public class Book1 extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Toast.makeText(getActivity(), "Book 1", Toast.LENGTH_LONG).show();
+        // Toast.makeText(getActivity(), "Book 1", Toast.LENGTH_LONG).show();
         //AppCompatActivity a;
 
         if (context instanceof AppCompatActivity){

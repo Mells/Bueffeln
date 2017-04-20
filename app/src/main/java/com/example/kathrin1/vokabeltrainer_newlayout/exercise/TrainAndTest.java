@@ -123,7 +123,7 @@ public class TrainAndTest extends AppCompatActivity
         // Get the handler for the UI thread
         handler = new Handler(Looper.getMainLooper());
 
-        //*
+        //* TODO: THIS IS ONLY FOR TESTING.  THIS SHOULD BE COMMENTED OUT IN FINAL VERSION
         dbManager.clearInteractionsTable();
         dbManager.clearSessionsTable();
         dbManager.wipeUserWordData();
@@ -295,7 +295,13 @@ public class TrainAndTest extends AppCompatActivity
             Log.v(LOG_TAG, "Word to display = " + word.toString());
 
             // Find a suitable example sentence for the word
-            currSentence = dbManager.getExampleGDEXSentence(word);
+            currSentence = dbManager.getExampleOldSentence(word);
+            if (currSentence.isEmpty())
+                currSentence = dbManager.getExampleLearnerSentence(word);
+            if (currSentence.isEmpty())
+                currSentence = dbManager.getExampleGDEXSentence(word);
+            if (currSentence.isEmpty())
+                currSentence = SentObject.buildForSingleWord(word.getVoc());
 
             Date currTime = new Date();
             float preActivation = model.recalcSingleActivation(
@@ -550,7 +556,7 @@ public class TrainAndTest extends AppCompatActivity
 
             case INCORRECT:
                 showFeedback(ExerciseUtils.fromHtml(
-                        getString(R.string.TrainText_Incorrect, currentWord.getTranslation(), currentWord.getVoc())));
+                        getString(R.string.TrainText_Incorrect, input, currentWord.getVoc())));
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_FAILURE);
 
@@ -814,6 +820,8 @@ public class TrainAndTest extends AppCompatActivity
             @Override
             public void onTabReselected(TabLayout.Tab tab)
             {
+                ExerciseUtils.updateBook(TrainAndTest.this, tab);
+                viewPager.setCurrentItem(tab.getPosition());
             }
         });
     }

@@ -203,7 +203,7 @@ public abstract class DBUtils
                         tagList.add(jArr.getString(i));
 
 
-                    smap.put(key, tagList);
+                    smap.put(key.toLowerCase(), tagList);
                 }
                 else
                 {

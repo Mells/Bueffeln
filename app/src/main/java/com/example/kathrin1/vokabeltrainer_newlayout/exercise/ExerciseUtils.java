@@ -15,6 +15,8 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * For housing some useful static methods used by exercises
@@ -61,6 +63,10 @@ public abstract class ExerciseUtils
         List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemma());
         String sent = sentence.getSentence();
 
+        // TODO:  Probably move this bit somewhere more sensible
+        // Cleans up spaces before punctuation
+        sent = sent.replaceAll("\\s([.,!?])", "$1");
+
         for (String lemma : lemmaVocList)
         {
             if (smap.containsKey(lemma))
@@ -68,7 +74,22 @@ public abstract class ExerciseUtils
                 List<String> bla = smap.get(lemma);
                 for (String s : bla)
                 {
-                    sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
+                    //sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
+
+                    // This strategy of using a Matcher object allows for case-insensitive matching,
+                    // while preserving case throughout the string
+                    Pattern pattern = Pattern.compile("\\b" + s.toLowerCase() + "\\b");
+                    Matcher matcher = pattern.matcher(sent.toLowerCase());
+
+                    while (matcher.find())
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(sent, 0, matcher.start());
+                        sb.append(replacementString.replace("%s", s));
+                        sb.append(sent, matcher.end(), sent.length());
+
+                        sent = sb.toString();
+                    }
                 }
             }
         }
@@ -114,7 +135,7 @@ public abstract class ExerciseUtils
 
         input = input.toLowerCase();
 
-        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getTagged());
+        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getMapped());
 
         List<String> wordsToMatch;
         if (!german && smap.containsKey(wordString))
@@ -153,12 +174,12 @@ public abstract class ExerciseUtils
      */
     public static void updateBook(Context c, TabLayout.Tab tab) {
         String b = "I";
-        switch (tab.getText().toString()){
-            case "Book 1": b = "I";
+        switch (tab.getPosition()){
+            case 0: b = "I";
                 break;
-            case "Book 2": b = "II";
+            case 1: b = "II";
                 break;
-            case "Book 3": b = "III";
+            case 2: b = "III";
                 break;
         }
         PreferenceManager.getDefaultSharedPreferences(c).edit()
