@@ -81,15 +81,18 @@ public abstract class ExerciseUtils
                     Pattern pattern = Pattern.compile("\\b" + s.toLowerCase() + "\\b");
                     Matcher matcher = pattern.matcher(sent.toLowerCase());
 
+                    int prevEnd = 0;
+                    StringBuilder sb = new StringBuilder();
                     while (matcher.find())
                     {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(sent, 0, matcher.start());
+                        sb.append(sent, prevEnd, matcher.start());
                         sb.append(replacementString.replace("%s", s));
-                        sb.append(sent, matcher.end(), sent.length());
 
-                        sent = sb.toString();
+                        prevEnd = matcher.end();
                     }
+                    sb.append(sent, prevEnd, sent.length());
+
+                    sent = sb.toString();
                 }
             }
         }
