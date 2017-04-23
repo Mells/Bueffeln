@@ -123,7 +123,7 @@ public class TrainAndTest extends AppCompatActivity
         // Get the handler for the UI thread
         handler = new Handler(Looper.getMainLooper());
 
-        //* TODO: THIS IS ONLY FOR TESTING.  THIS SHOULD BE COMMENTED OUT IN FINAL VERSION
+        /* TODO: THIS IS ONLY FOR TESTING.  THIS SHOULD BE COMMENTED OUT IN FINAL VERSION
         dbManager.clearInteractionsTable();
         dbManager.clearSessionsTable();
         dbManager.wipeUserWordData();
@@ -476,6 +476,9 @@ public class TrainAndTest extends AppCompatActivity
         });
 
         loadingBar = (LoadingBarView) findViewById(R.id.lay_loading);
+
+        // This should only be enabled in debug mode
+        btn_hint.setVisibility(View.INVISIBLE);
     }
 
     /**
