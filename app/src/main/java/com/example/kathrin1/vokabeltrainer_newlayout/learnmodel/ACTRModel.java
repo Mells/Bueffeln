@@ -762,7 +762,7 @@ public class ACTRModel implements LearnModel
             public void onRemoteFailure(NetworkError error)
             {
                 Log.e(LOG_TAG, "Error while logging user in.  User was not logged in.\n" +
-                               error.toString());
+                               (error != null ? error.toString() : ""));
 
                 if (listener != null)
                     listener.onRemoteFailure(error);
@@ -772,7 +772,7 @@ public class ACTRModel implements LearnModel
             public void onLocalFailure(Throwable error)
             {
                 Log.e(LOG_TAG, "Error while logging user in.  User was not logged in.\n" +
-                               error.getMessage());
+                               (error != null ? error.getMessage() : ""));
 
                 if (listener != null)
                     listener.onLocalFailure(error);
@@ -1451,7 +1451,7 @@ public class ACTRModel implements LearnModel
                 latch.countDown();
 
 
-                Log.e(LOG_TAG, String.format("%s error: %s", action, error.toString()));
+                Log.e(LOG_TAG, String.format("%s error: %s", action, (error != null ? error.toString() : "")));
                 errors.add(error);
             }
 
@@ -1506,7 +1506,7 @@ public class ACTRModel implements LearnModel
                 latch.countDown();
 
 
-                Log.e(LOG_TAG, String.format("%s error: %s", action, error.toString()));
+                Log.e(LOG_TAG, String.format("%s error: %s", action, (error != null ? error.toString() : "")));
                 errors.add(error);
             }
 

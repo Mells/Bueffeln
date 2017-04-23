@@ -14,3 +14,5 @@
 /settings.gradle
 /gradle/
 /gradlew.bat
+*.jks
+*.apk

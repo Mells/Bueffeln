@@ -190,14 +190,16 @@
 
     </TableLayout>
 
+
+    <!--android:layout_below="@+id/toolbar" TODO:  THIS IS THROWING ERRORS -->
     <com.wunderlist.slidinglayer.SlidingLayer
         xmlns:slidingLayer="http://schemas.android.com/apk/res-auto"
         android:id="@+id/slidingLayer1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
         android:elevation="2dip"
-        slidingLayer:stickTo="left">
+        slidingLayer:stickTo="left"
+        >
         <!--slidingLayer:shadowDrawable="@drawable/sidebar_shadow"
         slidingLayer:shadowSize="@dimen/shadow_size"
         slidingLayer:offsetDistance="@dimen/offset_distance"
