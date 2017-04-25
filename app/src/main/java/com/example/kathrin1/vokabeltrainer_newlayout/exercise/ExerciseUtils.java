@@ -136,7 +136,7 @@ public abstract class ExerciseUtils
                                    : word.getVoc();
 
 
-        input = input.toLowerCase();
+        input = input.toLowerCase().trim();
 
         Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getMapped());
 

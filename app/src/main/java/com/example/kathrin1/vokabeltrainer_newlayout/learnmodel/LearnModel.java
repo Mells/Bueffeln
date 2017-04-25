@@ -176,6 +176,15 @@ public interface LearnModel
     void initializeASync(CalcListener listener);
 
     /**
+     * Returns whether the model is currently initialized or not.  If this method returns true, that
+     * means any calls to model functions would result in a
+     * {@link com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.exceptions.ModelNotInitializedException}.
+     *
+     * @return Returns true if the model has been initialized, false otherwise.
+     */
+    boolean isInitialized();
+
+    /**
      * Destroys the model, freeing all resources and closing all open connections.
      */
     void destroy();

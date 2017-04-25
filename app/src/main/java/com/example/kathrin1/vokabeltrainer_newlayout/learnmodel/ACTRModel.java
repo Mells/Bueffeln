@@ -356,6 +356,15 @@ public class ACTRModel implements LearnModel
      * {@inheritDoc}
      */
     @Override
+    public boolean isInitialized()
+    {
+        return initialized;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void destroy()
     {
         SessionObject lastSession = sessions.get(sessions.size() - 1);

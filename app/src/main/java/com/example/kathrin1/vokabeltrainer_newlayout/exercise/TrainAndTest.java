@@ -68,9 +68,9 @@ public class TrainAndTest extends AppCompatActivity
 {
 
     public static final String LOG_TAG = "[TrainAndTest]";
-    public static final int TRAIN_L1_DELAY = 1000;
+    public static final int TRAIN_L1_MIN_DELAY = 1000;
     public static final int EXERCISE_CORRECT_WAIT_DELAY = 2000;
-    public static final int EXERCISE_INCORRECT_WAIT_DELAY = 4000;
+    public static final int EXERCISE_INCORRECT_WAIT_DELAY = 5000;
 
 
     private LearnModel model;
@@ -203,6 +203,10 @@ public class TrainAndTest extends AppCompatActivity
             @Override
             public void onCompletion()
             {
+
+                if (model == null || !model.isInitialized())
+                    return;
+
                 // Set restrictions for word selection
                 model.setRestrictions(book, chapter, unit);
 
@@ -218,6 +222,10 @@ public class TrainAndTest extends AppCompatActivity
                     @Override
                     public void onResponse(NetworkError error)
                     {
+
+                        if (model == null || !model.isInitialized())
+                            return;
+
                         // If an error occurred while attempting to get Parse IDs, just
                         // skip pulling from remote and display the next word
                         if (error != null)
@@ -235,6 +243,10 @@ public class TrainAndTest extends AppCompatActivity
                             @Override
                             public void onResponse(NetworkError error)
                             {
+
+                                if (model == null || !model.isInitialized())
+                                    return;
+
                                 // If no error occurred, asynchronously save the database and forget
                                 if (error == null)
                                     model.saveToDatabaseASync(false, null);
@@ -262,6 +274,12 @@ public class TrainAndTest extends AppCompatActivity
             @Override
             public void onSelection(VocObject vocObject)
             {
+
+                loadingBar.deactivate();
+
+                if (model == null || !model.isInitialized())
+                    return;
+
                 if (vocObject != null)
                 {
                     currExerciseType = vocObject.isNew()
@@ -269,7 +287,6 @@ public class TrainAndTest extends AppCompatActivity
                                        : InterxObject.EXERCISE_TEST;
                 }
                 displayWord(vocObject);
-                loadingBar.deactivate();
             }
         }, wordsToIgnore);
     }
@@ -325,7 +342,7 @@ public class TrainAndTest extends AppCompatActivity
 
                     txt_bsp.setText(ExerciseUtils.fromHtml(
                             ExerciseUtils.replaceWordInSentence(currSentence, word, "<b><big>%s</big></b>")));
-                    scheduleTrainDelayTimer(word.getTranslation());
+                    scheduleTrainDelayTimer(word.getTranslation(), currSentence);
 
                     // Set interaction values on training exercise immediately
                     currInterx.setLatency((int) ModelMath.predictedRT(currSentence.getSentence().length(),
@@ -342,7 +359,7 @@ public class TrainAndTest extends AppCompatActivity
                     toggleOptionalUIElements(View.VISIBLE);
 
                     txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(currSentence, word));
-                    scheduleTrainDelayTimer(word.getTranslation());
+                    scheduleTrainDelayTimer(word.getTranslation(), currSentence);
                     break;
             }
         }
@@ -489,7 +506,7 @@ public class TrainAndTest extends AppCompatActivity
         if (currentWord == null)
             return;
 
-       showFeedback(ExerciseUtils.fromHtml(
+        showFeedback(ExerciseUtils.fromHtml(
                 getString(R.string.TrainTest_Answer,
                           currentWord.getTranslation(),
                           currentWord.getVoc())));
@@ -534,7 +551,7 @@ public class TrainAndTest extends AppCompatActivity
      */
     private void onAnswerEntered()
     {
-
+        inputLayout.setVisibility(View.INVISIBLE);
         destroyExerciseWaitTimer();
 
         String input = edit_solution.getText().toString();
@@ -549,12 +566,13 @@ public class TrainAndTest extends AppCompatActivity
                 break;
 
             case CLOSE:
-               showFeedback(ExerciseUtils.fromHtml(
+                showFeedback(ExerciseUtils.fromHtml(
                         getString(R.string.TrainTest_Close, currentWord.getTranslation(), input, currentWord.getVoc())));
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_SUCCESS);
 
-                scheduleExerciseWaitTimer(EXERCISE_INCORRECT_WAIT_DELAY);
+                btn_next.setVisibility(View.VISIBLE);
+                //scheduleExerciseWaitTimer(EXERCISE_INCORRECT_WAIT_DELAY);
                 break;
 
             case INCORRECT:
@@ -563,7 +581,8 @@ public class TrainAndTest extends AppCompatActivity
                 if (currInterx != null)
                     currInterx.setResult(InterxObject.RESULT_FAILURE);
 
-                scheduleExerciseWaitTimer(EXERCISE_INCORRECT_WAIT_DELAY);
+                btn_next.setVisibility(View.VISIBLE);
+                //scheduleExerciseWaitTimer(EXERCISE_INCORRECT_WAIT_DELAY);
                 break;
         }
 
@@ -628,7 +647,7 @@ public class TrainAndTest extends AppCompatActivity
         ((ACTRModel) model).forceAddSessions(simSessions);
 
         for (VocObject voc : dbManager.getWordsByBookChapter(book, chapter, unit))
-            targetAlphas.put(voc, ((float)r.nextGaussian() * 0.08f) + ModelMath.ALPHA_DEFAULT);
+            targetAlphas.put(voc, ((float) r.nextGaussian() * 0.08f) + ModelMath.ALPHA_DEFAULT);
 
         simLoop(calendar, r);
     }
@@ -998,9 +1017,11 @@ public class TrainAndTest extends AppCompatActivity
     /**
      * Schedules the given word to appear after a delay, with a simple fading-in animation
      *
-     * @param word The word to display
+     * @param word     The word to display
+     * @param sentence The sentence used as context for the word, used to determine
+     *                 the duration to delay
      */
-    private void scheduleTrainDelayTimer(final String word)
+    private void scheduleTrainDelayTimer(final String word, SentObject sentence)
     {
         // Clear existing text
         txt_voc.setText("");
@@ -1032,7 +1053,8 @@ public class TrainAndTest extends AppCompatActivity
                     }
                 });
             }
-        }, TRAIN_L1_DELAY);
+        }, Math.max(TRAIN_L1_MIN_DELAY,
+                    (int) ModelMath.reactionTimeCharDiscount(sentence.getSentence().length())));
     }
 
     private void scheduleExerciseWaitTimer(int delay)
