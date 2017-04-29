@@ -84,7 +84,7 @@
                 android:layout_alignParentRight="true"/>
 
             <TextView
-                android:text="BlaBla"
+                android:text="Translation"
                 android:paddingLeft="10dp"
                 android:background="@drawable/ic_ueberschrift_hintrgrund"
                 android:layout_centerVertical="true"
@@ -104,7 +104,6 @@
             <EditText
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
                 android:text=""
                 android:ems="10"
                 android:layout_centerVertical="true"
@@ -112,7 +111,8 @@
                 android:layout_alignParentRight="true"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true" />
+                android:layout_alignParentStart="true"
+                android:inputType="textFilter|textNoSuggestions"/>
 
         </RelativeLayout>
 

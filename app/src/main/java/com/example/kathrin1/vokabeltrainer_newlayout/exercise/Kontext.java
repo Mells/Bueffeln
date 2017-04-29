@@ -306,73 +306,33 @@ public class Kontext extends AppCompatActivity {
             List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
             
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
-            // TODO - take gdex not random
             if (sentenceList.size() >= 3) {
 
                 // MOVED HANDLING OF PARSING INTEGERS FROM STRINGS TO DatabaseManager.getSentence(String)
-
-                index = randomGenerator.nextInt(sentenceList.size());
-                Log.d("TRANSLATION", Integer.toString(index));
-                String numberSentence1 = sentenceList.get(index);
-                sentenceList.remove(index);
-                index = randomGenerator.nextInt(sentenceList.size());
-                String numberSentence2 = sentenceList.get(index);
-                sentenceList.remove(index);
-                index = randomGenerator.nextInt(sentenceList.size());
-                String numberSentence3 = sentenceList.get(index);
-                //SentObject sentence = dbManager.getSentence(numberSentence1).getSentence();
-                // TODO - delete the word in sentences
-
-
-
-                txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence1)));
-                txt_sent02.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence2)));
-                txt_sent03.setText(deleteWordFromSentence(dbManager.getSentence(numberSentence3)));
+                txt_sent01.setText(ExerciseUtils.fromHtml(
+                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                txt_sent02.setText(ExerciseUtils.fromHtml(
+                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(1)), voc, "___")));
+                txt_sent03.setText(ExerciseUtils.fromHtml(
+                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(2)), voc, "___")));
             }
             else{
                 // todo supplement sentences
-                Log.d("List:", sentenceList.toString());
                 if (sentenceList.size() == 1){
-                    Log.d("List", sentenceList.toString());
-                    txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0))));
-                    txt_sent02.setText("Kein Satz vorhanden, entschuldigung.");
-                    txt_sent03.setText("Kein Satz vorhanden, entschuldigung.");
+                    txt_sent01.setText(ExerciseUtils.fromHtml(
+                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                    txt_sent02.setText("");
+                    txt_sent03.setText("");
                 }
                 else if (sentenceList.size() == 2){
-                    txt_sent01.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0))));
-                    txt_sent02.setText(deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1))));
-                    txt_sent03.setText("Kein Satz vorhanden, entschuldigung.");
-                }
-                //else if (sentenceList.size() == 3){
-                //    txt_sent01.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(0).substring(1, sentenceList.get(0).length() - 1))).getSentence());
-                //    txt_sent02.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(1).substring(1, sentenceList.get(1).length() - 1))).getSentence());
-                //    txt_sent03.setText(dbManager.getSentence(Integer.parseInt(sentenceList.get(2).substring(1, sentenceList.get(2).length() - 1))).getSentence());
-                //}
-
-            }
-        }
-    }
-
-    private String deleteWordFromSentence(SentObject sentence) {
-        Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
-
-        List<String> lemmaVocList = DBUtils.splitListString(voc.getLemma());
-        String sent = sentence.getSentence();
-
-        Log.d("smap", smap.toString());
-        Log.d("lemmaList", lemmaVocList.toString());
-
-        for (String l : lemmaVocList){
-            Log.d("l", l.replaceAll("'",""));
-            if (smap.containsKey(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""))){
-                List<String> bla = smap.get(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""));
-                Log.d("bla", bla.toString());
-                for (String s : bla){
-                    sent = sent.replaceAll(s, "___");
+                    txt_sent01.setText(ExerciseUtils.fromHtml(
+                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                    txt_sent02.setText(ExerciseUtils.fromHtml(
+                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(1)), voc, "___")));
+                    txt_sent03.setText("");
                 }
             }
         }
-        return sent;
     }
 
     public SlidingLayer getSlidingLayer(){

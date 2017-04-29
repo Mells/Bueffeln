@@ -67,7 +67,7 @@ public class SentObject
      */
     public static SentObject emptySentence(Context c)
     {
-        return new SentObject(-1, "-", "-", c.getString(R.string.Sent_Missing), "", "", "")
+        return new SentObject(-1, "-", "-", "", "", "", "")
                        .setEmpty(true);
     }
 
@@ -80,7 +80,7 @@ public class SentObject
      */
     public static SentObject emptySentence()
     {
-        return new SentObject(-1, "-", "-", ":SENTENCE MISSING:", "", "", "")
+        return new SentObject(-1, "-", "-", "", "", "", "")
                        .setEmpty(true);
     }
 

@@ -364,28 +364,29 @@ public class Translation extends AppCompatActivity {
 
             // TODO:  CHANGE SENTENCE TYPE HERE
             SentObject sentence = dbManager.getExampleGDEXSentence(voc);
+
             // TODO - delete the word from bsp
-
-            Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getTagged());
-
-            List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
-            String sent = sentence.getSentence();
-
-            Log.d("smap", smap.toString());
-            Log.d("lemmaList", lemmaVocList.toString());
-
-            for (String l : lemmaVocList){
-                Log.d("l", l.replaceAll("'",""));
-                String lemma = l.replaceAll("['\\[\\]]", "");
-                if (smap.containsKey(lemma)){
-                    List<String> bla = smap.get(lemma);
-                    Log.d("bla", bla.toString());
-                    for (String s : bla){
-                        sent = sent.replaceAll(s, "___");
-                    }
-                }
-            }
-            txt_bsp.setText(fromHtml(sent));
+//            Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getMapped());
+//
+//            List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
+//            String sent = sentence.getSentence();
+//
+//            Log.d("smap", smap.toString());
+//            Log.d("lemmaList", lemmaVocList.toString());
+//
+//            for (String l : lemmaVocList){
+//                Log.d("l", l.replaceAll("'",""));
+//                String lemma = l.replaceAll("['\\[\\]]", "");
+//                if (smap.containsKey(lemma)){
+//                    List<String> bla = smap.get(lemma);
+//                    Log.d("bla", bla.toString());
+//                    for (String s : bla){
+//                        sent = sent.replaceAll(s, "___");
+//                    }
+//                }
+//            }
+            txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
+            //txt_bsp.setText(fromHtml(sent));
             //txt_bsp.setText(sentence.getSentence());
         }
     }
@@ -405,12 +406,11 @@ public class Translation extends AppCompatActivity {
             // TODO:  CHANGE SENTENCE TYPE HERE
             SentObject sentence = dbManager.getExampleGDEXSentence(voc);
 
-
             // TODO - highlight the word in bsp
-            Log.d("Voc", voc.getVoc());
+            /*Log.d("Voc", voc.getVoc());
             Log.d("errorSent", sentence.getSentence());
 
-            Map<String, List<String>> smap = stringOfTagsToMap(sentence.getTagged());
+            Map<String, List<String>> smap = stringOfTagsToMap(sentence.getMapped());
 
             List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
             String sent = sentence.getSentence();
@@ -427,8 +427,10 @@ public class Translation extends AppCompatActivity {
                         sent = sent.replaceAll(s, "<big><b>"+s+"</b></big>");
                     }
                 }
-            }
-            txt_bsp.setText(fromHtml(sent));
+            }*/
+            txt_bsp.setText(ExerciseUtils.fromHtml(
+                    ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
+            //txt_bsp.setText(fromHtml(sent));
             //txt_bsp.setText(sentence.getSentence());
         }
     }

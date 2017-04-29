@@ -30,6 +30,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -195,8 +196,27 @@ public class Lektion extends AppCompatActivity {
                         if(status != TextToSpeech.ERROR){
                             if(status == TextToSpeech.SUCCESS)
                             {
+                                Log.d("Lektion: for cts", vocable.getVoc());
+                                //String cts = vocable.getVoc().replace("(=", " also ");
+                                String cts = vocable.getVoc().replaceAll("[\\(, \\), \\=]", " ");
+                                Log.d("Lektion: cts",cts);
                                 convertToSpeech.setLanguage(Locale.UK);
-                                convertToSpeech.speak(vocable.getVoc(), TextToSpeech.QUEUE_FLUSH, null, null);
+                                String[] word = cts.split("\\s+");
+                                Log.d("Lektion: tts", Arrays.toString(word));
+
+                                convertToSpeech.speak(cts, TextToSpeech.QUEUE_FLUSH, null, null);
+//                                if (word.length == 1){
+//                                }
+//                                else {
+//                                    for (String part : word) {
+//                                        convertToSpeech.speak(part, TextToSpeech.QUEUE_ADD, null, null);
+//                                        convertToSpeech.playSilentUtterance(1, TextToSpeech.QUEUE_ADD, null);
+//                                    }
+//                                }
+
+
+
+
                             }
                             else {
                                 Toast.makeText(getApplicationContext(), "not init" , Toast.LENGTH_LONG).show();
@@ -317,7 +337,9 @@ public class Lektion extends AppCompatActivity {
 
         SentObject sentence = dbManager.getSentence(sentenceList.get(index));
         // TODO - highlight the word in bsp
-        txt_bsp.setText(sentence.getSentence());
+        txt_bsp.setText(ExerciseUtils.fromHtml(
+                ExerciseUtils.replaceWordInSentence(sentence, vocable, "<b><big>%s</big></b>")));
+        //txt_bsp.setText(sentence.getSentence());
     }
 
     public SlidingLayer getSlidingLayer(){
