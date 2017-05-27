@@ -2,27 +2,32 @@
     <string name="app_name">Vokabeltrainer</string>
     <string name="ic_help">Hilfe</string>
     <string name="ic_home">Home</string>
-    <string name="reset">Reset</string>
+    <string name="ic_setting">Einstellungen</string>
     <string name="plus">Buch Hinzufügen</string>
+
+    <string name="woerterbuch">Wörterbuch</string>
+    <string name="lektionen">Wörter nach Lektionen</string>
+    <string name="aufgabe">Testen \u0026 Üben</string>
+    <string name="ex_translation">Worttest</string>
+    <string name="ex_kontext">Kontexttest</string>
+    <string name="status">Status</string>
+
 
     <string name="Sent_Missing">:SENTENCE MISSING:</string>
     <string name="DBHandler_ProgressDialog_Title">Database Update</string>
     <string name="DBHandler_ProgressDialog_Message">Loading updated data…</string>
 
-    <!-- <string name="Exercise_TrainAndTest">Train&amp;Test</string> -->
     <string name="Exercise_TrainAndTest">Lernen&amp;Testen</string>
-    <!-- <string name="TrainText_InitializeModel">Initializing model…</string> -->
     <string name="TrainTest_InitializeModel">Das Model wird initialisiert…</string>
-    <!-- <string name="TrainTest_LoadingModel">Loading model…</string> -->
     <string name="TrainTest_LoadingModel">Das Model wird geladen…</string>
-    <!-- <string name="TrainTest_CalculatingWord">Finding next word…</string> -->
     <string name="TrainTest_CalculatingWord">Suche nach neuem Wort...</string>
-    <!-- <string name="TrainText_InitialDownload">Performing first-time setup…</string> -->
     <string name="TrainTest_InitialDownload">Einstellungen werden zum ersten Mal durchgeführt…</string>
     <string name="TrainTest_MissingWord">Es gibt keine Wörter mehr!</string>
     <string name="TrainTest_Answer"><![CDATA[Die korrekte Übersetzung für <b><i>%1$s</i></b> ist <b><i>%2$s</i></b>.]]></string>
     <string name="TrainTest_Close"><![CDATA[Fast! Die korrekte Übersetzung für <b><i>%1$s</i></b> ist nicht <i>%2$s</i>, sondern <b><i>%3$s</i></b>.]]></string>
     <string name="TrainText_Incorrect"><![CDATA[Es tut mir leid, aber <i><b>%1$s</b></i> ist nicht korrekt.  Das korrekte Wort ist <i><b>%2$s</b></i>.]]></string>
     <string name="TrainText_Correct">Glückwunsch, das ist korrekt.</string>
+
+    <string name="SettingSentences">Hier kannst du ändern was für Beispielsätze du haben möchtest.</string>
 
 </resources>

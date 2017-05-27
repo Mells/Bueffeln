@@ -28,19 +28,13 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
-
-import static com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils.stringOfTagsToMap;
 
 /**
  * Created by kathrin1 on 20.12.16.
@@ -119,10 +113,14 @@ public class Translation extends AppCompatActivity {
         final Switch sw_language = (Switch) findViewById(R.id.sw_language);
         final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
 
+        //hide feedback until its needed
+        final RelativeLayout lay_feedback = (RelativeLayout) findViewById(R.id.lay_feedback);
+        lay_feedback.setVisibility(View.INVISIBLE);
+
         // on inatiating the activity
         setBookValues();
 
-        allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
+        allVocabulary = dbManager.getWordsByBookChapterUnitLevel(book, chapter, unit, level);
 
         if(!sw_language.isChecked()){
             getVocabularyEnglish();
@@ -143,7 +141,7 @@ public class Translation extends AppCompatActivity {
                 // todo keep allVocabulary as is if nothing has changed
                 setBookValues();
 
-                allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
+                allVocabulary = dbManager.getWordsByBookChapterUnitLevel(book, chapter, unit, level);
 
                 if(!sw_language.isChecked()){
                     getVocabularyEnglish();
@@ -170,7 +168,9 @@ public class Translation extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
+                edit_solution.setEnabled(true);
                 txt_feedback.setText("");
+                lay_feedback.setVisibility(View.INVISIBLE);
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -193,6 +193,8 @@ public class Translation extends AppCompatActivity {
         btn_solution.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                edit_solution.setEnabled(false);
+                lay_feedback.setVisibility(View.VISIBLE);
                 if (!sw_language.isChecked()) {
                     txt_feedback.setText(fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>"));
                 }
@@ -218,6 +220,7 @@ public class Translation extends AppCompatActivity {
                     if (edit_solution.getText().toString().length() > 0) {
                         if (!sw_language.isChecked()) {
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
                                 // write to database
@@ -226,11 +229,16 @@ public class Translation extends AppCompatActivity {
                                 }
                             } else {
                                 // Todo - feedback
+                                Feedback feedback = new Feedback(edit_solution.getText().toString(),
+                                        voc.toString(), voc.getPOS(), voc.getLemma());
+                                feedback.generateFeedback();
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
                         } else {
                             if (edit_solution.getText().toString().equals(voc.getVoc())) {
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
                                 // write to database
@@ -240,6 +248,7 @@ public class Translation extends AppCompatActivity {
 
                             } else {
                                 // Todo - feedback
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
@@ -262,12 +271,24 @@ public class Translation extends AppCompatActivity {
 
         sw_language.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                edit_solution.setEnabled(false);
                 txt_feedback.setText("");
+                lay_feedback.setVisibility(View.INVISIBLE);
                 if(!sw_language.isChecked()){
-                    getVocabularyEnglish();
+                    txt_voc.setText(voc.getVoc());
+
+                    // TODO:  get original sentence
+                    SentObject sentence = dbManager.getExampleGDEXSentence(voc);
+
+                    txt_bsp.setText(ExerciseUtils.fromHtml(
+                            ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
                 }
                 else {
-                    getVocabularyGerman();
+                    txt_voc.setText(voc.getTranslation());
+
+                    // TODO:  get original sentence
+                    SentObject sentence = dbManager.getExampleGDEXSentence(voc);
+                    txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
                 }
             }
         });
@@ -348,7 +369,6 @@ public class Translation extends AppCompatActivity {
     }
 
     private void getVocabularyGerman() {
-        Log.d("-----------", "-------------------");
         if (allVocabulary.size() == 0) {
             Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                     "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
@@ -361,30 +381,9 @@ public class Translation extends AppCompatActivity {
             Log.d("DE-Übersetzung", voc.getTranslation());
             txt_voc.setText(voc.getTranslation());
 
-
             // TODO:  CHANGE SENTENCE TYPE HERE
             SentObject sentence = dbManager.getExampleGDEXSentence(voc);
 
-            // TODO - delete the word from bsp
-//            Map<String, List<String>> smap = DBUtils.stringOfTagsToMap(sentence.getMapped());
-//
-//            List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
-//            String sent = sentence.getSentence();
-//
-//            Log.d("smap", smap.toString());
-//            Log.d("lemmaList", lemmaVocList.toString());
-//
-//            for (String l : lemmaVocList){
-//                Log.d("l", l.replaceAll("'",""));
-//                String lemma = l.replaceAll("['\\[\\]]", "");
-//                if (smap.containsKey(lemma)){
-//                    List<String> bla = smap.get(lemma);
-//                    Log.d("bla", bla.toString());
-//                    for (String s : bla){
-//                        sent = sent.replaceAll(s, "___");
-//                    }
-//                }
-//            }
             txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
             //txt_bsp.setText(fromHtml(sent));
             //txt_bsp.setText(sentence.getSentence());
@@ -392,7 +391,6 @@ public class Translation extends AppCompatActivity {
     }
 
     private void getVocabularyEnglish() {
-
         if (allVocabulary.size() == 0) {
             Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                     "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
@@ -406,28 +404,6 @@ public class Translation extends AppCompatActivity {
             // TODO:  CHANGE SENTENCE TYPE HERE
             SentObject sentence = dbManager.getExampleGDEXSentence(voc);
 
-            // TODO - highlight the word in bsp
-            /*Log.d("Voc", voc.getVoc());
-            Log.d("errorSent", sentence.getSentence());
-
-            Map<String, List<String>> smap = stringOfTagsToMap(sentence.getMapped());
-
-            List<String> lemmaVocList = new ArrayList<String>(Arrays.asList(voc.getLemma().substring(1, voc.getLemma().length() - 1).split(", ")));
-            String sent = sentence.getSentence();
-
-            Log.d("smap", smap.toString());
-            Log.d("lemmaList", lemmaVocList.toString());
-
-            for (String l : lemmaVocList){
-                Log.d("l", l.replaceAll("'",""));
-                if (smap.containsKey(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""))){
-                    List<String> bla = smap.get(l.replaceAll("'","").replaceAll("\\[","").replaceAll("\\]",""));
-                    Log.d("bla", bla.toString());
-                    for (String s : bla){
-                        sent = sent.replaceAll(s, "<big><b>"+s+"</b></big>");
-                    }
-                }
-            }*/
             txt_bsp.setText(ExerciseUtils.fromHtml(
                     ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
             //txt_bsp.setText(fromHtml(sent));

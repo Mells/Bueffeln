@@ -25,6 +25,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -646,7 +647,7 @@ public class TrainAndTest extends AppCompatActivity
 
         ((ACTRModel) model).forceAddSessions(simSessions);
 
-        for (VocObject voc : dbManager.getWordsByBookChapter(book, chapter, unit))
+        for (VocObject voc : dbManager.getWordsByBookChapterUnit(book, chapter, unit))
             targetAlphas.put(voc, ((float) r.nextGaussian() * 0.08f) + ModelMath.ALPHA_DEFAULT);
 
         simLoop(calendar, r);
@@ -978,6 +979,10 @@ public class TrainAndTest extends AppCompatActivity
             case R.id.item_home:
                 Intent intent_home = new Intent(TrainAndTest.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(TrainAndTest.this, Settings.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

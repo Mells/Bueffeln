@@ -440,8 +440,8 @@ public class DatabaseManager
      * @param level   Level of the word to filter by
      * @return List of words that meet the given filtering criteria
      */
-    public List<VocObject> getWordsByBookChapterLevel(String book, String chapter, String unit,
-                                                      int level)
+    public List<VocObject> getWordsByBookChapterUnitLevel(String book, String chapter, String unit,
+                                                          int level)
     {
         List<VocObject> vocab = new ArrayList<>();
 
@@ -488,7 +488,7 @@ public class DatabaseManager
      * @param unit    String of space-separated units to filter words by
      * @return List of words that meet the given filtering criteria
      */
-    public List<VocObject> getWordsByBookChapter(String book, String chapter, String unit)
+    public List<VocObject> getWordsByBookChapterUnit(String book, String chapter, String unit)
     {
         List<VocObject> vocab = new ArrayList<>();
 
@@ -499,6 +499,53 @@ public class DatabaseManager
                                      DBHandler.WORD_BOOK, book,
                                      DBHandler.WORD_CHAPTER, chapter);
 
+        Cursor cursor = db.rawQuery(query, null);
+
+        if (!cursor.isAfterLast())
+        {
+            while (cursor.moveToNext())
+                vocab.add(new VocObject(cursor));
+        }
+
+        cursor.close();
+
+        return vocab;
+    }
+
+    /**
+     * Gets all words in the database that match the given book, chapter and level.
+     *
+     * @param book    Book to filter words by
+     * @param chapter Chapter to filter words by
+     * @param level   Level of the word to filter by
+     * @return List of words that meet the given filtering criteria
+     */
+    public List<VocObject> getWordsByBookChapterLevel(String book, String chapter, int level)
+    {
+        List<VocObject> vocab = new ArrayList<>();
+
+        chapter = formatChapterForQuery(chapter, "A B C");
+
+        String query;
+
+        if (chapter.equals("Welcome"))
+        {
+            query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
+                    DBHandler.WORD_TABLENAME,
+                    DBHandler.WORD_BOOK, book,
+                    DBHandler.WORD_CHAPTER, chapter,
+                    DBHandler.WORD_LEVEL, level);
+            Log.d("Query", query);
+        }
+        else
+        {
+            query = String.format("select * from %s where %s = '%s' and (%s like %s) and %s = %d",
+                    DBHandler.WORD_TABLENAME,
+                    DBHandler.WORD_BOOK, book,
+                    DBHandler.WORD_CHAPTER, chapter,
+                    DBHandler.WORD_LEVEL, level);
+            Log.d("Query", query);
+        }
         Cursor cursor = db.rawQuery(query, null);
 
         if (!cursor.isAfterLast())

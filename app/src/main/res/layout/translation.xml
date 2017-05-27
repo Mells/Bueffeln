@@ -66,7 +66,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:id="@+id/txt_voc"
-                android:textSize="24sp" />
+                android:textSize="24sp"/>
         </RelativeLayout>
 
         <RelativeLayout
@@ -84,7 +84,7 @@
                 android:layout_alignParentRight="true"/>
 
             <TextView
-                android:text="Translation"
+                android:text="@string/ex_translation"
                 android:paddingLeft="10dp"
                 android:background="@drawable/ic_ueberschrift_hintrgrund"
                 android:layout_centerVertical="true"

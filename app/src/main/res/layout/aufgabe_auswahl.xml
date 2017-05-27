@@ -28,7 +28,7 @@
                 android:layout_marginBottom="20dp"
                 android:layout_weight="1"
                 android:background="@drawable/ic_sprechblase_auswahl"
-                android:text="Translation" />
+                android:text="@string/ex_translation" />
 
             <Button
                 android:id="@+id/btn_open_kontext"
@@ -39,7 +39,7 @@
                 android:layout_marginBottom="20dp"
                 android:layout_weight="1"
                 android:background="@drawable/ic_sprechblase_auswahl"
-                android:text="Kontext" />
+                android:text="@string/ex_kontext" />
 
             <Button
                 android:id="@+id/btn_open_ex3"

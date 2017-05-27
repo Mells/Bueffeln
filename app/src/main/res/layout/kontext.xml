@@ -40,12 +40,13 @@
 
         </RelativeLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/lay_vocabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/lay_überschrift"
             android:layout_marginTop="20dp"
+            android:orientation="vertical"
             android:background="@drawable/ic_sprechblase_aufgabe_links">
 
             <TextView
@@ -60,23 +61,22 @@
                 android:text=""
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/txt_sentence01"
                 android:layout_marginTop="10dp"
                 android:layout_marginLeft="60dp"
                 android:layout_marginRight="15dp"
                 android:id="@+id/txt_sentence02" />
+
             <TextView
                 android:text=""
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/txt_sentence02"
                 android:layout_marginTop="10dp"
                 android:layout_marginLeft="60dp"
                 android:layout_marginRight="15dp"
                 android:layout_marginBottom="10dp"
                 android:id="@+id/txt_sentence03" />
 
-        </RelativeLayout>
+        </LinearLayout>
 
         <RelativeLayout
             android:id="@+id/lay_überschrift"
@@ -84,7 +84,7 @@
             android:layout_height="50dp">
 
             <TextView
-                android:text="Kontext"
+                android:text="@string/ex_kontext"
                 android:paddingLeft="10dp"
                 android:background="@drawable/ic_ueberschrift_hintrgrund"
                 android:layout_centerVertical="true"

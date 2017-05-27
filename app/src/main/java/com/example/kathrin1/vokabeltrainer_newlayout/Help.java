@@ -55,6 +55,10 @@ public class Help extends AppCompatActivity{
                 Intent intent_home = new Intent(Help.this, MainActivity.class);
                 startActivity(intent_home);
                 return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(Help.this, Settings.class);
+                startActivity(intent_setting);
+                return (true);
         }
         return (super.onOptionsItemSelected(item));
     }

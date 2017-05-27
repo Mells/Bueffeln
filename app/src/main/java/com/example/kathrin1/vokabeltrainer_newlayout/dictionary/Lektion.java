@@ -22,6 +22,7 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -230,7 +231,7 @@ public class Lektion extends AppCompatActivity {
     }
 
     public void setVocabulary() {
-        allVocabulary = dbManager.getWordsByBookChapter(book, chapter, unit);
+        allVocabulary = dbManager.getWordsByBookChapterUnit(book, chapter, unit);
 
         len_vocabulary = allVocabulary.size()-1;
 
@@ -363,6 +364,10 @@ public class Lektion extends AppCompatActivity {
             case R.id.item_home:
                 Intent intent_home = new Intent(Lektion.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(Lektion.this, Settings.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

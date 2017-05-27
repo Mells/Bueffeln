@@ -16,6 +16,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
@@ -119,6 +120,10 @@ public class VocabularyEntry extends AppCompatActivity {
             case R.id.item_home:
                 Intent intent_home = new Intent(VocabularyEntry.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(VocabularyEntry.this, Settings.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

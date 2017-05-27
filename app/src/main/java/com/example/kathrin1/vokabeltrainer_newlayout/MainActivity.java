@@ -17,6 +17,8 @@ import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.status.Status;
+import com.example.kathrin1.vokabeltrainer_newlayout.status.Status2;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 public class MainActivity extends AppCompatActivity {
@@ -103,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         btn_status.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, Status.class);
+                Intent intent = new Intent(MainActivity.this, Status2.class);
                 startActivity(intent);
             }
         });
@@ -153,6 +155,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.item_home:
                 Intent intent_home = new Intent(MainActivity.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(MainActivity.this, Settings.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

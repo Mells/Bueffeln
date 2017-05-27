@@ -5,6 +5,7 @@ import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
@@ -66,19 +67,21 @@ public abstract class ExerciseUtils
         // TODO:  Probably move this bit somewhere more sensible
         // Cleans up spaces before punctuation
         sent = sent.replaceAll("\\s([.,!?])", "$1");
-
+        Log.d("ExerciseUtils: Smap", String.valueOf(smap));
+        Log.d("ExerciseUtils: lemvocli", String.valueOf(lemmaVocList));
         for (String lemma : lemmaVocList)
         {
             if (smap.containsKey(lemma))
             {
                 List<String> bla = smap.get(lemma);
+                Log.d("ExerciseUtils: Lemma", String.valueOf(bla));
                 for (String s : bla)
                 {
-                    //sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
+                    sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
 
                     // This strategy of using a Matcher object allows for case-insensitive matching,
                     // while preserving case throughout the string
-                    Pattern pattern = Pattern.compile("\\b" + s.toLowerCase() + "\\b");
+                    /*Pattern pattern = Pattern.compile("\\b" + s.toLowerCase() + "\\b");
                     Matcher matcher = pattern.matcher(sent.toLowerCase());
 
                     int prevEnd = 0;
@@ -92,7 +95,7 @@ public abstract class ExerciseUtils
                     }
                     sb.append(sent, prevEnd, sent.length());
 
-                    sent = sb.toString();
+                    sent = sb.toString();*/
                 }
             }
         }

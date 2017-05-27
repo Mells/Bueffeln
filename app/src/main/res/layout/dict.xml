@@ -26,6 +26,7 @@
         android:layout_marginTop="10dp"
         android:layout_below="@+id/edit_solution"
         android:layout_alignLeft="@+id/edit_solution"
-        android:layout_alignStart="@+id/edit_solution" />
+        android:layout_alignStart="@+id/edit_solution"
+        android:scrollbarSize="50dip"/>
 
 </RelativeLayout>

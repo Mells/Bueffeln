@@ -14,10 +14,12 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,15 +27,14 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -56,9 +57,11 @@ public class Kontext extends AppCompatActivity {
     private String unit;
     private int level;
 
+    private List<String> copyOfSentenceList;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.kontext);
+        setContentView(R.layout.kontext_scoll);
 
         // ----------------TABS---------------------
 
@@ -103,10 +106,13 @@ public class Kontext extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(Kontext.this);
 
-        Button btn_next = (Button) findViewById(R.id.btn_next);
-        Button btn_solution = (Button) findViewById(R.id.btn_solution);
-        Button btn_hint = (Button) findViewById(R.id.btn_hint);
+        final Button btn_next = (Button) findViewById(R.id.btn_next);
+        final Button btn_solution = (Button) findViewById(R.id.btn_solution);
+        final Button btn_hint = (Button) findViewById(R.id.btn_hint);
         Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
+
+        final LinearLayout lay_vocabel = (LinearLayout) findViewById(R.id.lay_vocabel);
+        final LinearLayout lay_button_menu = (LinearLayout) findViewById(R.id.lay_button_menu);
 
         txt_sent01 = (TextView) findViewById(R.id.txt_sentence01);
         txt_sent02 = (TextView) findViewById(R.id.txt_sentence02);
@@ -115,18 +121,24 @@ public class Kontext extends AppCompatActivity {
         final EditText edit_solution = (EditText) findViewById(R.id.edit_solution);
         final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
 
+        //hide feedback until its needed
+        final RelativeLayout lay_feedback = (RelativeLayout) findViewById(R.id.lay_feedback);
+        lay_feedback.setVisibility(View.INVISIBLE);
+
+
         // on inatiating the activity
         setBookValues();
 
         txt_feedback.setText("");
-        allVocabulary = dbManager.getWordsByBookChapterLevel(book, chapter, unit, level);
+        allVocabulary = dbManager.getWordsByBookChapterUnitLevel(book, chapter, unit, level);
 
         getVocabularyEnglishGerman();
 
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO - next word
+                lay_feedback.setVisibility(View.INVISIBLE);
+                edit_solution.setEnabled(true);
                 txt_feedback.setText("");
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
@@ -151,7 +163,43 @@ public class Kontext extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                                 "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
                     } else {
-                        txt_feedback.setText(fromHtml("Das deutsche Word lautet: <i><b>"+voc.getTranslation()+"</b></i>."));
+                        if (copyOfSentenceList.size() > 0){
+//                            <TextView
+//                            android:text=""
+//                            android:layout_width="wrap_content"
+//                            android:layout_height="wrap_content"
+//                            android:layout_marginTop="10dp"
+//                            android:layout_marginLeft="60dp"
+//                            android:layout_marginRight="15dp"
+//                            android:layout_marginBottom="10dp"
+//                            android:id="@+id/txt_sentence03" />
+
+                            TextView newSent = new TextView(Kontext.this);
+                            newSent.setText(ExerciseUtils.fromHtml(
+                                    ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(copyOfSentenceList.get(0)), voc)));
+                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                            //converting pixels into dp, so that is the same scale as in the layout
+                            int dpLeft = 60; // margin in dips
+                            int dpRight = 15; // margin in dips
+                            int dpBottom = 10; // margin in dips
+                            float d = Kontext.this.getResources().getDisplayMetrics().density;
+                            int marginLeft = (int)(dpLeft * d); // margin in pixels
+                            int marginRight = (int)(dpRight * d); // margin in pixels
+                            int marginBottom = (int)(dpBottom * d); // margin in pixels
+
+                            // left, top, right, bottom
+                            params.setMargins(marginLeft, 0, marginRight, marginBottom);
+                            newSent.setLayoutParams(params);
+
+                            lay_vocabel.addView(newSent);
+
+                            copyOfSentenceList.remove(0);
+                        }
+                        else {
+                            lay_feedback.setVisibility(View.VISIBLE);
+                            txt_feedback.setText(fromHtml("Es tud mir leid, es gibt keine weiteren Sätze für dieses Wort"));
+                        }
                     }
                 }else{
                     Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -163,6 +211,8 @@ public class Kontext extends AppCompatActivity {
         btn_solution.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                lay_feedback.setVisibility(View.VISIBLE);
+                edit_solution.setEnabled(false);
                 txt_feedback.setText(fromHtml("Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und Übersetzt <b><i>" + voc.getTranslation() + "</i></b>"));
             }
         });
@@ -179,6 +229,7 @@ public class Kontext extends AppCompatActivity {
         edit_solution.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+
                 Log.d("TextEdit", "in TextEdit");
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -190,6 +241,7 @@ public class Kontext extends AppCompatActivity {
                             InputMethodManager.HIDE_NOT_ALWAYS);
                     if (edit_solution.getText().toString().length() > 0) {
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
                                 // todo - schreib zu datenbank
@@ -198,6 +250,7 @@ public class Kontext extends AppCompatActivity {
                                 }
                             } else {
                                 // Todo - feedback
+                                lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
@@ -304,32 +357,42 @@ public class Kontext extends AppCompatActivity {
 
             // TODO:  CHANGE SENTENCE TYPE HERE
             List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
+            copyOfSentenceList = sentenceList;
             
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
             if (sentenceList.size() >= 3) {
-
+                Log.d("Kontext: sentenceList", sentenceList.toString());
                 // MOVED HANDLING OF PARSING INTEGERS FROM STRINGS TO DatabaseManager.getSentence(String)
                 txt_sent01.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
                 txt_sent02.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(1)), voc, "___")));
+                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1)), voc)));
                 txt_sent03.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(2)), voc, "___")));
+                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(2)), voc)));
+
+                copyOfSentenceList.remove(0);
+                copyOfSentenceList.remove(1);
+                copyOfSentenceList.remove(2);
             }
             else{
                 // todo supplement sentences
                 if (sentenceList.size() == 1){
                     txt_sent01.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
                     txt_sent02.setText("");
                     txt_sent03.setText("");
+
+                    copyOfSentenceList.remove(0);
                 }
                 else if (sentenceList.size() == 2){
                     txt_sent01.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(0)), voc, "___")));
+                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
                     txt_sent02.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.replaceWordInSentence(dbManager.getSentence(sentenceList.get(1)), voc, "___")));
+                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1)), voc)));
                     txt_sent03.setText("");
+
+                    copyOfSentenceList.remove(0);
+                    copyOfSentenceList.remove(1);
                 }
             }
         }
@@ -368,6 +431,10 @@ public class Kontext extends AppCompatActivity {
             case R.id.item_home:
                 Intent intent_home = new Intent(Kontext.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(Kontext.this, Settings.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));
