@@ -25,7 +25,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -111,7 +111,7 @@ public class TrainAndTest extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.train_and_test);
+        setContentView(R.layout.exercise_train_and_test);
 
         dbManager = DatabaseManager.build(this);
 
@@ -337,7 +337,7 @@ public class TrainAndTest extends AppCompatActivity
             switch (currExerciseType)
             {
                 // If this should be a training exercise, emphasize the word in the example sentence
-                // and display the L1 translation after a delay.
+                // and display the L1 exercise_translation after a delay.
                 case InterxObject.EXERCISE_TRAIN:
                     toggleOptionalUIElements(View.INVISIBLE);
 
@@ -355,7 +355,7 @@ public class TrainAndTest extends AppCompatActivity
                     break;
 
                 // If this should be a testing exercise, blank out the word in the example sentence
-                // and display the L1 translation immediately.
+                // and display the L1 exercise_translation immediately.
                 case InterxObject.EXERCISE_TEST:
                     toggleOptionalUIElements(View.VISIBLE);
 
@@ -853,7 +853,7 @@ public class TrainAndTest extends AppCompatActivity
     private void setBookValues()
     {
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                                            .getString("book", "0");
+                                            .getString("book_book", "0");
 
         if (!pref_book.equals("0"))
         {
@@ -933,7 +933,7 @@ public class TrainAndTest extends AppCompatActivity
     {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                                            .getString("book", "0");
+                                            .getString("book_book", "0");
         switch (pref_book)
         {
             case "0":
@@ -981,7 +981,7 @@ public class TrainAndTest extends AppCompatActivity
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(TrainAndTest.this, Settings.class);
+                Intent intent_setting = new Intent(TrainAndTest.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

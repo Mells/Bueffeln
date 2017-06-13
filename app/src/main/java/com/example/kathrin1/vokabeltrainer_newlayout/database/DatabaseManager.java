@@ -432,7 +432,7 @@ public class DatabaseManager
     }
 
     /**
-     * Gets all words in the database that match the given book, chapter, unit, and level.
+     * Gets all words in the database that match the given book_book, chapter, unit, and level.
      *
      * @param book    Book to filter words by
      * @param chapter Chapter to filter words by
@@ -481,7 +481,7 @@ public class DatabaseManager
     }
 
     /**
-     * Gets all words in the database that match the given book, chapter, and unit.
+     * Gets all words in the database that match the given book_book, chapter, and unit.
      *
      * @param book    Book to filter words by
      * @param chapter Chapter to filter words by
@@ -513,7 +513,7 @@ public class DatabaseManager
     }
 
     /**
-     * Gets all words in the database that match the given book, chapter and level.
+     * Gets all words in the database that match the given book_book, chapter and level.
      *
      * @param book    Book to filter words by
      * @param chapter Chapter to filter words by

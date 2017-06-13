@@ -10,7 +10,22 @@
     android:id="@+id/lay_dict"
     android:background="@drawable/ic_hintergrund">
 
+    <Button
+        android:id="@+id/btn_go_back"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/ic_arrow_back_black_24px"
+        />
+
+    <Button
+        android:id="@+id/btn_listen"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/ic_hearing_black_24px" />
+
     <RelativeLayout
+        android:layout_below="@id/btn_go_back"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginRight="20dp"
@@ -26,18 +41,6 @@
             android:layout_marginTop="37dp"
             android:layout_below="@+id/txt_voc_de"
             android:layout_centerHorizontal="true" />
-
-        <Button
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:id="@+id/btn_listen"
-            android:layout_centerHorizontal="true"
-            android:background="@android:drawable/ic_media_play"
-            android:layout_alignTop="@+id/txt_voc_en"
-            android:layout_alignRight="@+id/v_divider"
-            android:layout_alignEnd="@+id/v_divider"
-            android:layout_marginRight="17dp"
-            android:layout_marginEnd="17dp" />
 
         <TextView
             android:text="English"

@@ -47,7 +47,7 @@ public class Book3 extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
 
-        view = inflater.inflate(R.layout.book, container, false);
+        view = inflater.inflate(R.layout.book_book, container, false);
 
         Button btn_back = (Button) view.findViewById(R.id.btn_back);
         btn_chap0 = (Button) view.findViewById(R.id.btn_chap0);

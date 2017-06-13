@@ -17,7 +17,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
-import com.example.kathrin1.vokabeltrainer_newlayout.status.Status;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.status.Status2;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     private int setCurrentBook() {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "I");
+                .getString("book_book", "I");
         switch (pref_book){
             case "I": tab = 0;
                 break;
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(MainActivity.this, Settings.class);
+                Intent intent_setting = new Intent(MainActivity.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

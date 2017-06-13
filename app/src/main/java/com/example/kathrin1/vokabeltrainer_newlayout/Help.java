@@ -9,6 +9,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
+
 /**
  * Created by kathrin1 on 01.03.17.
  */
@@ -56,7 +58,7 @@ public class Help extends AppCompatActivity{
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Help.this, Settings.class);
+                Intent intent_setting = new Intent(Help.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

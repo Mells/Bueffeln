@@ -5,10 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -31,6 +30,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import java.util.List;
@@ -56,7 +56,7 @@ public class Translation extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.translation);
+        setContentView(R.layout.exercise_translation);
 
         // ----------------TABS---------------------
 
@@ -70,7 +70,7 @@ public class Translation extends AppCompatActivity {
         final PagerAdapter adapter = new PagerAdapter
                 (getSupportFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(setCurrentBook());
+        viewPager.setCurrentItem(ExerciseUtils.setCurrentBook(Translation.this));
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -102,6 +102,7 @@ public class Translation extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(Translation.this);
 
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         Button btn_next = (Button) findViewById(R.id.btn_next);
         Button btn_solution = (Button) findViewById(R.id.btn_solution);
         Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
@@ -196,10 +197,10 @@ public class Translation extends AppCompatActivity {
                 edit_solution.setEnabled(false);
                 lay_feedback.setVisibility(View.VISIBLE);
                 if (!sw_language.isChecked()) {
-                    txt_feedback.setText(fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>"));
+                    txt_feedback.setText(ExerciseUtils.fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>"));
                 }
                 else {
-                    txt_feedback.setText(fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getTranslation() + "</i></b> ist <b><i>" + voc.getVoc() + "</i></b>"));
+                    txt_feedback.setText(ExerciseUtils.fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getTranslation() + "</i></b> ist <b><i>" + voc.getVoc() + "</i></b>"));
 
                 }
             }
@@ -233,7 +234,7 @@ public class Translation extends AppCompatActivity {
                                         voc.toString(), voc.getPOS(), voc.getLemma());
                                 feedback.generateFeedback();
                                 lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
+                                txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
                         } else {
@@ -249,7 +250,7 @@ public class Translation extends AppCompatActivity {
                             } else {
                                 // Todo - feedback
                                 lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
+                                txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
                         }
@@ -279,7 +280,6 @@ public class Translation extends AppCompatActivity {
 
                     // TODO:  get original sentence
                     SentObject sentence = dbManager.getExampleGDEXSentence(voc);
-
                     txt_bsp.setText(ExerciseUtils.fromHtml(
                             ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
                 }
@@ -293,11 +293,17 @@ public class Translation extends AppCompatActivity {
             }
         });
 
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(Translation.this);
+            }
+        });
     }
 
     private void setBookValues() {
         book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "I");
+                .getString("book_book", "I");
 
         chapter = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString("chapter", "Welcome");
@@ -353,21 +359,6 @@ public class Translation extends AppCompatActivity {
         Log.d("BOOKVALUE ", book + " " + chapter + " " + unit + " " + level);
     }
 
-    private int setCurrentBook() {
-        int tab = 0;
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "I");
-        switch (pref_book){
-            case "I": tab = 0;
-                break;
-            case "II": tab = 1;
-                break;
-            case "III": tab = 2;
-                break;
-        }
-        return tab;
-    }
-
     private void getVocabularyGerman() {
         if (allVocabulary.size() == 0) {
             Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -381,12 +372,8 @@ public class Translation extends AppCompatActivity {
             Log.d("DE-Übersetzung", voc.getTranslation());
             txt_voc.setText(voc.getTranslation());
 
-            // TODO:  CHANGE SENTENCE TYPE HERE
-            SentObject sentence = dbManager.getExampleGDEXSentence(voc);
-
+            SentObject sentence = ExerciseUtils.getTranslationPreferenceSentence(Translation.this, dbManager, voc);
             txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
-            //txt_bsp.setText(fromHtml(sent));
-            //txt_bsp.setText(sentence.getSentence());
         }
     }
 
@@ -401,34 +388,14 @@ public class Translation extends AppCompatActivity {
             voc = allVocabulary.get(index);
             txt_voc.setText(voc.getVoc());
 
-            // TODO:  CHANGE SENTENCE TYPE HERE
-            SentObject sentence = dbManager.getExampleGDEXSentence(voc);
-
+            SentObject sentence = ExerciseUtils.getTranslationPreferenceSentence(Translation.this, dbManager, voc);
             txt_bsp.setText(ExerciseUtils.fromHtml(
                     ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
-            //txt_bsp.setText(fromHtml(sent));
-            //txt_bsp.setText(sentence.getSentence());
         }
-    }
-    public void fragmentDetached(){
-
     }
 
     public SlidingLayer getSlidingLayer(){
         return mSlidingLayer;
-    }
-
-
-
-    @SuppressWarnings("deprecation")
-    private static Spanned fromHtml(String html){
-        Spanned result;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            result = Html.fromHtml(html,Html.FROM_HTML_MODE_LEGACY);
-        } else {
-            result = Html.fromHtml(html);
-        }
-        return result;
     }
 
     @Override
@@ -448,6 +415,10 @@ public class Translation extends AppCompatActivity {
             case R.id.item_home:
                 Intent intent_home = new Intent(Translation.this, MainActivity.class);
                 startActivity(intent_home);
+                return (true);
+            case R.id.item_settings:
+                Intent intent_setting = new Intent(Translation.this, SettingSelection.class);
+                startActivity(intent_setting);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

@@ -12,7 +12,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -86,7 +86,7 @@ public class Status extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Status.this, Settings.class);
+                Intent intent_setting = new Intent(Status.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

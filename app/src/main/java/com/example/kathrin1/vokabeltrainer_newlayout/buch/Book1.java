@@ -44,7 +44,7 @@ public class Book1 extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        view = inflater.inflate(R.layout.book, container, false);
+        view = inflater.inflate(R.layout.book_book, container, false);
 
         Button btn_back = (Button) view.findViewById(R.id.btn_back);
         btn_chap0 = (Button) view.findViewById(R.id.btn_chap0);
@@ -213,7 +213,7 @@ public class Book1 extends Fragment {
         });
 
         //String pref_book = PreferenceManager.getDefaultSharedPreferences(a)
-        //        .getString("book", "0");
+        //        .getString("book_book", "0");
 
         String pref_chapter = PreferenceManager.getDefaultSharedPreferences(a)
                 .getString("chapter", "0");

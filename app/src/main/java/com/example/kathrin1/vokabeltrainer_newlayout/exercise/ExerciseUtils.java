@@ -8,6 +8,7 @@ import android.text.Spanned;
 import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -130,7 +131,7 @@ public abstract class ExerciseUtils
      * @param sentence The context sentence that the word was presented in
      * @param word     The word that the user is trying to get the correct answer for
      * @param input    The user's input
-     * @param german   True if the user is looking for the German translation, false otherwise.
+     * @param german   True if the user is looking for the German exercise_translation, false otherwise.
      * @return Returns true if the answer is deemed correct, false otherwise.
      */
     public static Answer isAnswerCorrect(SentObject sentence, VocObject word, String input, boolean german)
@@ -172,11 +173,11 @@ public abstract class ExerciseUtils
     }
 
     /**
-     * Determines the current tab of the given tab layout, saving the book associated with the tab
-     * as the currently selected book.
+     * Determines the current tab of the given tab layout, saving the book_book associated with the tab
+     * as the currently selected book_book.
      *
      * @param c Context within which to perform the operation
-     * @param tab The tab layout tab to use to determine the selected book
+     * @param tab The tab layout tab to use to determine the selected book_book
      */
     public static void updateBook(Context c, TabLayout.Tab tab) {
         String b = "I";
@@ -189,6 +190,163 @@ public abstract class ExerciseUtils
                 break;
         }
         PreferenceManager.getDefaultSharedPreferences(c).edit()
-                         .putString("book", b).commit();
+                         .putString("book_book", b).commit();
+    }
+
+    /**
+     *
+     * @param c Context within which to perform the operation
+     * @return The tab layout tab which is selected
+     */
+    public static int setCurrentBook(Context c) {
+        int tab = 0;
+        String pref_book = PreferenceManager.getDefaultSharedPreferences(c)
+                .getString("book_book", "I");
+        switch (pref_book){
+            case "I": tab = 0;
+                break;
+            case "II": tab = 1;
+                break;
+            case "III": tab = 2;
+                break;
+        }
+        return tab;
+    }
+
+    /**
+     * Determines the current example sentence in accord of the preferences of the user
+     *
+     * @param c Context within which to perform the operation
+     * @param dbManager The database manager
+     * @param voc The vocable for which the sentence is queried
+     * @return The sentence
+     */
+    public static SentObject getTranslationPreferenceSentence(Context c, DatabaseManager dbManager, VocObject voc){
+        //Get first preference sentence
+        String pref_first_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                .getString("word_first", "");
+        SentObject sentence = null;
+        switch(pref_first_sentence) {
+            case "":
+                sentence = dbManager.getExampleOldSentence(voc);
+                break;
+            case "book":
+                sentence = dbManager.getExampleOldSentence(voc);
+                break;
+            case "learner":
+                sentence = dbManager.getExampleLearnerSentence(voc);
+                break;
+            case "gdex":
+                sentence = dbManager.getExampleGDEXSentence(voc);
+                break;
+        }
+        // get second preference sentence
+        if (sentence.getSentence().equals("")){
+            String pref_second_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("word_second", "");
+            switch(pref_second_sentence) {
+                case "":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "book":
+                    sentence = dbManager.getExampleOldSentence(voc);
+                    break;
+                case "learner":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "gdex":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+            }
+        }
+        // get third preference sentence
+        if (sentence.getSentence().equals("")){
+            String pref_second_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("word_third", "");
+            switch(pref_second_sentence) {
+                case "":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+                case "book":
+                    sentence = dbManager.getExampleOldSentence(voc);
+                    break;
+                case "learner":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "gdex":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+            }
+        }
+        return sentence;
+    }
+
+    /**
+     * Determines the current example sentence in accord of the preferences of the user
+     *
+     * @param c Context within which to perform the operation
+     * @param dbManager The database manager
+     * @param voc The vocable for which the sentence is queried
+     * @param part String which denotes which number of sentence is needed
+     * @return The sentence
+     */
+    public static SentObject getKontextPreferenceSentence(Context c, DatabaseManager dbManager, VocObject voc, String part){
+
+        String pref_first_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                .getString("kontext_"+part+"_first", "");
+        SentObject sentence = null;
+        switch(pref_first_sentence) {
+            case "":
+                sentence = dbManager.getExampleOldSentence(voc);
+                break;
+            case "book":
+                sentence = dbManager.getExampleOldSentence(voc);
+                break;
+            case "learner":
+                sentence = dbManager.getExampleLearnerSentence(voc);
+                break;
+            case "gdex":
+                sentence = dbManager.getExampleGDEXSentence(voc);
+                break;
+        }
+        // get second preference sentence
+        if (sentence.getSentence().equals("")){
+            String pref_second_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("kontext_"+part+"_second", "");
+            switch(pref_second_sentence) {
+                case "":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "book":
+                    sentence = dbManager.getExampleOldSentence(voc);
+                    break;
+                case "learner":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "gdex":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+            }
+        }
+        // get third preference sentence
+        if (sentence.getSentence().equals("")){
+            String pref_second_sentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("kontext_"+part+"_third", "");
+            switch(pref_second_sentence) {
+                case "":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+                case "book":
+                    sentence = dbManager.getExampleOldSentence(voc);
+                    break;
+                case "learner":
+                    sentence = dbManager.getExampleLearnerSentence(voc);
+                    break;
+                case "gdex":
+                    sentence = dbManager.getExampleGDEXSentence(voc);
+                    break;
+            }
+        }
+        return sentence;
     }
 }

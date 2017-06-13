@@ -26,10 +26,10 @@ import java.io.InputStreamReader;
         - morphology ("You used the right word, but think about the form:"):
             - tempus ("walked" instead of "walks")
             - agreement ("He walk" instead of "He walks")
-            - determiner ("an book" instead of "a book")
+            - determiner ("an book_book" instead of "a book_book")
             - wrong pronoun ("Mary likes himself" instead of "Mary likes herself", or
             - "I like himself" instead of "I like myself")
-            - spelling  ("hte book" instead of "the book")
+            - spelling  ("hte book_book" instead of "the book_book")
 
         - word order ("He put on it" instead of "He put it on")
 
@@ -125,10 +125,10 @@ public class Feedback {
 
 //      tempus ("walked" instead of "walks")
 //      agreement ("He walk" instead of "He walks")
-//      determiner ("an book" instead of "a book")
+//      determiner ("an book_book" instead of "a book_book")
 //      wrong pronoun ("Mary likes himself" instead of "Mary likes herself", or
 //      "I like himself" instead of "I like myself")
-//      spelling  ("hte book" instead of "the book")
+//      spelling  ("hte book_book" instead of "the book_book")
         return null;
     }
 

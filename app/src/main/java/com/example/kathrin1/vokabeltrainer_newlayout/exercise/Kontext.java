@@ -5,10 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -27,9 +26,9 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
@@ -61,7 +60,8 @@ public class Kontext extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.kontext_scoll);
+        //todo change to exercise_kontext and look why its dying
+        setContentView(R.layout.exercise_kontext_scoll);
 
         // ----------------TABS---------------------
 
@@ -75,7 +75,7 @@ public class Kontext extends AppCompatActivity {
         final PagerAdapter adapter = new PagerAdapter
                 (getSupportFragmentManager(), tabLayout.getTabCount());
         viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(setCurrentBook());
+        viewPager.setCurrentItem(ExerciseUtils.setCurrentBook(Kontext.this));
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -106,6 +106,7 @@ public class Kontext extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(Kontext.this);
 
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         final Button btn_next = (Button) findViewById(R.id.btn_next);
         final Button btn_solution = (Button) findViewById(R.id.btn_solution);
         final Button btn_hint = (Button) findViewById(R.id.btn_hint);
@@ -113,6 +114,7 @@ public class Kontext extends AppCompatActivity {
 
         final LinearLayout lay_vocabel = (LinearLayout) findViewById(R.id.lay_vocabel);
         final LinearLayout lay_button_menu = (LinearLayout) findViewById(R.id.lay_button_menu);
+        final RelativeLayout lay_trans_down = (RelativeLayout) findViewById(R.id.lay_trans_down);
 
         txt_sent01 = (TextView) findViewById(R.id.txt_sentence01);
         txt_sent02 = (TextView) findViewById(R.id.txt_sentence02);
@@ -175,8 +177,11 @@ public class Kontext extends AppCompatActivity {
 //                            android:id="@+id/txt_sentence03" />
 
                             TextView newSent = new TextView(Kontext.this);
+                            // TODO: NO SAME SENTENCE
                             newSent.setText(ExerciseUtils.fromHtml(
-                                    ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(copyOfSentenceList.get(0)), voc)));
+                                           ExerciseUtils.deleteWordFromSentence(ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "hint"), voc)));
+                            //newSent.setText(ExerciseUtils.fromHtml(
+                            //        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(copyOfSentenceList.get(0)), voc)));
                             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
                             //converting pixels into dp, so that is the same scale as in the layout
@@ -198,7 +203,7 @@ public class Kontext extends AppCompatActivity {
                         }
                         else {
                             lay_feedback.setVisibility(View.VISIBLE);
-                            txt_feedback.setText(fromHtml("Es tud mir leid, es gibt keine weiteren Sätze für dieses Wort"));
+                            txt_feedback.setText(ExerciseUtils.fromHtml("Es tud mir leid, es gibt keine weiteren Sätze für dieses Wort"));
                         }
                     }
                 }else{
@@ -213,7 +218,7 @@ public class Kontext extends AppCompatActivity {
             public void onClick(View v) {
                 lay_feedback.setVisibility(View.VISIBLE);
                 edit_solution.setEnabled(false);
-                txt_feedback.setText(fromHtml("Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und Übersetzt <b><i>" + voc.getTranslation() + "</i></b>"));
+                txt_feedback.setText(ExerciseUtils.fromHtml("Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und Übersetzt <b><i>" + voc.getTranslation() + "</i></b>"));
             }
         });
 
@@ -244,14 +249,13 @@ public class Kontext extends AppCompatActivity {
                                 lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
-                                // todo - schreib zu datenbank
                                 if (voc.getId() > 6) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
                             } else {
                                 // Todo - feedback
                                 lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText(fromHtml("Es tut mir leid, aber <i><b>" +
+                                txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
                             }
                     }
@@ -261,11 +265,18 @@ public class Kontext extends AppCompatActivity {
                 return handled;
             }
         });
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(Kontext.this);
+            }
+        });
     }
 
     private void setBookValues() {
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+                .getString("book_book", "0");
 
         if (!pref_book.equals("0")){
             book = pref_book;
@@ -329,21 +340,6 @@ public class Kontext extends AppCompatActivity {
         level = pref_level;
     }
 
-    private int setCurrentBook() {
-        int tab = 0;
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "I");
-        switch (pref_book){
-            case "I": tab = 0;
-                break;
-            case "II": tab = 1;
-                break;
-            case "III": tab = 2;
-                break;
-        }
-        return tab;
-    }
-
     private void getVocabularyEnglishGerman() {
 
         if (allVocabulary.size() == 0) {
@@ -356,7 +352,20 @@ public class Kontext extends AppCompatActivity {
             voc = allVocabulary.get(index);
 
             // TODO:  CHANGE SENTENCE TYPE HERE
-            List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
+            // TODO: MAKE SURE THERE ARE NO SAME SENTENCES
+            // get first preference sentence
+            SentObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first");
+            // get second preference sentence
+            SentObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second");
+            // get third preference sentence
+            SentObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third");
+
+            txt_sent01.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(first_sentence, voc)));
+            txt_sent02.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(second_sentence, voc)));
+            txt_sent03.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(third_sentence, voc)));
+
+            //Todo OLD
+            /**List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
             copyOfSentenceList = sentenceList;
             
             Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
@@ -394,24 +403,12 @@ public class Kontext extends AppCompatActivity {
                     copyOfSentenceList.remove(0);
                     copyOfSentenceList.remove(1);
                 }
-            }
+            }**/
         }
     }
 
     public SlidingLayer getSlidingLayer(){
         return mSlidingLayer;
-    }
-
-
-    @SuppressWarnings("deprecation")
-    public static Spanned fromHtml(String html){
-        Spanned result;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            result = Html.fromHtml(html,Html.FROM_HTML_MODE_LEGACY);
-        } else {
-            result = Html.fromHtml(html);
-        }
-        return result;
     }
 
     @Override
@@ -433,7 +430,7 @@ public class Kontext extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Kontext.this, Settings.class);
+                Intent intent_setting = new Intent(Kontext.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -22,7 +23,7 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -68,7 +69,7 @@ public class Lektion extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.lektion_entry_tabs);
+        setContentView(R.layout.dictionary_lektion);
 
         // ----------------TABS---------------------
 
@@ -113,6 +114,7 @@ public class Lektion extends AppCompatActivity {
 
         dbManager = DatabaseManager.build(Lektion.this);
 
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         txt_voc_de = (TextView) findViewById(R.id.txt_voc_de);
         txt_voc_en = (TextView) findViewById(R.id.txt_voc_en);
         Button btn_listen = (Button) findViewById(R.id.btn_listen);
@@ -228,6 +230,13 @@ public class Lektion extends AppCompatActivity {
                 });
             }
         });
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(Lektion.this);
+            }
+        });
     }
 
     public void setVocabulary() {
@@ -245,7 +254,7 @@ public class Lektion extends AppCompatActivity {
 
     public void setBookValues() {
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "0");
+                .getString("book_book", "0");
 
         if (!pref_book.equals("0")){
             book = pref_book;
@@ -307,7 +316,7 @@ public class Lektion extends AppCompatActivity {
     private int setCurrentBook() {
         int tab = 0;
         String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book", "I");
+                .getString("book_book", "I");
         switch (pref_book){
             case "I": tab = 0;
                 break;
@@ -366,7 +375,7 @@ public class Lektion extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Lektion.this, Settings.class);
+                Intent intent_setting = new Intent(Lektion.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

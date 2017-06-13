@@ -5,12 +5,30 @@
     <string name="ic_setting">Einstellungen</string>
     <string name="plus">Buch Hinzufügen</string>
 
-    <string name="woerterbuch">Wörterbuch</string>
-    <string name="lektionen">Wörter nach Lektionen</string>
+    <string name="woerterbuch">Wörterbuch\n</string>
+    <string name="lektionen">Wörter nach\nLektionen</string>
     <string name="aufgabe">Testen \u0026 Üben</string>
     <string name="ex_translation">Worttest</string>
     <string name="ex_kontext">Kontexttest</string>
     <string name="status">Status</string>
+
+    <string name="setting">Einstellungen</string>
+    <string name="setting_btn_to_wordtest">Für Worttest</string>
+    <string name="setting_btn_to_kontexttest">Für Kontexttest</string>
+    <string name="setting_btn_for_reset">Reset</string>
+    <string name="setting_wordtest">Einstellungen: Worttest</string>
+    <string name="setting_kontexttest">Einstellungen: Kontexttest</string>
+
+    <string name="first_sentence">Für den ersten Satz</string>
+    <string name="second_sentence">Für den zweiten Satz</string>
+    <string name="third_sentence">Für den dritten Satz</string>
+    <string name="hint">Für den Hinweis-Satz</string>
+    <string name="first">1. Wahl</string>
+    <string name="second">2. Wahl</string>
+    <string name="third">3. Wahl</string>
+    <string name="gdex">GDEX</string>
+    <string name="learner">Verständnis</string>
+    <string name="book">Buch</string>
 
 
     <string name="Sent_Missing">:SENTENCE MISSING:</string>

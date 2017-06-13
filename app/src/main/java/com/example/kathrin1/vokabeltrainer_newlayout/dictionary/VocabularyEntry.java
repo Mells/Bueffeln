@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -16,7 +17,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
@@ -47,6 +48,8 @@ public class VocabularyEntry extends AppCompatActivity {
 
         final DatabaseManager databaseQuery = DatabaseManager.build(VocabularyEntry.this);
         final VocObject vocable = databaseQuery.getWordPairById(vocId);
+
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
 
         TextView txt_voc_de = (TextView) findViewById(R.id.txt_voc_de);
         TextView txt_voc_en = (TextView) findViewById(R.id.txt_voc_en);
@@ -101,6 +104,13 @@ public class VocabularyEntry extends AppCompatActivity {
                 });
             }
         });
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(VocabularyEntry.this);
+            }
+        });
     }
 
     @Override
@@ -122,7 +132,7 @@ public class VocabularyEntry extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(VocabularyEntry.this, Settings.class);
+                Intent intent_setting = new Intent(VocabularyEntry.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

@@ -60,7 +60,7 @@ public class LoadingBarView extends RelativeLayout
      */
     private void init()
     {
-        inflate(getContext(), R.layout.view_loading_bar_layout, this);
+        inflate(getContext(), R.layout.exercise_view_loading_bar_layout, this);
         loadingText = (TextView) findViewById(R.id.loading_text);
         loadingBar = (ProgressBar) findViewById(R.id.loading_bar);
         handler = new Handler(Looper.getMainLooper());

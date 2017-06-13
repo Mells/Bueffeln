@@ -206,10 +206,43 @@ public class DBHandler extends SQLiteAssetHelper
             "FOREIGN KEY (" + INTERX_SESSION + ") " +
             "REFERENCES " + SESSION_TABLENAME + "(" + SESSION_ID + ") )";
 
+    //TODO
+    /**
+     * MORPHO TABLE
+     * ======================================================================
+     */
+    /*public static final String SENT_TABLENAME = "sentences";
+    public static final String SENT_TABLENAME_OLD = "sentences_old";
+    public static final String SENT_ID = "_id";
+    public static final String SENT_BOOK = "Book";
+    public static final String SENT_PAGE = "Page";
+    public static final String SENT_CHAPTER = "Chapter";
+    public static final String SENT_SENTENCE = "Sentence";
+    public static final String SENT_TAGGED = "Tagged";
+    public static final String SENT_MAPPED = "Mapped";
+    public static final String SENT_LEMMA = "Lemma";
+    public static final String[] SENT_COLUMNS = {SENT_ID, SENT_BOOK, SENT_CHAPTER, SENT_PAGE,
+            SENT_SENTENCE, SENT_TAGGED, SENT_MAPPED, SENT_LEMMA};
+
+    // NO LONGER USED
+    final private static String CREATE_SENT_TABLE =
+
+            "CREATE TABLE " + SENT_TABLENAME + " (" +
+                    SENT_ID + " INTEGER NOT NULL, " +
+                    SENT_BOOK + " TEXT, " +
+                    SENT_CHAPTER + " TEXT, " +
+                    SENT_PAGE + " INTEGER, " +
+                    SENT_SENTENCE + " TEXT, " +
+                    SENT_TAGGED + " TEXT, " +
+                    SENT_MAPPED + " TEXT, " +
+                    SENT_LEMMA + " TEXT, " +
+                    "PRIMARY KEY (" + SENT_ID + ") )";
+*/
 
     // CSV file paths
     private static final String WORD_CSV = "databases/vocabulary.csv";
     private static final String SENT_CSV = "databases/sentences.csv";
+    private static final String MORPH_CSV = "databases/xtag-morph-1.5a.csv";
 
     // Date formats.  The timezones of these formats are set to UTC inside the constructor
     public static final SimpleDateFormat ISO_DATE =
@@ -392,6 +425,8 @@ public class DBHandler extends SQLiteAssetHelper
             {
                 readCSVIntoTable(db, WORD_TABLENAME, WORD_CSV);
                 readCSVIntoTable(db, SENT_TABLENAME, SENT_CSV);
+                //TODO JUST UNCOMMENT
+                //readCSVIntoTable(db, MORPH_TABLENAME, MORPH_CSV);
 
                 return null;
             }

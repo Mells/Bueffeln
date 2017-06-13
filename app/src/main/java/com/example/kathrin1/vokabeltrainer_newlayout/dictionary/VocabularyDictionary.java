@@ -2,6 +2,7 @@ package com.example.kathrin1.vokabeltrainer_newlayout.dictionary;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -10,15 +11,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.Settings;
+import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.ItemObject;
+
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,14 +40,15 @@ public class VocabularyDictionary extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.dict);
+        setContentView(R.layout.dictionary_dict);
 
-        filterText = (EditText)findViewById(R.id.edit_solution);
-        final ListView itemList = (ListView)findViewById(R.id.listView);
+        filterText = (EditText) findViewById(R.id.edit_solution);
+        final ListView itemList = (ListView) findViewById(R.id.listView);
 
         final DatabaseManager databaseQuery = DatabaseManager.build(VocabularyDictionary.this);
         //final String[] terms = databaseQuery.dictionaryWords();
 
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
 
         List<ItemObject> vocabulary = new ArrayList<ItemObject>();
         int i = 0;
@@ -71,23 +76,30 @@ public class VocabularyDictionary extends AppCompatActivity {
                 //        + "Deutsch: " + allVocabulary.getTranslation();
                 //Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(VocabularyDictionary.this, VocabularyEntry.class);
-                intent.putExtra("voc_id", listAdapter.getItem(position).oldPos()+1);
+                intent.putExtra("voc_id", listAdapter.getItem(position).oldPos() + 1);
                 startActivity(intent);
             }
         });
-
-
 
         filterText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 VocabularyDictionary.this.listAdapter.getFilter().filter(s);
             }
+
             @Override
             public void afterTextChanged(Editable s) {
+            }
+        });
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(VocabularyDictionary.this);
             }
         });
     }
@@ -111,7 +123,7 @@ public class VocabularyDictionary extends AppCompatActivity {
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(VocabularyDictionary.this, Settings.class);
+                Intent intent_setting = new Intent(VocabularyDictionary.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

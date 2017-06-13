@@ -118,7 +118,7 @@ public class ACTRModel implements LearnModel
     }
 
     /**
-     * Checks whether the given word meets the restrictions set by book, chapter, and unit.
+     * Checks whether the given word meets the restrictions set by book_book, chapter, and unit.
      */
     private boolean meetsRestrictions(VocObject word)
     {
