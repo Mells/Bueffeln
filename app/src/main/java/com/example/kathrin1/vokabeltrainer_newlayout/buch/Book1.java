@@ -61,6 +61,14 @@ public class Book1 extends Fragment {
 
         final SeekBar seek = (SeekBar) view.findViewById(R.id.seek_level);
 
+        btn_chap0.setText("Welcome to Camden Town!");
+        btn_chap1.setText("At school");
+        btn_chap2.setText("At home");
+        btn_chap3.setText("Birthdays");
+        btn_chap4.setText("Free time");
+        btn_chap5.setText("Pets");
+        btn_chap6.setText("Holidays");
+
         if (seek != null) {
             seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override

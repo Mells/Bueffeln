@@ -2,69 +2,61 @@ package com.example.kathrin1.vokabeltrainer_newlayout.status;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
-import android.text.Spanned;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ExpandableListView;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by kathrin1 on 01.03.17.
- */
-
 public class Status extends AppCompatActivity {
-
-    private DatabaseManager dbManager = null;
-    private List<VocObject> allVocabulary;
-    private String[] book = {"I", "II", "III"};
-    private String[] chapter = {"Welcome", "1", "2", "3", "4", "5", "6"};
-    private String[] unit = {"A", "B", "C"};
-    private Integer[] level ={0,1,2,3,4,5,6,7};
-
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.status);
+        setContentView(R.layout.status_content_main);
 
-        TextView txt_status_answer = (TextView) findViewById(R.id.txt_status_answer);
-        dbManager = DatabaseManager.build(Status.this);
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
 
-        String information = "";
-        for (String b : book) {
-            information += "Du hast in <b>Buch " + b +"</b>:<br>";
-            for (String c : chapter) {
-                information += "&nbsp;&nbsp;&nbsp;&nbsp;in <b>Kapitel: " + c +"</b>:<br>";
-                for (int l : level) {
-                    information += "&nbsp;&nbsp;&nbsp;&nbsp;in <b>Level: " + l +"</b>:<br>";
-                    int numberOfWords = (dbManager.getWordsByBookChapterLevel(b, c, l)).size();
-                    information += "&nbsp;&nbsp;&nbsp;&nbsp;" + numberOfWords + " Vokabeln.<br>";
-                }
+        // Init top level data
+        List<String> listDataHeader = new ArrayList<>();
+        //String[] mItemHeaders = getResources().getStringArray(R.array.items_array_book);
+        String[] mItemHeaders = {"Camden Town I", "Camden Town II", "Camden Town III"};
+        Collections.addAll(listDataHeader, mItemHeaders);
+        final ExpandableListView mExpandableListView = (ExpandableListView) findViewById(R.id.expandableListView_Parent);
+
+        if (mExpandableListView != null) {
+            ParentLevelAdapter parentLevelAdapter = new ParentLevelAdapter(this, listDataHeader);
+            mExpandableListView.setAdapter(parentLevelAdapter);
+
+            //display only one expand item
+//            mExpandableListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+//                int previousGroup = -1;
+//                @Override
+//                public void onGroupExpand(int groupPosition) {
+//                    if (groupPosition != previousGroup)
+//                        mExpandableListView.collapseGroup(previousGroup);
+//                    previousGroup = groupPosition;
+//                }
+//            });
+        }
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(Status.this);
             }
-            information += "<br>";
-        }
-
-        txt_status_answer.setText(fromHtml(information));
-
-    }
-
-    @SuppressWarnings("deprecation")
-    private static Spanned fromHtml(String html){
-        Spanned result;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            result = Html.fromHtml(html,Html.FROM_HTML_MODE_LEGACY);
-        } else {
-            result = Html.fromHtml(html);
-        }
-        return result;
+        });
     }
 
     @Override

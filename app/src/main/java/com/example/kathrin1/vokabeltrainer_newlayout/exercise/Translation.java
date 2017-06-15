@@ -231,7 +231,7 @@ public class Translation extends AppCompatActivity {
                             } else {
                                 // Todo - feedback
                                 Feedback feedback = new Feedback(edit_solution.getText().toString(),
-                                        voc.toString(), voc.getPOS(), voc.getLemma());
+                                        voc.getVoc(), voc.getPOS(), voc.getLemma(), Translation.this);
                                 feedback.generateFeedback();
                                 lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +

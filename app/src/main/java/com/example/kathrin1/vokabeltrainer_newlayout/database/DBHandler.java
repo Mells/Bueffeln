@@ -211,38 +211,44 @@ public class DBHandler extends SQLiteAssetHelper
      * MORPHO TABLE
      * ======================================================================
      */
-    /*public static final String SENT_TABLENAME = "sentences";
-    public static final String SENT_TABLENAME_OLD = "sentences_old";
-    public static final String SENT_ID = "_id";
-    public static final String SENT_BOOK = "Book";
-    public static final String SENT_PAGE = "Page";
-    public static final String SENT_CHAPTER = "Chapter";
-    public static final String SENT_SENTENCE = "Sentence";
-    public static final String SENT_TAGGED = "Tagged";
-    public static final String SENT_MAPPED = "Mapped";
-    public static final String SENT_LEMMA = "Lemma";
-    public static final String[] SENT_COLUMNS = {SENT_ID, SENT_BOOK, SENT_CHAPTER, SENT_PAGE,
-            SENT_SENTENCE, SENT_TAGGED, SENT_MAPPED, SENT_LEMMA};
+    public static final String MORPH_TABLENAME = "xtagmorph";
+    public static final String MORPH_ID = "_id";
+    public static final String MORPH_WORD = "Word";
+    public static final String MORPH_LEMMA = "Lemma";
+    public static final String MORPH_READING1 = "Reading1";
+    public static final String MORPH_READING2 = "Reading2";
+    public static final String MORPH_READING3 = "Reading3";
+    public static final String MORPH_READING4 = "Reading4";
+    public static final String MORPH_READING5 = "Reading5";
+    public static final String MORPH_READING6 = "Reading6";
+    public static final String MORPH_READING7 = "Reading7";
+    public static final String MORPH_READING8 = "Reading8";
+    public static final String[] MORPH_COLUMNS = {MORPH_ID, MORPH_WORD, MORPH_LEMMA, MORPH_READING1,
+            MORPH_READING2, MORPH_READING3, MORPH_READING4, MORPH_READING5, MORPH_READING6,
+            MORPH_READING7, MORPH_READING8};
 
     // NO LONGER USED
-    final private static String CREATE_SENT_TABLE =
+    final private static String CREATE_MORPH_TABLE =
 
-            "CREATE TABLE " + SENT_TABLENAME + " (" +
-                    SENT_ID + " INTEGER NOT NULL, " +
-                    SENT_BOOK + " TEXT, " +
-                    SENT_CHAPTER + " TEXT, " +
-                    SENT_PAGE + " INTEGER, " +
-                    SENT_SENTENCE + " TEXT, " +
-                    SENT_TAGGED + " TEXT, " +
-                    SENT_MAPPED + " TEXT, " +
-                    SENT_LEMMA + " TEXT, " +
-                    "PRIMARY KEY (" + SENT_ID + ") )";
-*/
+            "CREATE TABLE " + MORPH_TABLENAME + " (" +
+                    MORPH_ID + " INTEGER NOT NULL, " +
+                    MORPH_WORD + " TEXT, " +
+                    MORPH_LEMMA + " TEXT, " +
+                    MORPH_READING1 + " TEXT, " +
+                    MORPH_READING2 + " TEXT, " +
+                    MORPH_READING3 + " TEXT, " +
+                    MORPH_READING4 + " TEXT, " +
+                    MORPH_READING5 + " TEXT, " +
+                    MORPH_READING6 + " TEXT, " +
+                    MORPH_READING7 + " TEXT, " +
+                    MORPH_READING8 + " TEXT, " +
+                    "PRIMARY KEY (" + MORPH_ID + ") )";
+
 
     // CSV file paths
     private static final String WORD_CSV = "databases/vocabulary.csv";
     private static final String SENT_CSV = "databases/sentences.csv";
-    private static final String MORPH_CSV = "databases/xtag-morph-1.5a.csv";
+    private static final String MORPH_CSV = "databases/xtagmorph.csv";
 
     // Date formats.  The timezones of these formats are set to UTC inside the constructor
     public static final SimpleDateFormat ISO_DATE =
@@ -426,7 +432,7 @@ public class DBHandler extends SQLiteAssetHelper
                 readCSVIntoTable(db, WORD_TABLENAME, WORD_CSV);
                 readCSVIntoTable(db, SENT_TABLENAME, SENT_CSV);
                 //TODO JUST UNCOMMENT
-                //readCSVIntoTable(db, MORPH_TABLENAME, MORPH_CSV);
+                readCSVIntoTable(db, MORPH_TABLENAME, MORPH_CSV);
 
                 return null;
             }

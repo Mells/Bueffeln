@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
@@ -560,6 +561,37 @@ public class DatabaseManager
     }
 
     /**
+     * Retrieves the word with the given ID from the word database.
+     *
+     * @param word the word for which we need morphological information.
+     * @return The morphological information we want.
+     */
+    public MorphObject getMorphInformation(String word)
+    {
+
+        String query = String.format("select * from %s where %s like '"+word+"'",
+                DBHandler.MORPH_TABLENAME,
+                DBHandler.MORPH_WORD);
+        Log.d("Query", query);
+
+        Cursor cursor = db.rawQuery(query, null);
+        //Cursor cursor = db.query(DBHandler.MORPH_TABLENAME, DBHandler.MORPH_COLUMNS,
+        //        DBHandler.MORPH_WORD + " = " + word,
+        //        null, null, null, null);
+
+        if (cursor.getCount() != 1)
+            throw new NoSuchElementException("Word with the given String [" + word + "] not found.");
+
+        cursor.moveToFirst();
+
+        MorphObject returnObj = new MorphObject(cursor);
+
+        cursor.close();
+
+        return returnObj;
+    }
+
+    /**
      * Adds the given word data to the database.  If a word with the same ID is already in the
      * database, it's values are updated to those of the given word.  Returns the ID of the item
      * in the database.
@@ -718,7 +750,7 @@ public class DatabaseManager
                                              chapter, u, DBHandler.WORD_CHAPTER);
             }
             chapterUnit = chapterUnit.substring(0, chapterUnit.lastIndexOf("'") + 1);
-            Log.d("CHAPTER ", chapterUnit);
+            //Log.d("CHAPTER ", chapterUnit);
 
             return chapterUnit;
         }

@@ -11,6 +11,7 @@ import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,34 +39,66 @@ public class ParentLevelAdapter extends BaseExpandableListAdapter {
         for (int i = 0; i < parentCount; i++) {
             String content = mListDataHeader.get(i);
             switch (content) {
-                case "Buch 1":
-                    mItemHeaders = mContext.getResources().getStringArray(R.array.items_array_expandable_level_one_one_child);
+                case "Camden Town I":
+                    mItemHeaders = new String[]{"Welcome: Welcome to Camden Town!", "Chapter 1: At school", "Chapter 2: At home", 
+                            "Chapter 3: Birthdays", "Chapter 4: Free time", "Chapter 5: Pets", "Chapter 6: Holidays"};
                     break;
-                case "Level 1.2":
-                    mItemHeaders = mContext.getResources().getStringArray(R.array.items_array_expandable_level_one_one_child);
+                case "Camden Town II":
+                    mItemHeaders = new String[]{"Chapter 1: After the holidays", "Chapter 2: Let’s get the party started", 
+                            "Chapter 3: London", "Chapter 4: School life", "Chapter 5: Going green", "Chapter 6: Fun and games"};
+                    break;
+                case "Camden Town III":
+                    mItemHeaders = new String[]{"Chapter 1: On the move", "Chapter 2: Welcome to Wales!", "Chapter 3: Famous Brits", 
+                            "Chapter 4: Keep me posted", "Chapter 5: Diverse Britain", "Chapter 6: The Great Outdoors", };
                     break;
                 default:
-                    mItemHeaders = mContext.getResources().getStringArray(R.array.items_array_expandable_level_two);
+                    mItemHeaders = new String[]{"Welcome: Welcome to Camden Town!", "Chapter 1: At school", "Chapter 2: At home", 
+                            "Chapter 3: Birthdays", "Chapter 4: Free time", "Chapter 5: Pets", "Chapter 6: Holidays"};
+                    break;
+
             }
             mListData_SecondLevel_Map.put(mListDataHeader.get(i), Arrays.asList(mItemHeaders));
         }
 
         // THIRD LEVEL
-        String[] mItemChildOfChild;
-        List<String> listChild;
+        DatabaseManager dbManager = DatabaseManager.build(mContext);
         mListData_ThirdLevel_Map = new HashMap<>();
+        String[] book = {"I", "II", "III"};
+        String[] chapter1 = {"Welcome", "1", "2", "3", "4", "5", "6"};
+        String[] chapter23 = {"1", "2", "3", "4", "5", "6"};
+        int bookNumber;
         for (Object o : mListData_SecondLevel_Map.entrySet()) {
             Map.Entry entry = (Map.Entry) o;
             Object object = entry.getValue();
             Log.d("secondLVl", object.toString());
+            if(object.toString().startsWith("[Welcome: Welcome")){
+                bookNumber = 0;
+            }
+            else if (object.toString().startsWith("[Chapter 1: On the move")){
+                bookNumber = 1;
+            }
+            else {
+                bookNumber = 2;
+            }
             if (object instanceof List) {
                 List<String> stringList = new ArrayList<>();
                 Collections.addAll(stringList, (String[]) ((List) object).toArray());
-                for (int i = 0; i < stringList.size(); i++) {
-                    mItemChildOfChild = mContext.getResources().getStringArray(R.array.items_array_expandable_level_three);
-                    listChild = Arrays.asList(mItemChildOfChild);
-                    Log.d("Array", listChild.toString());
-                    mListData_ThirdLevel_Map.put(stringList.get(i), listChild);
+                for (int c = 0; c < stringList.size(); c++) {
+                    List<String> levelList = new ArrayList<>();
+                    int numberOfWords;
+                    if (bookNumber == 0){
+                        for(int l = 0; l <= 7; l++) {
+                            numberOfWords = (dbManager.getWordsByBookChapterLevel(book[bookNumber], chapter1[c], l)).size();
+                            levelList.add("Level "+l+" Vokabeln: "+numberOfWords);
+                        }
+                    }
+                    else {
+                        for(int l = 0; l <= 7; l++) {
+                            numberOfWords = (dbManager.getWordsByBookChapterLevel(book[bookNumber], chapter23[c], l)).size();
+                            levelList.add("Level "+l+" Vokabeln: "+numberOfWords);
+                        }
+                    }
+                    mListData_ThirdLevel_Map.put(stringList.get(c), levelList);
                 }
             }
         }

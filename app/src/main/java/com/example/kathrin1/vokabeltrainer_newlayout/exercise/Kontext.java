@@ -61,7 +61,7 @@ public class Kontext extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //todo change to exercise_kontext and look why its dying
-        setContentView(R.layout.exercise_kontext_scoll);
+        setContentView(R.layout.exercise_kontext);
 
         // ----------------TABS---------------------
 

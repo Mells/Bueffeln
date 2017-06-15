@@ -220,6 +220,4 @@ public abstract class DBUtils
 
         return smap;
     }
-
-
 }

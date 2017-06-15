@@ -18,7 +18,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictio
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
-import com.example.kathrin1.vokabeltrainer_newlayout.status.Status2;
+import com.example.kathrin1.vokabeltrainer_newlayout.status.Status;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 public class MainActivity extends AppCompatActivity {
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
         btn_status.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, Status2.class);
+                Intent intent = new Intent(MainActivity.this, Status.class);
                 startActivity(intent);
             }
         });

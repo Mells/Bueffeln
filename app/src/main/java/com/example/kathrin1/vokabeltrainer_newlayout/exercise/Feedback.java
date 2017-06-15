@@ -1,7 +1,11 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
+
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,50 +51,21 @@ public class Feedback {
     private String voc_pos;
     private String voc_lemma;
 
-    private String file = "assets/databases/xtag-morph-1.5a.txt";
+    private DatabaseManager dbManager;
 
-    public Feedback(String vocableByLearner, String voc_vocable, String pos, String lemma){
+    public Feedback(String vocableByLearner, String voc_vocable, String pos, String lemma, Context c){
         this.learner_vocable = vocableByLearner;
         this.voc_vocable = voc_vocable;
         this.voc_pos = pos;
         this.voc_lemma = lemma;
+        dbManager = DatabaseManager.build(c);
     }
 
     public String generateFeedback(){
         //look up tag and lemma of word
-        BufferedReader reader = null;
-
-        try {
-            reader = new BufferedReader(
-                    new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(file)));
-
-            // do reading, usually loop until end of file reading
-            String line;
-            String[] lineArray;
-            while ((line = reader.readLine()) != null) {
-                //process line
-                if (line.startsWith(";;;")){
-                    continue;
-                }
-
-                lineArray = line.split("\\t");
-                if (lineArray[0].equals(learner_vocable)){
-                    learner_lemma = lineArray[1];
-                    learner_pos = lineArray[2];
-                    Log.d("Feedback", learner_lemma + " " + learner_pos);
-                }
-            }
-        } catch (IOException e) {
-            //log the exception
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    //log the exception
-                }
-            }
-        }
+        MorphObject morph = dbManager.getMorphInformation(learner_vocable);
+        Log.d("Feedback", morph.getAllReadings());
+        morph.getReading1();
 
         // put word into a gaped sentence for tagging?
 
