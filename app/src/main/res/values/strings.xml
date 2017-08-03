@@ -1,10 +1,12 @@
 <resources>
+    <!-- MENU -->
     <string name="app_name">Vokabeltrainer</string>
     <string name="ic_help">Hilfe</string>
     <string name="ic_home">Home</string>
+    <string name="ic_achievement">Erfolg</string>
     <string name="ic_setting">Einstellungen</string>
-    <string name="plus">Buch Hinzufügen</string>
 
+    <!-- OPTIONS -->
     <string name="woerterbuch">Wörterbuch\n</string>
     <string name="lektionen">Wörter nach\nLektionen</string>
     <string name="aufgabe">Testen \u0026 Üben</string>
@@ -12,6 +14,7 @@
     <string name="ex_kontext">Kontexttest</string>
     <string name="status">Status</string>
 
+    <!-- SETTINGS -->
     <string name="setting">Einstellungen</string>
     <string name="setting_btn_to_wordtest">Für Worttest</string>
     <string name="setting_btn_to_kontexttest">Für Kontexttest</string>
@@ -19,6 +22,7 @@
     <string name="setting_wordtest">Einstellungen: Worttest</string>
     <string name="setting_kontexttest">Einstellungen: Kontexttest</string>
 
+    <!--  -->
     <string name="first_sentence">Für den ersten Satz</string>
     <string name="second_sentence">Für den zweiten Satz</string>
     <string name="third_sentence">Für den dritten Satz</string>
@@ -29,7 +33,20 @@
     <string name="gdex">GDEX</string>
     <string name="learner">Verständnis</string>
     <string name="book">Buch</string>
+    <string name="easy">Einfach</string>
+    <string name="middle">Mittel</string>
+    <string name="hard">Schwer</string>
 
+    <!-- ACHIEVEMENT -->
+    <string name="achievement_g_1"><b>Aller Anfang ist... Richtig</b>\n\nGratulation du hast dein
+        erstes Richtiges Wort</string>
+    <string name="achievement_g_2"><b>Aller Anfang ist... Schwer</b>\n\nAller Anfang ist schwer,
+        jetzt kann es nur noch besser werden! </string>
+    <string name="achievement_g_3"><b>7 Zwerge</b>\n\nEs sind schon 7 Zwerge, ich meinte richtige Wörter</string>
+    <string name="achievement_g_4"><b>10</b>\n\nEs sind 10 Richtige Wörter (oder 2?)</string>
+    <string name="achievement_g_5"><b>100%</b>\n\nNoch nicht ganz, aber du bist schon auf dem besten Weg dahin (100 Wörter)</string>
+    <string name="achievement_g_6"><b>1001 Nacht ich meinte Wort</b>\n\nJetzt kannst du schon Geschichten schreiben</string>
+    <string name="achievement_g_7"><b>Ein langer Kampf</b>\n\nDas erste Wort in Kategorie 7</string>
 
     <string name="Sent_Missing">:SENTENCE MISSING:</string>
     <string name="DBHandler_ProgressDialog_Title">Database Update</string>

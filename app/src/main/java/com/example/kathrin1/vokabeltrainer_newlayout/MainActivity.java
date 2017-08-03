@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
+import com.example.kathrin1.vokabeltrainer_newlayout.achievement.AchievementMain;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary;
@@ -159,6 +160,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.item_settings:
                 Intent intent_setting = new Intent(MainActivity.this, SettingSelection.class);
                 startActivity(intent_setting);
+                return (true);
+            case R.id.item_achievement:
+                Intent intent_achievement = new Intent(MainActivity.this, AchievementMain.class);
+                startActivity(intent_achievement);
                 return (true);
         }
         return (super.onOptionsItemSelected(item));

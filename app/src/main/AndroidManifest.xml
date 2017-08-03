@@ -4,93 +4,117 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
+    <!--first line in  <application>: android:name=".MainApplication" -->
     <application
-        android:name=".MainApplication"
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity
-            android:name=".MainActivity"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+    android:allowBackup="true"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:supportsRtl="true"
+    android:theme="@style/AppTheme">
+    <activity
+        android:name=".MainActivity"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
 
-        <activity android:name=".dictionary.VocabularyDictionary"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
-        </activity>
-        <activity android:name=".dictionary.VocabularyEntry"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary" />
-        </activity>
-        <activity android:name=".dictionary.Lektion"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
-        </activity>
+    <activity android:name=".dictionary.VocabularyDictionary"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait"
+        android:windowSoftInputMode="stateHidden">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
+    <activity android:name=".dictionary.VocabularyEntry"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary" />
+    </activity>
+    <activity android:name=".dictionary.Lektion"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
 
-        <activity android:name=".exercise.Translation"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden|adjustResize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
-        </activity>
-        <activity android:name=".exercise.Kontext"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"
-            android:windowSoftInputMode="stateHidden|adjustResize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
-        </activity>
-        <activity android:name=".exercise.AufgabeAuswahl"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
-        </activity>
-        <activity android:name=".exercise.TrainAndTest"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
+    <activity android:name=".exercise.Translation"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait"
+       >
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
+    </activity>
+    <activity android:name=".exercise.Kontext"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait"
+        android:windowSoftInputMode="stateHidden|adjustResize">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
+    </activity>
+    <activity android:name=".exercise.AufgabeAuswahl"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
+    <activity android:name=".exercise.TrainAndTest"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
+    </activity>
 
-        <activity android:name=".Help"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
+    <activity android:name=".Help"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait"/>
 
-        <activity android:name=".settings.SettingSelection"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".settings.SettingWordtest"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".settings.SettingKontexttest"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
+    <activity android:name=".settings.SettingSelection"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
+    <activity android:name=".settings.SettingWordtest"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection" />
+    </activity>
+    <activity android:name=".settings.SettingKontexttest"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection" />
+    </activity>
 
-        <activity android:name=".status.Status"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
-        </activity>
-    </application>
+    <activity android:name=".status.Status"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
+
+    <activity android:name=".achievement.AchievementMain"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait">
+        <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.example.kathrin1.vokabeltrainer_newlayout.MainActivity" />
+    </activity>
+</application>
 </manifest>

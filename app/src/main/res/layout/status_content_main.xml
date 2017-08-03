@@ -31,8 +31,62 @@
             android:layout_toRightOf="@+id/btn_go_back"/>
     </RelativeLayout>
 
-    <ExpandableListView
+    <LinearLayout
+        android:id="@+id/lay_explaination"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_below="@id/lay_überschrift"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E33C17"
+            android:text="0%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E38017"
+            android:text="1-25%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#E3C417"
+            android:text="26-50%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#BEE317"
+            android:text="51-75%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#65CF03"
+            android:text="76-99%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#1F8900"
+            android:text="100%"
+            android:gravity="center"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+
+    <ExpandableListView
+        android:layout_below="@id/lay_explaination"
         android:id="@+id/expandableListView_Parent"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"

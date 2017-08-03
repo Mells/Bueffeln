@@ -1,7 +1,10 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.status;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -44,7 +47,7 @@ public class SecondLevelAdapter extends BaseExpandableListAdapter {
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = layoutInflater.inflate(R.layout.drawer_list_item, parent, false);
+            convertView = layoutInflater.inflate(R.layout.status_drawer_list_item, parent, false);
         }
         TextView txtListChild = (TextView) convertView
                 .findViewById(R.id.lblListItem);
@@ -84,13 +87,16 @@ public class SecondLevelAdapter extends BaseExpandableListAdapter {
         if (convertView == null) {
             LayoutInflater layoutInflater = (LayoutInflater) this.mContext
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = layoutInflater.inflate(R.layout.drawer_list_group_second, parent, false);
+            convertView = layoutInflater.inflate(R.layout.status_drawer_list_group_second, parent, false);
         }
         TextView lblListHeader = (TextView) convertView
                 .findViewById(R.id.lblListHeader);
         lblListHeader.setText(headerTitle);
+        Log.d("Status: Header", headerTitle);
         lblListHeader.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         lblListHeader.setTextColor(Color.BLACK);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        lblListHeader.setBackgroundColor(Color.parseColor(sharedPreferences.getString(headerTitle, "#000000")));
         return convertView;
     }
 

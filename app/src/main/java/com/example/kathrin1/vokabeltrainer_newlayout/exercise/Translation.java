@@ -220,6 +220,7 @@ public class Translation extends AppCompatActivity {
                             InputMethodManager.HIDE_NOT_ALWAYS);
                     if (edit_solution.getText().toString().length() > 0) {
                         if (!sw_language.isChecked()) {
+                            // German Input
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
                                 lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText("Gratulation, das ist korrekt.");
@@ -228,11 +229,12 @@ public class Translation extends AppCompatActivity {
                                 if (voc.getId() > 6) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
+                                // English Input
                             } else {
                                 // Todo - feedback
-                                Feedback feedback = new Feedback(edit_solution.getText().toString(),
-                                        voc.getVoc(), voc.getPOS(), voc.getLemma(), Translation.this);
-                                feedback.generateFeedback();
+                                //Feedback feedback = new Feedback(edit_solution.getText().toString(),
+                                //        voc.getVoc(), voc.getPOS(), voc.getLemma(), true, Translation.this);
+                                //feedback.generateFeedback();
                                 lay_feedback.setVisibility(View.VISIBLE);
                                 txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));

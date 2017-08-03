@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Spanned;
@@ -96,7 +97,7 @@ public class TrainAndTest extends AppCompatActivity
     private TextView txt_feedback;
     private EditText edit_solution;
     private RelativeLayout feedbackLayout, inputLayout;
-    private Button btn_next, btn_solution, btn_auswahl, btn_hint;
+    private Button btn_next, btn_solution, btn_auswahl, btn_hint, btn_go_back;
 
     private LoadingBarView loadingBar;
 
@@ -407,6 +408,7 @@ public class TrainAndTest extends AppCompatActivity
         btn_solution = (Button) findViewById(R.id.btn_solution);
         btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
         btn_hint = (Button) findViewById(R.id.btn_hint);
+        btn_go_back = (Button) findViewById(R.id.btn_go_back);
 
         //the input field
         edit_solution = (EditText) findViewById(R.id.edit_solution);
@@ -490,6 +492,13 @@ public class TrainAndTest extends AppCompatActivity
             public void onClosed()
             {
                 onSlidingLayerClosed();
+            }
+        });
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(TrainAndTest.this);
             }
         });
 

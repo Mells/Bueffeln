@@ -1,8 +1,10 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.settings;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +17,7 @@ import android.widget.RadioGroup;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
 
 
 /**
@@ -41,6 +44,10 @@ public class SettingWordtest extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.setting_wordtest);
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
+
         //RadioGroup rbtn_first_group = (RadioGroup) findViewById(R.id.rbtn_1st_sent_1st_group);
         rbtn_first_book = (RadioButton) findViewById(R.id.rbtn_1st_sent_1st_book);
         rbtn_second_book = (RadioButton) findViewById(R.id.rbtn_1st_sent_2nd_book);
@@ -56,6 +63,22 @@ public class SettingWordtest extends AppCompatActivity{
         rbtn_second_gdex = (RadioButton) findViewById(R.id.rbtn_1st_sent_2nd_gdex);
         rbtn_third_gdex = (RadioButton) findViewById(R.id.rbtn_1st_sent_3rd_gdex);
 
+        rbtn_first_book.setChecked(sharedPreferences.getBoolean("rbtn_first_book", false));
+        rbtn_second_book.setChecked(sharedPreferences.getBoolean("rbtn_second_book", false));
+        rbtn_third_book.setChecked(sharedPreferences.getBoolean("rbtn_second_book", false));
+        rbtn_first_learner.setChecked(sharedPreferences.getBoolean("rbtn_first_learner", false));
+        rbtn_second_learner.setChecked(sharedPreferences.getBoolean("rbtn_second_learner", false));
+        rbtn_third_learner.setChecked(sharedPreferences.getBoolean("rbtn_second_learner", false));
+        rbtn_first_gdex.setChecked(sharedPreferences.getBoolean("rbtn_first_gdex", false));
+        rbtn_second_gdex.setChecked(sharedPreferences.getBoolean("rbtn_second_gdex", false));
+        rbtn_third_gdex.setChecked(sharedPreferences.getBoolean("rbtn_first_second_gdex", false));
+
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(SettingWordtest.this);
+            }
+        });
     }
 
     public void onRadioButtonClicked(View view) {
@@ -148,6 +171,18 @@ public class SettingWordtest extends AppCompatActivity{
                 }
                 break;
         }
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor shEditor = sharedPreferences.edit();
+        shEditor.putBoolean("rbtn_first_book", rbtn_first_book.isChecked());
+        shEditor.putBoolean("rbtn_second_book", rbtn_second_book.isChecked());
+        shEditor.putBoolean("rbtn_third_book", rbtn_third_book.isChecked());
+        shEditor.putBoolean("rbtn_first_learner", rbtn_first_learner.isChecked());
+        shEditor.putBoolean("rbtn_second_learner", rbtn_second_learner.isChecked());
+        shEditor.putBoolean("rbtn_third_learner", rbtn_third_learner.isChecked());
+        shEditor.putBoolean("rbtn_first_gdex", rbtn_first_gdex.isChecked());
+        shEditor.putBoolean("rbtn_second_gdex", rbtn_second_gdex.isChecked());
+        shEditor.putBoolean("rbtn_third_gdex", rbtn_third_gdex.isChecked());
+        shEditor.commit();
     }
 
 

@@ -343,7 +343,6 @@ public class Book1 extends Fragment {
             }
         }
 
-
     }
 
 

@@ -10,9 +10,17 @@
     android:background="@color/colorPrimaryDark">
 
     <RelativeLayout
+        android:orientation="horizontal"
         android:id="@+id/lay_überschrift"
         android:layout_width="match_parent"
         android:layout_height="50dp">
+
+        <Button
+            android:id="@+id/btn_go_back"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_arrow_back_black_24px"
+            />
 
         <TextView
             android:text="@string/setting"
@@ -22,7 +30,9 @@
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:id="@+id/textView"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@+id/btn_go_back"/>
     </RelativeLayout>
 
     <LinearLayout

@@ -17,6 +17,8 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
@@ -71,19 +73,21 @@ public class VocabularyEntry extends AppCompatActivity {
         dbManager = DatabaseManager.build(VocabularyEntry.this);
 
         // TODO:  CHANGE SENTENCE TYPE HERE
-        List<String> sentenceList = new ArrayList<String>(Arrays.asList(vocable.getGDEXSentences().substring(1, vocable.getGDEXSentences().length() - 1).split(", ")));
+        List<String> bookList = DBUtils.splitListString(vocable.getOldSentences());
         Random randomGenerator = new Random();
-        int index = randomGenerator.nextInt(sentenceList.size());
-        Log.d("EN-SentenceList", sentenceList.toString());
+        int index = randomGenerator.nextInt(bookList.size());
+        Log.d("EN-SentenceList", bookList.toString());
         try {
-            int numberSentence = Integer.parseInt(sentenceList.get(index).substring(1, sentenceList.get(index).length() - 1));
-            SentObject sentence = dbManager.getSentence(numberSentence);
+            int numberSentence = Integer.parseInt(bookList.get(index));
+            SentObject sentence = dbManager.getOldSentence(numberSentence);
             // TODO - highlight the word in bsp
-            txt_bsp.setText(sentence.getSentence());
-        } catch (NumberFormatException e) // Thrown if there if the string could not be parsed as an int
+            txt_bsp.setText(ExerciseUtils.fromHtml(
+                    ExerciseUtils.replaceWordInSentence(sentence, vocable, "<b><big>%s</big></b>")));
+        } // Thrown if there if the string could not be parsed as an int: NumberFormatException
+        catch (Exception e)
         {
             // If the sentence list value cannot be parsed as an integer, just display it
-            txt_bsp.setText(R.string.Sent_Missing);
+            txt_bsp.setText("");
         }
         //SentObject sentence = databaseQuery.getSentence(numberSentence);
 

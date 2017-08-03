@@ -569,18 +569,16 @@ public class DatabaseManager
     public MorphObject getMorphInformation(String word)
     {
 
-        String query = String.format("select * from %s where %s like '"+word+"'",
-                DBHandler.MORPH_TABLENAME,
-                DBHandler.MORPH_WORD);
-        Log.d("Query", query);
-
-        Cursor cursor = db.rawQuery(query, null);
-        //Cursor cursor = db.query(DBHandler.MORPH_TABLENAME, DBHandler.MORPH_COLUMNS,
-        //        DBHandler.MORPH_WORD + " = " + word,
-        //        null, null, null, null);
+        Cursor cursor = db.query(DBHandler.MORPH_TABLENAME, DBHandler.MORPH_COLUMNS,
+                DBHandler.MORPH_WORD + " like '" + word +"'",
+                null, null, null, null);
 
         if (cursor.getCount() != 1)
-            throw new NoSuchElementException("Word with the given String [" + word + "] not found.");
+        {
+            Log.e(LOG_TAG, "Word with the given String [" + word + "] not found.  " +
+                    "Returning empty object instead.");
+            return MorphObject.emptyObject();
+        }
 
         cursor.moveToFirst();
 

@@ -64,7 +64,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onFirstRadioButtonClicked"
@@ -72,7 +72,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
                                 android:id="@+id/rbtn_1st_sent_1st_gdex"
@@ -80,7 +80,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:onClick="onFirstRadioButtonClicked"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -106,7 +106,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onFirstRadioButtonClicked"
@@ -114,7 +114,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
                                 android:id="@+id/rbtn_1st_sent_2nd_gdex"
@@ -122,7 +122,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:onClick="onFirstRadioButtonClicked"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -148,7 +148,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onFirstRadioButtonClicked"
@@ -156,7 +156,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onFirstRadioButtonClicked"
@@ -164,7 +164,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
                 </LinearLayout>
@@ -211,7 +211,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -219,7 +219,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -227,7 +227,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -253,7 +253,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -261,7 +261,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -269,7 +269,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -295,7 +295,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -303,7 +303,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onSecondRadioButtonClicked"
@@ -311,7 +311,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
                 </LinearLayout>
@@ -358,7 +358,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -366,7 +366,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -374,7 +374,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -400,7 +400,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -408,7 +408,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -416,7 +416,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -442,7 +442,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -450,7 +450,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onThirdRadioButtonClicked"
@@ -458,7 +458,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
                 </LinearLayout>
@@ -505,7 +505,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -513,7 +513,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -521,7 +521,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -547,7 +547,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -555,7 +555,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -563,7 +563,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -589,7 +589,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/book" />
+                                android:text="@string/easy" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -597,7 +597,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/learner" />
+                                android:text="@string/middle" />
 
                             <RadioButton
 								android:onClick="onHintRadioButtonClicked"
@@ -605,7 +605,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/gdex" />
+                                android:text="@string/hard" />
                         </RadioGroup>
                     </LinearLayout>
                 </LinearLayout>
@@ -614,12 +614,20 @@
     </ScrollView>
 
     <RelativeLayout
+        android:orientation="horizontal"
         android:id="@+id/lay_überschrift"
         android:layout_width="match_parent"
         android:layout_height="50dp">
 
+        <Button
+            android:id="@+id/btn_go_back"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_arrow_back_black_24px"
+            />
+
         <TextView
-            android:text="@string/setting_wordtest"
+            android:text="@string/setting_kontexttest"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:background="@drawable/ic_ueberschrift_hintrgrund"
@@ -627,7 +635,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textView"
-            android:textSize="20sp" />
+            android:textSize="20sp"
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@+id/btn_go_back"/>
     </RelativeLayout>
 
 </RelativeLayout>

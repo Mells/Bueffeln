@@ -4,6 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
     defaultConfig {
+        vectorDrawables.useSupportLibrary = true
         applicationId "com.example.kathrin1.vokabeltrainer_newlayout"
         minSdkVersion 16
         targetSdkVersion 25

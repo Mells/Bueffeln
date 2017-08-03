@@ -164,6 +164,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/txt_example_answer"
+                android:layout_weight="1"
                 android:layout_marginTop="24dp"/>
 
         </TableRow>
@@ -192,7 +193,6 @@
         </TableRow>
 
     </TableLayout>
-
 
     <!--android:layout_below="@+id/toolbar" TODO:  THIS IS THROWING ERRORS -->
     <com.wunderlist.slidinglayer.SlidingLayer

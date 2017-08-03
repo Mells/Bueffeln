@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -16,6 +17,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 
 import static android.R.attr.id;
@@ -27,6 +29,8 @@ public class SettingSelection extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.setting_selection);
+
+        Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
 
         Button btn_setting_wordtrain = (Button) findViewById(R.id.btn_setting_wordtrain);
         Button btn_setting_kontexttrain = (Button) findViewById(R.id.btn_setting_kontexttrain);
@@ -79,10 +83,12 @@ public class SettingSelection extends AppCompatActivity{
             }
         });
 
-
-
-
-
+        btn_go_back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NavUtils.navigateUpFromSameTask(SettingSelection.this);
+            }
+        });
     }
 
 

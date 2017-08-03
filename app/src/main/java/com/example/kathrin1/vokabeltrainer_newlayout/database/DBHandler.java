@@ -266,10 +266,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 15;
+    private static final int VERSION = 17;
     // ======================================
 
-    private static final int FORCED_UPGRADE_VERSION = 15;
+    private static final int FORCED_UPGRADE_VERSION = 17;
 
 
     private final Context c;
@@ -384,6 +384,14 @@ public class DBHandler extends SQLiteAssetHelper
 
         */
 
+        // VERSION 16 UPGRADE
+        // ==================
+        /*if (oldVersion < 16 && newVersion >= 16)
+        {
+            db.execSQL(CREATE_MORPH_TABLE);
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }*/
+
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
         if (newVersion != 8
@@ -393,7 +401,9 @@ public class DBHandler extends SQLiteAssetHelper
                 && newVersion != 12
                 && newVersion != 13
                 && newVersion != 14
-                && newVersion != 15)
+                && newVersion != 15
+                && newVersion != 16
+                && newVersion != 17)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
@@ -431,7 +441,7 @@ public class DBHandler extends SQLiteAssetHelper
             {
                 readCSVIntoTable(db, WORD_TABLENAME, WORD_CSV);
                 readCSVIntoTable(db, SENT_TABLENAME, SENT_CSV);
-                //TODO JUST UNCOMMENT
+                //TODO
                 readCSVIntoTable(db, MORPH_TABLENAME, MORPH_CSV);
 
                 return null;

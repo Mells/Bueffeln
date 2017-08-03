@@ -1,6 +1,7 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -18,6 +19,8 @@ public class MorphObject {
     private String reading6;
     private String reading7;
     private String reading8;
+
+    private boolean isEmpty = false;
 
     public MorphObject(int id, String word, String lemma, String reading1, String reading2,
                        String reading3, String reading4, String reading5, String reading6,
@@ -92,9 +95,80 @@ public class MorphObject {
 
     public String getReading8() { return reading8; }
 
-    public String getAllReadings() {return reading1 + ";" + reading2 + ";" + reading3 + ";" + reading4
-            + ";" + reading5 + ";" + reading6 + ";" + reading7 + ";" + reading8;}
+    public int getNumberOfReadings() {
+        int counter = 0;
+        if (!reading1.equals("")){
+            counter ++;
+        }
+        if (!reading2.equals("")){
+            counter ++;
+        }
+        if (!reading3.equals("")){
+            counter ++;
+        }
+        if (!reading4.equals("")){
+            counter ++;
+        }
+        if (!reading5.equals("")){
+            counter ++;
+        }
+        if (!reading6.equals("")){
+            counter ++;
+        }
+        if (!reading7.equals("")){
+            counter ++;
+        }
+        if (!reading8.equals("")){
+            counter ++;
+        }
+        return counter;
+    }
 
+    public String getReadingByNumber(int number){
+        switch (number){
+            case 1:
+                return getReading1();
+            case 2:
+                return getReading2();
+            case 3:
+                return getReading3();
+            case 4:
+                return getReading4();
+            case 5:
+                return getReading5();
+            case 6:
+                return getReading6();
+            case 7:
+                return getReading7();
+            case 8:
+                return getReading8();
+            default:
+                return "";
+        }
+    }
+
+    public String[] getAllReadings() {return new String[] {reading1, reading2, reading3, reading4,
+            reading5, reading6, reading7, reading8};}
+
+    private MorphObject setEmpty(boolean empty)
+    {
+        isEmpty = empty;
+        return this;
+    }
+
+    public boolean isEmpty()
+    {
+        return isEmpty;
+    }
+    /**
+     * Generates an empty sentence to use as a non-null placeholder in case of errors.
+     *
+     * @return A generic, empty morph object
+     */
+    public static MorphObject emptyObject()
+    {
+        return new MorphObject(-1, "", "", "", "", "", "", "", "", "", "").setEmpty(true);
+    }
     @Override
     public boolean equals(Object o)
     {

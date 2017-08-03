@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
@@ -179,7 +180,7 @@ public class Kontext extends AppCompatActivity {
                             TextView newSent = new TextView(Kontext.this);
                             // TODO: NO SAME SENTENCE
                             newSent.setText(ExerciseUtils.fromHtml(
-                                           ExerciseUtils.deleteWordFromSentence(ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "hint"), voc)));
+                                           ExerciseUtils.deleteWordFromSentence(ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "hint", "", ""), voc)));
                             //newSent.setText(ExerciseUtils.fromHtml(
                             //        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(copyOfSentenceList.get(0)), voc)));
                             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -348,17 +349,20 @@ public class Kontext extends AppCompatActivity {
         } else {
             Random randomGenerator = new Random();
             int index = randomGenerator.nextInt(allVocabulary.size());
-            Log.d("TRANSLATION:", Integer.toString(allVocabulary.size()));
+            Log.d("KONTEXT:", Integer.toString(allVocabulary.size()));
             voc = allVocabulary.get(index);
 
-            // TODO:  CHANGE SENTENCE TYPE HERE
             // TODO: MAKE SURE THERE ARE NO SAME SENTENCES
+            List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
+            List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
+            List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
+
             // get first preference sentence
-            SentObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first");
+            SentObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first", "", "");
             // get second preference sentence
-            SentObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second");
+            SentObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second", first_sentence.getSentence(), "");
             // get third preference sentence
-            SentObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third");
+            SentObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third", first_sentence.getSentence(), second_sentence.getSentence());
 
             txt_sent01.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(first_sentence, voc)));
             txt_sent02.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(second_sentence, voc)));
