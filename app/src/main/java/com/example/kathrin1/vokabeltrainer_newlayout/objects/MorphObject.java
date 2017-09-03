@@ -49,9 +49,9 @@ public class MorphObject {
     public MorphObject(Cursor cursor) throws IllegalArgumentException
     {
         if (cursor == null)
-            throw new IllegalArgumentException("Cursor is null while creating VocObject.");
+            throw new IllegalArgumentException("Cursor is null while creating MorphObject.");
         if (cursor.isAfterLast() || cursor.isBeforeFirst())
-            throw new IllegalArgumentException("Cursor is not pointing at data while creating VocObject.");
+            throw new IllegalArgumentException("Cursor is not pointing at data while creating MorphObject.");
 
         id = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.MORPH_ID));
         word = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_WORD));
@@ -64,9 +64,6 @@ public class MorphObject {
         reading6 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING6));
         reading7 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING7));
         reading8 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING8));
-        //activation = !cursor.isNull(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
-        //        ? cursor.getFloat(cursor.getColumnIndexOrThrow(DBHandler.WORD_ACTIVATION))
-        //        : null;
     }
 
     public int getId() {

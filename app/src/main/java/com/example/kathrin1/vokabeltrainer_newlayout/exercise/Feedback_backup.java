@@ -18,9 +18,9 @@ import java.util.Map;
  * Created by kathrin1 on 03.05.17.
  */
 
-public class Feedback {
+public class Feedback_backup {
 
-    private String learnerAnswer;
+    private String learner_vocable;
     private String learner_pos;
     private String learner_lemma;
 
@@ -31,7 +31,7 @@ public class Feedback {
 
     private Map<String, List> postags = new HashMap<>();
 
-    private List app_vocable;
+    private String app_vocable;
     private String app_pos;
     private String app_lemma;
     private String app_soundex;
@@ -43,14 +43,8 @@ public class Feedback {
     private String reading1, reading2, reading3, reading4, reading5, reading6, reading7, reading8;
     private String[] allReadings;
 
-    public Feedback(String vocableByLearner, List voc_vocable, String pos, String lemma, Boolean isEnglishWord, Context c){
-        this.learnerAnswer = vocableByLearner;
-        if (voc_vocable.get(0) instanceof List) {
-            this.app_vocable = (ArrayList<ArrayList<String>>) voc_vocable;
-        }
-        else {
-            this.app_vocable = (ArrayList<String>) voc_vocable;
-        }
+    public Feedback_backup(String vocableByLearner, String voc_vocable, String pos, String lemma, Boolean isEnglishWord, Context c){
+        this.learner_vocable = vocableByLearner;
         this.app_vocable = voc_vocable;
         this.app_pos = pos;
         this.app_lemma = lemma;
@@ -78,550 +72,93 @@ public class Feedback {
     }
 
     public String generateFeedback(){
-        // ## single word single answer ##
-        // Vokabel | pro_voc | tag_proc_voc    | soundex | lemma   | tag_lemma_voc   | simple_tagged_lemma_vocable;
-        // can     | ['can'] | [('can', 'MD')] | ['C50'] | ['can'] | [('can', 'MD')] | [('can', 'MD')]
+        //look up tag and lemma of word
 
-        // single word multiple answer
-        // Vokabel | pro_voc         | tag_proc_voc                    | soundex
-        // a/an    | [['a'], ['an']] | [[('a', 'DT')], [('an', 'DT')]] | [['A'], ['A5']]
-        // --------------------------------------------------------------------------------------
-        // | lemma           | tag_lemma_voc                   | simple_tagged_lemma_vocable;
-        // | [['a'], ['an']] | [[('a', 'DT')], [('an', 'DT')]] | [[('a', 'DT')], [('an', 'DT')]]
+        if (isEnglishWord) {
+            // test purpose
+            // Vokabel; pro_voc;    tag_proc_voc;       soundex;    lemma;  tag_lemma_voc;  simple_tagged_lemma_vocable;
+            // can;     ['can'];    [('can', 'MD')];    ['C50'];    ['can'];[('can', 'MD')];[('can', 'MD')]
+            app_vocable = "can";
+            app_pos = "MD";
+            app_lemma = "can";
+            app_soundex = "C50";
 
-        // ## phrase one answer ##
-        // Vokabel                 | pro_voc                    | tag_proc_voc
-        // Welcome to Camden Town! | ['Welcome to Camden Town'] | [('Welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
-        // --------------------------------------------------------------------------------------------------------------------------
-        // | soundex                    | lemma                               | tag_lemma_voc
-        // | ['W425000 W0 W53500 W500'] | ['welcome', 'to', 'Camden', 'Town'] | [('welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
-        // --------------------------------------------------------------------------------------------------------------------------
-        // | simple_tagged_lemma_vocable
-        // | [('welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
+            learner_vocable = "";
 
-        // phrase multiple answer
-        // Vokabel                  | pro_voc                                    |
-        // to expect/to have a baby | [['to expect a baby'], ['to have a baby']] |
-        // ----------------------------------------------------------------------------------
-        // tag_proc_voc    | soundex | lemma   | tag_lemma_voc   | simple_tagged_lemma_vocable;
-        // [[('to', 'TO'), ('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('to', 'TO'), ('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]];[['T0 T21230 T T100'], ['T0 T100 T T100']];[['expect', 'a', 'baby'], ['have', 'a', 'baby']];[[('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]];[[('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]]
+            // 1 Word
+            if (learner_vocable.split("\\s").length == 1) {
+                MorphObject morph = dbManager.getMorphInformation(learner_vocable);
 
+                // no word could be retrieved
+                if (morph.isEmpty()) {
 
+                    String learner_soundex = generateSoundex(learner_vocable);
+                    int levenshtein_soundex = levenshteinDistance(learner_soundex, app_soundex);
+                    int levenshtein_spelling = levenshteinDistance(learner_vocable, app_vocable);
 
-        // if <TargetAnswer> is a list longer than one:	# there are alternative answers
-        // ['can'] - [['a'], ['an']] - ['Welcome to Camden Town'] - [['to expect a baby'], ['to have a baby']]
-        String singleTarget;
-        if (app_vocable.get(0) instanceof List) {
-            int topDistance = 1000;
-            String topAnswer = "";
-            // select element from list that has shortest Levensthein distance with LearnerString
-            for (int i = 0; i <= app_vocable.size(); i++){
-                String answer = (String) app_vocable.get(i);
-                int distance = levenshteinDistance(answer, learnerAnswer);
-                if (distance < topDistance){
-                    topDistance = distance;
-                    topAnswer = answer;
-                }
-            }
-            // call it <SingleTarget>
-            singleTarget = topAnswer;
-        } else { // there is a single answer
-            // <SingleTarget> = <TargetAnswer>
-            singleTarget = (String) app_vocable.get(0);
-        }
-
-        // if <SingleTarget> is a single word:
-        if (singleTarget.split("\\s").length < 2) {
-            //if <LearnerString> is a single word:
-            if (learnerAnswer.split("\\s").length < 2) {
-                //	<xtag> the morphological database
-                MorphObject wordReading = dbManager.getMorphInformation(learnerAnswer);
-                // if: <SingleTarget> is not known in <xtag>
-                if (wordReading.isEmpty()) {
-                    // calculate  <soundex> of learner word
-                    String learner_soundex = generateSoundex(learnerAnswer);
-
-                    // calculate <sound_levenshtein> between soundex
-                    int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTarget);
-
-                    // calculate <word_levenshtein> between words
-                    int levenshtein_spelling = levenshteinDistance(learnerAnswer, singleTarget);
-
-                    // if <sound_levenshtein> distance = 0
+                    // is the soundx the same?
                     if (levenshtein_soundex == 0) {
-                        // return “sounds the same”
                         return "Du hast kein bekanntes Wort eingegeben, " +
                                 "aber die Lösung klingt gleich wie deine Eingabe";
                     }
-                    else if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
-                        return "";
-                    } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
-                        // return "Das Wort klingt gleich"
+
+                    // smaller value is closer to the solution
+                    if (levenshtein_soundex == levenshtein_spelling) {
+                        return "Du hast kein bekanntes Wort eingegeben. " +
+                                "Damit können wir leider nicht arbeiten.";
+                    } else if (levenshtein_soundex < levenshtein_spelling) {
                         // todo threshold
                         return "Du hast kein bekanntes Wort eingegeben, aber die Lösung klingt " +
-                            "ähnlich. Bitte überprüfe deine Rechtschreibung";
-                    } else if (levenshtein_soundex > levenshtein_spelling){ // else if <sound_levenshtein> larger than <word_levenshtein>
-                        // return "schau nach einem Rechtschreibfehler"
+                                "ähnlich. Bitte überprüfe deine Rechtschreibung";
+                    } else {
                         // todo threshold
                         return "Du hast kein bekanntes Wort eingegeben, " +
-                            "bitte überprüfe deine Rechtschreibung.";
+                                "bitte überprüfe deine Rechtschreibung.";
                     }
-                } else { //	else # <SingleTarget> is known in <xtag>
-                    // <xtag> has <WordReading>
-                    // <wordReading> has <morphologicalReading>
+                }
+                // word could be retrieved
+                else {
+                    //todo there could be more than 1 meaning
+                    String[] allReadings = morph.getAllReadings();
+                    // (well;well)   N 3sg#well , Adv#well , V INF;
+                    // (welled;well)    V PAST WK#well , V PPART WK
 
-                    MorphInfoObject morphologicalReading;
-                    if (wordReading.getNumberOfReadings() > 1) { // <WordReading> has more than one <MorphologicalReading>
-                        // get the best <morphologicalReading> through levenshtein
-                        morphologicalReading = getBestReading(app_pos, wordReading.getAllReadings());
+
+                    MorphInfoObject mio = new MorphInfoObject(morph.getReading1());
+                    learner_pos = mio.getPOS();
+                    // does it have the same lemma?
+                    String learner_lemma = morph.getLemma();
+                    if (learner_lemma.equals(app_lemma)) {   // the lemma is the same
+                        // todo not finished
+                        return comparePOSTags(mio, app_pos);
                     }
                     else {
-                        // get <morphologicalReading> from <wordReading>
-                        morphologicalReading = new MorphInfoObject(wordReading.getReading1());
+                        String category_pos_learner ="";
+                        String category_pos_app ="";
+                        for (Map.Entry<String, List> entry : postags.entrySet()) {
+                            if (entry.getValue().equals(learner_pos)) {
+                                category_pos_learner = entry.getKey();
+                            }
+                        }
+                        for (Map.Entry<String, List> entry : postags.entrySet()) {
+                            if (entry.getValue().equals(app_pos)) {
+                                category_pos_app = entry.getKey();
+                            }
+                        }
+                        if (category_pos_app.equals(category_pos_learner)) {
+                            return comparePOSTags(mio, app_pos);
+                        }
+                        else {
+                            return "Du hast ein " + category_pos_learner + " eingegeben, du brauchst aber " +
+                                    "ein " + category_pos_app + ".";
+                        }
                     }
-
-                    comparePOSTags(morphologicalReading, app_pos);
-
                 }
-            }
-            else { // <LearnerString> is more than a single word:
-                return "Deine Antwort beinhaltet " + Integer.toString(learnerAnswer.split("\\s").length) +
-                        " Wörter, es wird aber nur eins gesucht";
-            }
-        } else { // <SingleTarget> is more than one word
-            // ['to expect a baby']
-            if (singleTarget.split("\\s").length == learnerAnswer.split("\\s").length) { // have the same number of words
-
-            }
-            else { // have not the same number of words
-
-            }
-
-        }
-
-        return null;
-    }
-
-    //
-    // GET THE BEST MORPHOLOGICAL READING
-    //
-    private MorphInfoObject getBestReading(String app_pos, String[] allReadings) {
-        String pos_app = "";
-        for (Map.Entry<String, List> entry : postags.entrySet()) {
-            if (entry.getValue().equals(app_pos)) {
-                pos_app = entry.getKey();
-            }
-            switch (pos_app) {
-
-                case "NOUN": return getBestNounReading(app_pos, allReadings);
-                case "DETERMINER": return getBestDeterminerReading(app_pos, allReadings);
-                case "ADJECTIVE": return getBestAdjectiveReading(app_pos, allReadings);
-                case "VERB": return getBestVerbReading(app_pos, allReadings);
-                case "PRONOUN": return getBestPronounReading(app_pos, allReadings);
-                case "ADVERB": return getBestAdverbReading(allReadings);
-                case "PREPOSITION": return getBestPrepositionReading(allReadings);
-                case "CONJUNCTION": return getBestConjunctionReading(allReadings);
-                case "SENTENCE_MARKER": return getBestSentenceMarkerReading(allReadings);
-                default: new MorphInfoObject("");
-
             }
         }
         return null;
     }
 
-    private MorphInfoObject getBestNounReading(String app_pos, String[] allReadings) {
-        // NN, NNZ      = N (sg, 2nd, 3rd)
-        // NNS, NNSZ    = N (pl)
-        // NP, NPZ      = PropN (sg, 2nd, 3rd)
-        // NPS, NPSZ    = PropN (pl)
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-        for (String reading : allReadings){
-            if (reading.substring(0,1).equals("N")){
-                if (reading.contains("sg") || reading.contains("2nd") || reading.contains("3rd")){
-                    int nn = levenshteinDistance(app_pos, "NN");
-                    if (nn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nn;
-                        bestReading = reading;
-                    }
-                    int nnz = levenshteinDistance(app_pos, "NNZ");
-                    if (nnz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nnz;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("pl")){
-                    int nns = levenshteinDistance(app_pos, "NNS");
-                    if (nns < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nns;
-                        bestReading = reading;
-                    }
-                    int nnsz = levenshteinDistance(app_pos, "NNSZ");
-                    if (nnsz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nnsz;
-                        bestReading = reading;
-                    }
-                }
-            }
-            else if (reading.substring(0,5).equals("PropN")){
-                if (reading.contains("sg") || reading.contains("2nd") || reading.contains("3rd")){
-                    int np = levenshteinDistance(app_pos, "NP");
-                    if (np < bestLevenshteinDistance){
-                        bestLevenshteinDistance = np;
-                        bestReading = reading;
-                    }
-                    int npz = levenshteinDistance(app_pos, "NPZ");
-                    if (npz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = npz;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("pl")){
-                    int nps = levenshteinDistance(app_pos, "NPS");
-                    if (nps < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nps;
-                        bestReading = reading;
-                    }
-                    int npsz = levenshteinDistance(app_pos, "NPSZ");
-                    if (npsz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = npsz;
-                        bestReading = reading;
-                    }
-                }
-            }
-        }
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestDeterminerReading(String app_pos, String[] allReadings) {
-        // DT   = Det
-        // WDT  = Det wh
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-        for (String reading : allReadings){
-            if (reading.substring(0,3).equals("Det")){
-                if (reading.contains(" wh")){
-                    int wdt = levenshteinDistance(app_pos, "WDT");
-                    if (wdt < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wdt;
-                        bestReading = reading;
-                    }
-                }
-                else {
-                    int dt = levenshteinDistance(app_pos, "DT");
-                    if (dt < bestLevenshteinDistance){
-                        bestLevenshteinDistance = dt;
-                        bestReading = reading;
-                    }
-                }
-            }
-        }
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestAdjectiveReading(String app_pos, String[] allReadings) {
-        // JJ   = A -comp -super
-        // JJR  = A +comp
-        // JJS  = A +super
-
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 1).equals("A")) {
-                if (reading.contains("COMP")){
-                    int jjr = levenshteinDistance(app_pos, "JJR");
-                    if (jjr < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jjr;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("SUPER")) {
-                    int jjs = levenshteinDistance(app_pos, "JJS");
-                    if (jjs < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jjs;
-                        bestReading = reading;
-                    }
-                }
-                else {
-                    int jj = levenshteinDistance(app_pos, "JJ");
-                    if (jj < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jj;
-                        bestReading = reading;
-                    }
-                }
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestVerbReading(String app_pos, String[] allReadings) {
-        // MD                   = V PRES
-        // VBP                  = V PRES [1|2]sg
-        // VBZ, VHZ, VVZ        = V PRES 3sg
-        // VB, VH, VHP, VV, VVP = V INF
-        // VBD, VHD, VVD        = V PAST
-        // VBG, VHG, VVG        = V PROG
-        // VBN, VHN, VVN        = V PPART
-
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 1).equals("V")) {
-                if (reading.contains("PRES")) {
-                    if (reading.matches("[1|2]sg")) {
-                        int vbp = levenshteinDistance(app_pos, "VBP");
-                        if (vbp < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vbp;
-                            bestReading = reading;
-                        }
-                    }
-                    else if (reading.contains("3sg")) {
-                        int vbz = levenshteinDistance(app_pos, "VBZ");
-                        if (vbz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vbz;
-                            bestReading = reading;
-                        }
-                        int vhz = levenshteinDistance(app_pos, "VHZ");
-                        if (vhz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vhz;
-                            bestReading = reading;
-                        }
-                        int vvz = levenshteinDistance(app_pos, "VVZ");
-                        if (vvz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vvz;
-                            bestReading = reading;
-                        }
-                    }
-                    else {
-                        int md = levenshteinDistance(app_pos, "MD");
-                        if (md < bestLevenshteinDistance){
-                            bestLevenshteinDistance = md;
-                            bestReading = reading;
-                        }
-                    }
-                }
-                else if (reading.contains("INF")) {
-                    int vb = levenshteinDistance(app_pos, "VB");
-                    if (vb < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vb;
-                        bestReading = reading;
-                    }
-                    int vh = levenshteinDistance(app_pos, "VH");
-                    if (vh < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vh;
-                        bestReading = reading;
-                    }
-                    int vhp = levenshteinDistance(app_pos, "VHP");
-                    if (vhp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhp;
-                        bestReading = reading;
-                    }
-                    int vv = levenshteinDistance(app_pos, "VV");
-                    if (vv < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vv;
-                        bestReading = reading;
-                    }
-                    int vvp = levenshteinDistance(app_pos, "VVP");
-                    if (vvp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvp;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PAST")) {
-                    int vbd = levenshteinDistance(app_pos, "VBD");
-                    if (vbd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbd;
-                        bestReading = reading;
-                    }
-                    int vhd = levenshteinDistance(app_pos, "VHD");
-                    if (vhd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhd;
-                        bestReading = reading;
-                    }
-                    int vvd = levenshteinDistance(app_pos, "VVD");
-                    if (vvd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvd;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PROG")) {
-                    int vbg = levenshteinDistance(app_pos, "VBG");
-                    if (vbg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbg;
-                        bestReading = reading;
-                    }
-                    int vhg = levenshteinDistance(app_pos, "VHG");
-                    if (vhg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhg;
-                        bestReading = reading;
-                    }
-                    int vvg = levenshteinDistance(app_pos, "VVG");
-                    if (vvg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvg;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PPART")) {
-                    int vbn = levenshteinDistance(app_pos, "VBN");
-                    if (vbn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbn;
-                        bestReading = reading;
-                    }
-                    int vhn = levenshteinDistance(app_pos, "VHN");
-                    if (vhn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhn;
-                        bestReading = reading;
-                    }
-                    int vvn = levenshteinDistance(app_pos, "VVN");
-                    if (vvn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvn;
-                        bestReading = reading;
-                    }
-                }
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestPronounReading(String app_pos, String[] allReadings) {
-        // PP, PP$  = Pron
-        // WP, WPZ  = Pron wh
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Pron")) {
-                if (reading.contains(" wh")){
-                    int pp = levenshteinDistance(app_pos, "PP");
-                    if (pp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = pp;
-                        bestReading = reading;
-                    }
-                    int ppz = levenshteinDistance(app_pos, "PP$");
-                    if (ppz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = ppz;
-                        bestReading = reading;
-                    }
-                }
-                else {
-                    int wp = levenshteinDistance(app_pos, "WP");
-                    if (wp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wp;
-                        bestReading = reading;
-                    }
-                    int wpz = levenshteinDistance(app_pos, "WPZ");
-                    if (wpz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wpz;
-                        bestReading = reading;
-                    }
-                }
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestAdverbReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 3).equals("Adv")) {
-                bestReading = reading;
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestPrepositionReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Prep")) {
-                bestReading = reading;
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestConjunctionReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Conj")) {
-                bestReading = reading;
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestSentenceMarkerReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 5).equals("Punct")) {
-                bestReading = reading;
-            }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-
-    //
-    // HELPER METHODS: SOUNDEX & LEVENSHTEIN
-    //
     private String generateSoundex(String learner_word) {
         // digits holds the soundex values for the alphabet
         char[] digits = "01230120022455012623010202".toCharArray();
@@ -704,10 +241,7 @@ public class Feedback {
         return cost[len0 - 1];
     }
 
-
-    //
-    // COMPARE POS TAGS
-    //
+    
     private String comparePOSTags(MorphInfoObject mio, String app_pos) {
         String pos_app = "";
         for (Map.Entry<String, List> entry : postags.entrySet()) {
@@ -1011,7 +545,7 @@ public class Feedback {
                 }
 
             case "VBG":     // verb be, gerund/present participle
-                // ;being;being;N 3sg#be;V PROG;
+                // ;being;being;V PROG;
                 if (mio.getLemma().equals("be")){
                     if (mio.getIsInfinitive()){
                         return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
@@ -1127,7 +661,7 @@ public class Feedback {
                 }
 
             case "VHD":     // verb have, past tense
-                // ;had;have;V PAST STR#have;V PPART STR;
+                // ;had;have;V PAST STR#have;
                 if (mio.getLemma().equals("be")){
                     if (mio.getIsInfinitive()){
                         return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
@@ -1171,7 +705,7 @@ public class Feedback {
                 }
 
             case "VHN":     // verb have, past participle
-                // ;had;have;V PAST STR#have;V PPART STR;
+                // ;had;have;V PPART STR;
                 if (mio.getLemma().equals("have")){
                     if (mio.getIsInfinitive()){
                         return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
@@ -1236,7 +770,7 @@ public class Feedback {
                 }
 
             case "VV":      // verb, base form
-                //
+                // ;see;see;V INF;;;;;;
                 if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
                     if (mio.getIsInfinitive()){
                         return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
@@ -1255,7 +789,7 @@ public class Feedback {
                 }
 
             case "VVD":     // verb, past tense
-                //
+                // ;saw;saw;V PAST STR;;;;;
                 if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
                     if (mio.getIsInfinitive()){
                         return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +

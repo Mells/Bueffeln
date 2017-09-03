@@ -52,31 +52,31 @@ public class MorphInfoObject {
         String[] mReading = mReading_withLemma[0].trim().split("\\s");;
         switch (mReading[0]){
             case "Punct":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "Prep":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "Conj":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "Comp":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "G":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "I":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "Part":
-                setPOSTAG(mReading);
+                setPOSTag(mReading);
                 break;
             case "Adv":
                 setAdverbTag(mReading);
                 break;
             case "A":
-                setAdjective(mReading);
+                setAdjectiveTag(mReading);
                 break;
             case "VVC":
                 setVVCTag(mReading);
@@ -104,12 +104,13 @@ public class MorphInfoObject {
 
     // Adv {'wh'}
     private void setAdverbTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setWhTag(mReading);
     }
 
     // A {'SUPER', 'COMP'}
-    private void setAdjective(String[] mReading){
+    private void setAdjectiveTag(String[] mReading){
+        setPOSTag(mReading);
         if (Arrays.asList(mReading).contains("COMP")){
             isComparative = true;
         }
@@ -120,21 +121,21 @@ public class MorphInfoObject {
 
     // VVC {'PRES', 'INF'}
     private void setVVCTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setTimeTag(mReading);
         setInfinitiveTag(mReading);
     }
 
     // PropN {'3sg', '3pl', 'GEN'}
     private void setProperNounTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setCaseTag(mReading);
     }
 
     // N {'3sg', 'masc', '3pl', 'GEN'}
     private void setNounTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setCaseTag(mReading);
         setGenderTag(mReading);
@@ -142,7 +143,7 @@ public class MorphInfoObject {
 
     // Det {'ref2sg', 'ref3pl', 'ref2nd', 'ref1sg', 'ref3sg', 'ref1pl', 'refmasc', 'wh', 'reffem', 'GEN'}
     private void setDeterminerTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setCaseTag(mReading);
         setGenderTag(mReading);
@@ -151,7 +152,7 @@ public class MorphInfoObject {
 
     // NVC {'1sg', '3sg', 'masc', 'fem', 'neut', 'STR', 'wh', '3pl', 'PAST', 'PRES', '1pl', '2nd'}
     private void setNVCTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setCaseTag(mReading);
         setGenderTag(mReading);
@@ -162,7 +163,7 @@ public class MorphInfoObject {
 
     // V {'1sg', 'INDAUX', '3sg', 'NEG', 'INF', 'PROG', 'TO', 'STR', 'pl', '3pl', 'PAST', 'PRES', 'WK', 'PPART', 'PASSIVE', 'CONTR', '2sg'}
     private void setVerbTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setINDAUXTag(mReading);
         setNegationTag(mReading);
@@ -177,7 +178,7 @@ public class MorphInfoObject {
 
     // Pron {'ref2sg', '3sg', 'masc', 'ref3pl', '2pl', '3rd', '1sg', 'fem', 'reffem', 'refmasc', 'neut', 'wh', '3pl', 'nomacc', 'ref1sg', '1pl', 'ref3sg', 'GEN', 'ref1pl', 'ref2nd', 'NEG', 'nom', 'acc', 'refl', '2nd', '2sg'}
     private void setPronounTag(String[] mReading){
-        setPOSTAG(mReading);
+        setPOSTag(mReading);
         setNumberTag(mReading);
         setGenderTag(mReading);
         setWhTag(mReading);
@@ -187,7 +188,7 @@ public class MorphInfoObject {
     }
 
 
-    private void setPOSTAG(String[] mReading){
+    private void setPOSTag(String[] mReading){
         pos = mReading[0];
     }
 
