@@ -1,15 +1,18 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphInfoObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.StrBuilder;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,102 +24,137 @@ import java.util.Map;
 public class Feedback {
 
     private String learnerAnswer;
-    private String learner_pos;
-    private String learner_lemma;
 
+    private ArrayList appAnswer;
+    private ArrayList appAnswerTag;
+    private ArrayList appLemma;
+    private ArrayList appLemmaTag;
+    private ArrayList appSoundex;
 
-    // BOOK Tags: a, av, d, i, irr, k, p, ph, pr, s, v
-    // xtag: A, Adv, Comp, Conj, Det, G, I, N, NVC, Part, Punct, Pron, Prep, PropN, V, VVC
-
-
-    private Map<String, List> postags = new HashMap<>();
-
-    private List app_vocable;
-    private String app_pos;
-    private String app_lemma;
-    private String app_soundex;
+    private String bestAppReading;
 
     private Boolean isEnglishWord;
 
     private DatabaseManager dbManager;
 
-    private String reading1, reading2, reading3, reading4, reading5, reading6, reading7, reading8;
-    private String[] allReadings;
+    public Feedback(String learnerAnswer, VocObject vocable, Boolean isEnglishWord, Context c){
 
-    public Feedback(String vocableByLearner, List voc_vocable, String pos, String lemma, Boolean isEnglishWord, Context c){
-        this.learnerAnswer = vocableByLearner;
-        if (voc_vocable.get(0) instanceof List) {
-            this.app_vocable = (ArrayList<ArrayList<String>>) voc_vocable;
+        this.learnerAnswer = learnerAnswer;
+        this.isEnglishWord = isEnglishWord;
+
+        if(this.isEnglishWord) {
+            this.appAnswer = vocable.getProcessedVocable();
+            this.appAnswerTag = vocable.getTaggedProcessedVocable();
+            this.appSoundex = vocable.getProcessedVocableSoundex();
+            this.appLemma = vocable.getLemmaVocable();
+            this.appLemmaTag = vocable.getTaggedLemmaVocable();
         }
         else {
-            this.app_vocable = (ArrayList<String>) voc_vocable;
+            this.appAnswer = vocable.getProcessedTranslation();
+            this.appAnswerTag = vocable.getTaggedProcessedTranslation();
+            this.appSoundex = vocable.getProcessedTranslationSoundex();
+            this.appLemma = vocable.getLemmaTranslation();
+            this.appLemmaTag = vocable.getTaggedLemmaTranslation();
         }
-        this.app_vocable = voc_vocable;
-        this.app_pos = pos;
-        this.app_lemma = lemma;
-        // todo add soundex
-        this.app_soundex = "";
-        this.isEnglishWord = isEnglishWord;
+
+        bestAppReading = "";
+
         dbManager = DatabaseManager.build(c);
 
-        // BOOK Tags: i, irr, ph
-        // xtag: G, I, NVC, Part(Partical?)
-        // Penn: EX (existential there), TO	(infinitive ‘to’), UH (interjection), RP (particle)
-        //CARDINAL_NUMBER = Arrays.asList(new String[]{"CD"}); - only penn
-        //FOREIGN_WORD = Arrays.asList(new String[]{"FW"}); - only penn
-        postags.put("NOUN", Arrays.asList(new String[]{"N", "PropN", "NN", "NNS", "NNSZ", "NNZ", "NP", "NPS",
-                "NPSZ", "NPZ"}));
-        postags.put("DETERMINER", Arrays.asList(new String[]{"Det", "DT", "WDT"}));
-        postags.put("ADJECTIVE", Arrays.asList(new String[]{"A", "JJ", "JJR", "JJS"}));
-        postags.put("VERB", Arrays.asList(new String[]{"V", "VVC", "MD", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ",
-                "VH", "VHD", "VHG", "VHN", "VHP", "VHZ", "VV", "VVD", "VVG", "VVN", "VVP", "VVZ"}));
-        postags.put("PRONOUN", Arrays.asList(new String[]{"Pron", "PP", "PP$", "WP", "WPZ"}));
-        postags.put("ADVERB", Arrays.asList(new String[]{"Adv", "RB", "RBR", "RBS"}));
-        postags.put("PREPOSITION", Arrays.asList(new String[]{"Prep", "IN"}));
-        postags.put("CONJUNCTION", Arrays.asList(new String[]{"Conj", "CC"}));
-        postags.put("SENTENCE_MARKER", Arrays.asList(new String[]{"Punct", "SENT"}));
+
     }
 
     public String generateFeedback(){
-        // ## single word single answer ##
-        // Vokabel | pro_voc | tag_proc_voc    | soundex | lemma   | tag_lemma_voc   | simple_tagged_lemma_vocable;
-        // can     | ['can'] | [('can', 'MD')] | ['C50'] | ['can'] | [('can', 'MD')] | [('can', 'MD')]
 
-        // single word multiple answer
-        // Vokabel | pro_voc         | tag_proc_voc                    | soundex
-        // a/an    | [['a'], ['an']] | [[('a', 'DT')], [('an', 'DT')]] | [['A'], ['A5']]
-        // --------------------------------------------------------------------------------------
-        // | lemma           | tag_lemma_voc                   | simple_tagged_lemma_vocable;
-        // | [['a'], ['an']] | [[('a', 'DT')], [('an', 'DT')]] | [[('a', 'DT')], [('an', 'DT')]]
+        if (isEnglishWord) {
+            return generateEnglishFeedback();
+        }
+        else {
 
-        // ## phrase one answer ##
-        // Vokabel                 | pro_voc                    | tag_proc_voc
-        // Welcome to Camden Town! | ['Welcome to Camden Town'] | [('Welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
-        // --------------------------------------------------------------------------------------------------------------------------
-        // | soundex                    | lemma                               | tag_lemma_voc
-        // | ['W425000 W0 W53500 W500'] | ['welcome', 'to', 'Camden', 'Town'] | [('welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
-        // --------------------------------------------------------------------------------------------------------------------------
-        // | simple_tagged_lemma_vocable
-        // | [('welcome', 'JJ'), ('to', 'TO'), ('Camden', 'NP'), ('Town', 'NP')]
+        }
+        return null;
+    }
 
-        // phrase multiple answer
-        // Vokabel                  | pro_voc                                    |
-        // to expect/to have a baby | [['to expect a baby'], ['to have a baby']] |
-        // ----------------------------------------------------------------------------------
-        // tag_proc_voc    | soundex | lemma   | tag_lemma_voc   | simple_tagged_lemma_vocable;
-        // [[('to', 'TO'), ('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('to', 'TO'), ('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]];[['T0 T21230 T T100'], ['T0 T100 T T100']];[['expect', 'a', 'baby'], ['have', 'a', 'baby']];[[('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]];[[('expect', 'VV'), ('a', 'DT'), ('baby', 'NN')], [('have', 'VH'), ('a', 'DT'), ('baby', 'NN')]]
+    private String generateEnglishFeedback() {
+
+        Log.d("Feedback: appA", appAnswer.toString());
+
+        String singleTarget = getSingleTarget();
+
+        // <SingleTarget> is a single word:
+        if (singleTarget.split("\\s").length < 2) {
+
+            // <LearnerString> is a single word:
+            if (learnerAnswer.split("\\s").length < 2) {
+
+                return singleWordComparison(singleTarget);
+            }
+            else { // <LearnerString> is more than a single word:
+
+                return "Deine Antwort beinhaltet " + Integer.toString(learnerAnswer.split("\\s").length) +
+                        " Wörter, es wird aber nur eins gesucht";
+            }
+        } else { // <SingleTarget> is more than one word
+            // [['to expect a baby'], ['to have a baby']]
+            //
+            // [[('to', ['V TO']), ('expect', ['V INF']), ('a', ['Det']), ('baby', ['N 3sg'])],
+            // [('to', ['V TO']), ('have', ['V INF']), ('a', ['Det']), ('baby', ['N 3sg'])]]
 
 
+            if (singleTarget.split("\\s").length == learnerAnswer.split("\\s").length) {
+                // have the same number of words
 
-        // if <TargetAnswer> is a list longer than one:	# there are alternative answers
-        // ['can'] - [['a'], ['an']] - ['Welcome to Camden Town'] - [['to expect a baby'], ['to have a baby']]
-        String singleTarget;
-        if (app_vocable.get(0) instanceof List) {
+                ArrayList<Pair> newAppAnswerTag = getCorrectTaggedByIndex(appAnswerTag);
+
+                String[] learnerWords = learnerAnswer.split("\\s");
+                StringBuilder theFeedback = new StringBuilder();
+                MorphObject learnerWordReading;
+
+                for (int i = 0; i < newAppAnswerTag.size(); i++){
+                    //for (Pair word : newAppAnswerTag){
+                    Pair aWord = newAppAnswerTag.get(i);
+                    String lWord = learnerWords[i];
+
+                    theFeedback.append(lWord + ":");
+
+                    learnerWordReading = dbManager.getMorphInformation(lWord);
+
+                    if (learnerWordReading.isEmpty()) {
+
+                        theFeedback.append(feedbackForWordNotFound((String) aWord.getKey()));
+
+                    } else {
+                        String appReading = (String) aWord.getValue();
+                        String[] allAppReadings = appReading.split(", ");
+
+                        MorphInfoObject morphologicalReading = getBestLearnerReading(appReading, allAppReadings, learnerWordReading);
+
+                        theFeedback.append(compareReadings(learnerWordReading, morphologicalReading, bestAppReading));
+                    }
+                }
+            }
+            else { // have not the same number of words
+                return "Die Antwort hat " + singleTarget.split("\\s").length + " Wörter. " +
+                        "Deine Antwort hat " + learnerAnswer.split("\\s").length + " Wörter.";
+            }
+//
+        }
+
+        return "Es tut mir leid, irgendetwas ist schief gelaufen.";
+    }
+
+    private String getSingleTarget(){
+        String singleTarget = "";
+        // if it has more than one correct answer
+        if (appAnswer.size() > 1) {
+            // [[xxx], [yyy]]
             int topDistance = 1000;
             String topAnswer = "";
             // select element from list that has shortest Levensthein distance with LearnerString
-            for (int i = 0; i <= app_vocable.size(); i++){
-                String answer = (String) app_vocable.get(i);
+            for (int i = 0; i < appAnswer.size(); i++){
+                //Log.d("Feedback: appA0", appAnswer.get(i).toString());
+                ArrayList<String> temp = (ArrayList<String>) appAnswer.get(i);
+                String answer = temp.get(0);
                 int distance = levenshteinDistance(answer, learnerAnswer);
                 if (distance < topDistance){
                     topDistance = distance;
@@ -125,503 +163,927 @@ public class Feedback {
             }
             // call it <SingleTarget>
             singleTarget = topAnswer;
-        } else { // there is a single answer
+        }
+        // there is a single answer
+        else {
+            // [[we]]
             // <SingleTarget> = <TargetAnswer>
-            singleTarget = (String) app_vocable.get(0);
+            ArrayList<String> temp = (ArrayList<String>) appAnswer.get(0);
+            singleTarget = temp.get(0);
         }
-
-        // if <SingleTarget> is a single word:
-        if (singleTarget.split("\\s").length < 2) {
-            //if <LearnerString> is a single word:
-            if (learnerAnswer.split("\\s").length < 2) {
-                //	<xtag> the morphological database
-                MorphObject wordReading = dbManager.getMorphInformation(learnerAnswer);
-                // if: <SingleTarget> is not known in <xtag>
-                if (wordReading.isEmpty()) {
-                    // calculate  <soundex> of learner word
-                    String learner_soundex = generateSoundex(learnerAnswer);
-
-                    // calculate <sound_levenshtein> between soundex
-                    int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTarget);
-
-                    // calculate <word_levenshtein> between words
-                    int levenshtein_spelling = levenshteinDistance(learnerAnswer, singleTarget);
-
-                    // if <sound_levenshtein> distance = 0
-                    if (levenshtein_soundex == 0) {
-                        // return “sounds the same”
-                        return "Du hast kein bekanntes Wort eingegeben, " +
-                                "aber die Lösung klingt gleich wie deine Eingabe";
-                    }
-                    else if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
-                        return "";
-                    } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
-                        // return "Das Wort klingt gleich"
-                        // todo threshold
-                        return "Du hast kein bekanntes Wort eingegeben, aber die Lösung klingt " +
-                            "ähnlich. Bitte überprüfe deine Rechtschreibung";
-                    } else if (levenshtein_soundex > levenshtein_spelling){ // else if <sound_levenshtein> larger than <word_levenshtein>
-                        // return "schau nach einem Rechtschreibfehler"
-                        // todo threshold
-                        return "Du hast kein bekanntes Wort eingegeben, " +
-                            "bitte überprüfe deine Rechtschreibung.";
-                    }
-                } else { //	else # <SingleTarget> is known in <xtag>
-                    // <xtag> has <WordReading>
-                    // <wordReading> has <morphologicalReading>
-
-                    MorphInfoObject morphologicalReading;
-                    if (wordReading.getNumberOfReadings() > 1) { // <WordReading> has more than one <MorphologicalReading>
-                        // get the best <morphologicalReading> through levenshtein
-                        morphologicalReading = getBestReading(app_pos, wordReading.getAllReadings());
-                    }
-                    else {
-                        // get <morphologicalReading> from <wordReading>
-                        morphologicalReading = new MorphInfoObject(wordReading.getReading1());
-                    }
-
-                    comparePOSTags(morphologicalReading, app_pos);
-
-                }
-            }
-            else { // <LearnerString> is more than a single word:
-                return "Deine Antwort beinhaltet " + Integer.toString(learnerAnswer.split("\\s").length) +
-                        " Wörter, es wird aber nur eins gesucht";
-            }
-        } else { // <SingleTarget> is more than one word
-            // ['to expect a baby']
-            if (singleTarget.split("\\s").length == learnerAnswer.split("\\s").length) { // have the same number of words
-
-            }
-            else { // have not the same number of words
-
-            }
-
-        }
-
-        return null;
+        Log.d("Feedback: singTar", singleTarget);
+        return singleTarget;
     }
 
-    //
-    // GET THE BEST MORPHOLOGICAL READING
-    //
-    private MorphInfoObject getBestReading(String app_pos, String[] allReadings) {
-        String pos_app = "";
-        for (Map.Entry<String, List> entry : postags.entrySet()) {
-            if (entry.getValue().equals(app_pos)) {
-                pos_app = entry.getKey();
-            }
-            switch (pos_app) {
+    private String singleWordComparison(String singleTarget){
+        //	<xtag> the morphological database
+        MorphObject learnerWordReading = dbManager.getMorphInformation(learnerAnswer);
 
-                case "NOUN": return getBestNounReading(app_pos, allReadings);
-                case "DETERMINER": return getBestDeterminerReading(app_pos, allReadings);
-                case "ADJECTIVE": return getBestAdjectiveReading(app_pos, allReadings);
-                case "VERB": return getBestVerbReading(app_pos, allReadings);
-                case "PRONOUN": return getBestPronounReading(app_pos, allReadings);
-                case "ADVERB": return getBestAdverbReading(allReadings);
-                case "PREPOSITION": return getBestPrepositionReading(allReadings);
-                case "CONJUNCTION": return getBestConjunctionReading(allReadings);
-                case "SENTENCE_MARKER": return getBestSentenceMarkerReading(allReadings);
-                default: new MorphInfoObject("");
+        // <SingleTarget> is not known in <xtag>
+        if (learnerWordReading.isEmpty()) {
 
-            }
+            return feedbackForWordNotFound(singleTarget);
+
+        } else {
+            // <SingleTarget> is known in <xtag>
+            Log.d("Feedback: reading", this.appAnswerTag.toString());
+
+            //[[(can,V PRES, V INF)]] more than one reading
+            ArrayList helper = (ArrayList) this.appAnswerTag.get(0);
+            Pair pair = (Pair) helper.get(0);
+            String appReading = (String) pair.getValue();
+            String[] allAppReadings = appReading.split(", ");
+
+            MorphInfoObject morphologicalReading = getBestLearnerReading(appReading, allAppReadings, learnerWordReading);
+
+            return compareReadings(learnerWordReading, morphologicalReading, bestAppReading);
         }
-        return null;
     }
 
-    private MorphInfoObject getBestNounReading(String app_pos, String[] allReadings) {
-        // NN, NNZ      = N (sg, 2nd, 3rd)
-        // NNS, NNSZ    = N (pl)
-        // NP, NPZ      = PropN (sg, 2nd, 3rd)
-        // NPS, NPSZ    = PropN (pl)
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-        for (String reading : allReadings){
-            if (reading.substring(0,1).equals("N")){
-                if (reading.contains("sg") || reading.contains("2nd") || reading.contains("3rd")){
-                    int nn = levenshteinDistance(app_pos, "NN");
-                    if (nn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nn;
-                        bestReading = reading;
-                    }
-                    int nnz = levenshteinDistance(app_pos, "NNZ");
-                    if (nnz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nnz;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("pl")){
-                    int nns = levenshteinDistance(app_pos, "NNS");
-                    if (nns < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nns;
-                        bestReading = reading;
-                    }
-                    int nnsz = levenshteinDistance(app_pos, "NNSZ");
-                    if (nnsz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nnsz;
-                        bestReading = reading;
-                    }
-                }
-            }
-            else if (reading.substring(0,5).equals("PropN")){
-                if (reading.contains("sg") || reading.contains("2nd") || reading.contains("3rd")){
-                    int np = levenshteinDistance(app_pos, "NP");
-                    if (np < bestLevenshteinDistance){
-                        bestLevenshteinDistance = np;
-                        bestReading = reading;
-                    }
-                    int npz = levenshteinDistance(app_pos, "NPZ");
-                    if (npz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = npz;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("pl")){
-                    int nps = levenshteinDistance(app_pos, "NPS");
-                    if (nps < bestLevenshteinDistance){
-                        bestLevenshteinDistance = nps;
-                        bestReading = reading;
-                    }
-                    int npsz = levenshteinDistance(app_pos, "NPSZ");
-                    if (npsz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = npsz;
-                        bestReading = reading;
-                    }
-                }
-            }
+    private String feedbackForWordNotFound(String singleTarget) {
+        Log.d("Feedback: in empty", "TRUE");
+        // calculate  <soundex> of learner word
+        String learner_soundex = generateSoundex(learnerAnswer);
+
+        // calculate <sound_levenshtein> between soundex
+        // TODO HERE IS NOT SOUNDEX USED BUT SINGLETARGET
+        int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTarget);
+
+        // calculate <word_levenshtein> between words
+        int levenshtein_spelling = levenshteinDistance(learnerAnswer, singleTarget);
+
+        levenshtein_soundex = 1;
+        Log.d("Feedback: learnerSound", learner_soundex);
+        Log.d("Feedback: levenSound", String.valueOf(levenshtein_soundex));
+        Log.d("Feedback: levenSpell", String.valueOf(levenshtein_spelling));
+
+        // if <sound_levenshtein> distance = 0
+        if (levenshtein_soundex == 0) {
+            // return “sounds the same”
+            return "Du hast kein bekanntes Wort eingegeben, " +
+                    "aber die Lösung klingt gleich wie deine Eingabe";
         }
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
+        else if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
+            Log.d("Feedback in", "same");
+            return "Muss noch konstruiert werden";
+        } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
+            // return "Das Wort klingt gleich"
+            // todo threshold
+            Log.d("Feedback in", "soundex");
+            return "Du hast kein bekanntes Wort eingegeben, aber die Lösung klingt " +
+                    "ähnlich. Bitte überprüfe deine Rechtschreibung";
+        } else {
+            // else (if) <sound_levenshtein> larger than <word_levenshtein>
+            // return "schau nach einem Rechtschreibfehler"
+            // todo threshold
+            Log.d("Feedback in", "spelling");
+            return "Du hast kein bekanntes Wort eingegeben, " +
+                    "bitte überprüfe deine Rechtschreibung.";
+        }
+    }
+
+    private MorphInfoObject getBestLearnerReading(String appReading, String[] allAppReadings, MorphObject learnerWordReading) {
+
+        MorphInfoObject morphologicalReading = null;
+
+        if (appReading.split(", ").length > 1){
+            if (learnerWordReading.getNumberOfReadings() > 1) { // <WordReading> has more than one <MorphologicalReading>
+                // get the best <morphologicalReading> through levenshtein
+
+                String bestStringResult = "";
+                int bestIntResult = 100;
+                for (String read : allAppReadings){
+                    for (int i = 1; i <= learnerWordReading.getNumberOfReadings(); i++){
+                        String lReading = learnerWordReading.getReadingByNumber(i);
+                        lReading = lReading.split("#")[0];
+                        int leven = levenshteinDistance(read, lReading);
+                        if (leven < bestIntResult){
+                            bestIntResult = leven;
+                            bestStringResult = lReading;
+                            bestAppReading = read;
+                        }
+                    }
+                }
+
+                morphologicalReading = new MorphInfoObject(bestStringResult);
+            }
+            else {
+                // get <morphologicalReading> from <wordReading>
+                String bestStringResult = "";
+                int bestIntResult = 100;
+                for (String read : allAppReadings){
+                    int leven = levenshteinDistance(read, learnerWordReading.getReading1().split("#")[0]);
+                    if (leven < bestIntResult){
+                        bestIntResult = leven;
+                        bestStringResult = learnerWordReading.getReading1();
+                        bestAppReading = read;
+                    }
+                }
+                morphologicalReading = new MorphInfoObject(bestStringResult);
+            }
         }
         else {
-            return new MorphInfoObject(bestReading);
+            if (learnerWordReading.getNumberOfReadings() > 1) { // <WordReading> has more than one <MorphologicalReading>
+
+                // get the best <morphologicalReading> through levenshtein
+                String bestStringResult = "";
+                int bestIntResult = 100;
+                for (int i = 1; i <= learnerWordReading.getNumberOfReadings(); i++){
+                    String lReading = learnerWordReading.getReadingByNumber(i);
+                    lReading = lReading.split("#")[0];
+                    int leven = levenshteinDistance(appReading, lReading);
+                    if (leven < bestIntResult){
+                        bestIntResult = leven;
+                        bestStringResult = lReading;
+                        bestAppReading = appReading;
+                    }
+                }
+
+                morphologicalReading = new MorphInfoObject(bestStringResult);
+
+            }
+            else {
+
+                // get <morphologicalReading> from <wordReading>
+                morphologicalReading = new MorphInfoObject(learnerWordReading.getReading1());
+                bestAppReading = appReading;
+            }
+        }
+        return morphologicalReading;
+    }
+
+    private String compareReadings(MorphObject learnerWordReading, MorphInfoObject morphologicalLearnerReading, String bestAppReading) {
+        MorphInfoObject morphologicalAppReading = new MorphInfoObject(bestAppReading);
+        String learnerPOS = morphologicalLearnerReading.getPOS();
+        String appPos = morphologicalAppReading.getPOS();
+        if (learnerWordReading.getLemma().equals(this.appLemma.get(0))){
+            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
+                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+            }
+            else {
+                return "Fehler: (1) Lemma ist das Gleiche, aber nicht der POS Tag.";
+            }
+        }
+        else if (morphologicalLearnerReading.getLemma().equals(this.appLemma.get(0))){
+            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
+                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+            }
+            else {
+                return "Fehler: (2) Lemma ist das Gleiche, aber nicht der POS Tag.";
+            }
+        }
+        else if (appPos.equals(learnerPOS)){
+            return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+        }
+        else {
+            return "Wir suchen ein " + posToString(appPos) + ", du hast ein "
+                    + posToString(learnerPOS) + " eingegeben.";
+        }
+
+    }
+
+    private ArrayList<Pair> getCorrectTaggedByIndex(ArrayList theList) {
+        String[][] answer = {{"to expect a baby"}, {"to have a baby"}};
+        int tmpX = 0;
+        int tmpY = 0;
+        String max = "to have a baby";
+        // there are some changes here. in addition to the caching
+        for (int i = 0; i < answer.length; i++) {
+            String[] inner = answer[i];
+            // caches inner variable so that it does not have to be looked up
+            // as often, and it also tests based on the inner loop's length in
+            // case the inner loop has a different length from the outer loop.
+            for (int y = 0; y < inner.length; y++) {
+                System.out.println(inner[y] + " - " + max);
+                if (inner[y].equals(max)) {
+                    max = inner[y];
+                    // store the coordinates of max
+                    tmpX = i;
+                    tmpY = y;
+                }
+            }
+        }
+        System.out.println(max);
+        // convert to string before outputting:
+        System.out.println("The (x,y) is: (" + tmpX + "," + tmpY + ")");
+        System.out.println(theList.get(tmpX));
+        return (ArrayList<Pair>) theList.get(tmpX);
+    }
+
+    /*
+    COMPARE THE SAME PART OF SPEECH TAGS
+     */
+    private String compareMorphologicalInformation(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        switch (morphologicalAppReading.getPOS()) {
+            case "A":
+                return compareAdjectives(morphologicalAppReading, morphologicalLearnerReading);
+            case "Adv":
+                return compareAdverbs(morphologicalAppReading, morphologicalLearnerReading);
+            case "Comp":
+                return compareComparatives();
+            case "Conj":
+                return compareConjuctions();
+            case "Det":
+                return compareDeterminers(morphologicalAppReading, morphologicalLearnerReading);
+            case "G":
+                return compareGenitiveNoun();
+            case "I":
+                return compareInterjections();
+            case "N":
+                return compareNouns(morphologicalAppReading, morphologicalLearnerReading);
+            case "NVC":
+                return compareNounVerbCombinations(morphologicalAppReading, morphologicalLearnerReading);
+            case "Part":
+                return compareParticles();
+            case "Punct":
+                return "Punctuation"; // TODO?
+            case "Pron":
+                return comparePronouns(morphologicalAppReading, morphologicalLearnerReading);
+            case "Prep":
+                return comparePrepositions();
+            case "PropN":
+                return compareProperNouns(morphologicalAppReading, morphologicalLearnerReading);
+            case "V":
+                return compareVerbs(morphologicalAppReading, morphologicalLearnerReading);
+            case "VVC":
+                return compareVerbVerbCombinations(morphologicalAppReading, morphologicalLearnerReading);
+            default:
+                return "Fehler";
         }
     }
 
-    private MorphInfoObject getBestDeterminerReading(String app_pos, String[] allReadings) {
-        // DT   = Det
-        // WDT  = Det wh
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-        for (String reading : allReadings){
-            if (reading.substring(0,3).equals("Det")){
-                if (reading.contains(" wh")){
-                    int wdt = levenshteinDistance(app_pos, "WDT");
-                    if (wdt < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wdt;
-                        bestReading = reading;
-                    }
+    private String compareAdjectives(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+
+        String result = compareComperativeSuperlative(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+        return "Ich kann leider nichts festellen. Probiere ein anderes Adjektiv.";
+    }
+
+    private String compareAdverbs(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // setWhTag(mReading)
+
+        String result = compareWh(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+        return "Ich kann leider nichts festellen. Probiere ein anderes Adverb.";
+    }
+
+    private String compareComparatives() {
+        return "Ich kann leider nichts festellen. Probiere ein anderes Komparativ.";
+    }
+
+    private String compareConjuctions() {
+        return "Ich kann leider nichts festellen. Probiere eine andere Konjuktion.";
+    }
+
+    private String compareDeterminers(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // setNumberTag(mReading);
+        // setCaseTag(mReading);
+        // setGenderTag(mReading);
+        // setWhTag(mReading);
+
+        String result = compareWh(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareGenders(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareCases(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere einen anderen Artikel.";
+    }
+
+    private String compareGenitiveNoun() {
+        return "Ich kann leider nichts festellen. Probiere ein anderes Genetiv Nomen.";
+    }
+
+    private String compareInterjections() {
+        return "Ich kann leider nichts festellen. Probiere eine andere Interjektion.";
+    }
+
+    private String compareNouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // setNumberTag(mReading);
+        // setCaseTag(mReading);
+        //setGenderTag(mReading);
+
+        String result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareGenders(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareCases(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere ein anderes Nomen.";
+    }
+
+    private String compareNounVerbCombinations(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // setNumberTag(mReading);
+        // setGenderTag(mReading);
+        // setWhTag(mReading);
+        // setTimeTag(mReading);
+        // setStrongVerbTag(mReading);
+
+        String result = compareWh(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareTime(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareGenders(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareStrong(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere eine andere Nomen-Verb-Kombination.";
+
+    }
+
+    private String compareParticles() {
+        return "Ich kann leider nichts festellen. Probiere ein anderes Partikel.";
+    }
+
+    private String comparePronouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // Pron {'ref2sg', '3sg', 'masc', 'ref3pl', '2pl', '3rd', '1sg', 'fem', 'reffem', 'refmasc', 'neut', 'wh', '3pl', 'nomacc', 'ref1sg', '1pl', 'ref3sg', 'GEN', 'ref1pl', 'ref2nd', 'NEG', 'nom', 'acc', 'refl', '2nd', '2sg'}
+        // setNumberTag(mReading);
+        // setGenderTag(mReading);
+        // setWhTag(mReading);
+        // setCaseTag(mReading);
+        // setNegationTag(mReading);
+        // setReflexiveTag(mReading);
+
+        String result = compareWh(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareGenders(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareCases(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")) {
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere ein anderes Pronomen.";
+
+
+    }
+
+    private String comparePrepositions() {
+        return "Ich kann leider nichts festellen. Probiere ein andere Preposition.";
+    }
+
+    private String compareProperNouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // PropN {'3sg', '3pl', 'GEN'}
+        // setNumberTag(mReading);
+        // setCaseTag(mReading);
+
+        String result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareCases(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere ein anderen Eigenname.";
+    }
+
+    private String compareVerbs(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        // V {'1sg', 'INDAUX', '3sg', 'NEG', 'INF', 'PROG', 'TO', 'STR', 'pl', '3pl', 'PAST', 'PRES', 'WK', 'PPART', 'PASSIVE', 'CONTR', '2sg'}
+        // setNumberTag(mReading);
+        // setINDAUXTag(mReading);
+        // setNegationTag(mReading);
+        // setInfinitiveTag(mReading);
+        // setTimeTag(mReading);
+        // setTOTag(mReading);
+        // setStrongVerbTag(mReading);
+        // setWeakVerbTag(mReading);
+        // setPassiveTag(mReading);
+        // setCONTRTag(mReading);
+
+
+        String result = compareNegation(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareInfinitive(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareTime(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareWeak(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareStrong(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = comparePassive(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        // setTOTag(mReading);
+        return "Ich kann leider nichts festellen. Probiere ein anderes Verb.";
+    }
+
+    private String compareVerbVerbCombinations(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading){
+        // VVC {'PRES', 'INF'}
+        // setTimeTag(mReading);
+        // setInfinitiveTag(mReading);
+
+        String result = compareInfinitive(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        result = compareTime(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Ich kann leider nichts festellen. Probiere eine andere Verb Verb Kombination.";
+    }
+
+
+
+    /*
+     HELPER METHODS: LINGUISTIC CASES
+     */
+    private String compareNumbers(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading){
+        if (!morphologicalAppReading.getNumber().equals("")){
+            // solution has a number tag
+            if (!morphologicalLearnerReading.getNumber().equals("")){
+                // learner also has an number tag
+                if (morphologicalAppReading.getNumber().equals(morphologicalLearnerReading.getNumber())) {
+                    return "";
                 }
                 else {
-                    int dt = levenshteinDistance(app_pos, "DT");
-                    if (dt < bestLevenshteinDistance){
-                        bestLevenshteinDistance = dt;
-                        bestReading = reading;
-                    }
+                    return "Das Wort wird in " + numberToString(morphologicalAppReading.getNumber())
+                            + "gesucht, nicht in " + numberToString(morphologicalLearnerReading.getNumber())
+                            + ".";
                 }
             }
-        }
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
+            else {
+                return "Das Wort wird in " + numberToString(morphologicalAppReading.getNumber())
+                        + "gesucht.";
+            }
         }
         else {
-            return new MorphInfoObject(bestReading);
+            // solution has no number marker
+            if (!morphologicalLearnerReading.getNumber().equals("")){
+                // learner has number marker
+                return "Deine Eingabe ist in " + numberToString(morphologicalLearnerReading.getNumber())
+                        + ". Bist du sicher ob das richtig ist?";
+            }
         }
+
+        return "";
     }
 
-    private MorphInfoObject getBestAdjectiveReading(String app_pos, String[] allReadings) {
-        // JJ   = A -comp -super
-        // JJR  = A +comp
-        // JJS  = A +super
-
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 1).equals("A")) {
-                if (reading.contains("COMP")){
-                    int jjr = levenshteinDistance(app_pos, "JJR");
-                    if (jjr < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jjr;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("SUPER")) {
-                    int jjs = levenshteinDistance(app_pos, "JJS");
-                    if (jjs < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jjs;
-                        bestReading = reading;
-                    }
+    private String compareCases(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (!morphologicalAppReading.getLingCase().equals("")){
+            // solution has a case marker
+            if (!morphologicalLearnerReading.getLingCase().equals("")){
+                // learner also has an case marker
+                if (morphologicalAppReading.getLingCase().equals(morphologicalLearnerReading.getLingCase())) {
+                    return "";
                 }
                 else {
-                    int jj = levenshteinDistance(app_pos, "JJ");
-                    if (jj < bestLevenshteinDistance){
-                        bestLevenshteinDistance = jj;
-                        bestReading = reading;
-                    }
+                    return "Das Wort wird in " + caseToString(morphologicalAppReading.getLingCase())
+                            + "gesucht, nicht in " + caseToString(morphologicalLearnerReading.getLingCase())
+                            + ".";
                 }
             }
-        }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestVerbReading(String app_pos, String[] allReadings) {
-        // MD                   = V PRES
-        // VBP                  = V PRES [1|2]sg
-        // VBZ, VHZ, VVZ        = V PRES 3sg
-        // VB, VH, VHP, VV, VVP = V INF
-        // VBD, VHD, VVD        = V PAST
-        // VBG, VHG, VVG        = V PROG
-        // VBN, VHN, VVN        = V PPART
-
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 1).equals("V")) {
-                if (reading.contains("PRES")) {
-                    if (reading.matches("[1|2]sg")) {
-                        int vbp = levenshteinDistance(app_pos, "VBP");
-                        if (vbp < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vbp;
-                            bestReading = reading;
-                        }
-                    }
-                    else if (reading.contains("3sg")) {
-                        int vbz = levenshteinDistance(app_pos, "VBZ");
-                        if (vbz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vbz;
-                            bestReading = reading;
-                        }
-                        int vhz = levenshteinDistance(app_pos, "VHZ");
-                        if (vhz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vhz;
-                            bestReading = reading;
-                        }
-                        int vvz = levenshteinDistance(app_pos, "VVZ");
-                        if (vvz < bestLevenshteinDistance){
-                            bestLevenshteinDistance = vvz;
-                            bestReading = reading;
-                        }
-                    }
-                    else {
-                        int md = levenshteinDistance(app_pos, "MD");
-                        if (md < bestLevenshteinDistance){
-                            bestLevenshteinDistance = md;
-                            bestReading = reading;
-                        }
-                    }
-                }
-                else if (reading.contains("INF")) {
-                    int vb = levenshteinDistance(app_pos, "VB");
-                    if (vb < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vb;
-                        bestReading = reading;
-                    }
-                    int vh = levenshteinDistance(app_pos, "VH");
-                    if (vh < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vh;
-                        bestReading = reading;
-                    }
-                    int vhp = levenshteinDistance(app_pos, "VHP");
-                    if (vhp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhp;
-                        bestReading = reading;
-                    }
-                    int vv = levenshteinDistance(app_pos, "VV");
-                    if (vv < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vv;
-                        bestReading = reading;
-                    }
-                    int vvp = levenshteinDistance(app_pos, "VVP");
-                    if (vvp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvp;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PAST")) {
-                    int vbd = levenshteinDistance(app_pos, "VBD");
-                    if (vbd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbd;
-                        bestReading = reading;
-                    }
-                    int vhd = levenshteinDistance(app_pos, "VHD");
-                    if (vhd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhd;
-                        bestReading = reading;
-                    }
-                    int vvd = levenshteinDistance(app_pos, "VVD");
-                    if (vvd < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvd;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PROG")) {
-                    int vbg = levenshteinDistance(app_pos, "VBG");
-                    if (vbg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbg;
-                        bestReading = reading;
-                    }
-                    int vhg = levenshteinDistance(app_pos, "VHG");
-                    if (vhg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhg;
-                        bestReading = reading;
-                    }
-                    int vvg = levenshteinDistance(app_pos, "VVG");
-                    if (vvg < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvg;
-                        bestReading = reading;
-                    }
-                }
-                else if (reading.contains("PPART")) {
-                    int vbn = levenshteinDistance(app_pos, "VBN");
-                    if (vbn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vbn;
-                        bestReading = reading;
-                    }
-                    int vhn = levenshteinDistance(app_pos, "VHN");
-                    if (vhn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vhn;
-                        bestReading = reading;
-                    }
-                    int vvn = levenshteinDistance(app_pos, "VVN");
-                    if (vvn < bestLevenshteinDistance){
-                        bestLevenshteinDistance = vvn;
-                        bestReading = reading;
-                    }
-                }
+            else {
+                return "Das Wort wird in " + caseToString(morphologicalAppReading.getLingCase())
+                        + "gesucht.";
             }
         }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
         else {
-            return new MorphInfoObject(bestReading);
+            // solution has no case marker
+            if (!morphologicalLearnerReading.getLingCase().equals("")){
+                // learner has case marker
+                return "Deine Eingabe ist in " + caseToString(morphologicalLearnerReading.getLingCase())
+                        + ". Bist du sicher ob das richtig ist?";
+            }
         }
+        return "";
     }
 
-    private MorphInfoObject getBestPronounReading(String app_pos, String[] allReadings) {
-        // PP, PP$  = Pron
-        // WP, WPZ  = Pron wh
-        int bestLevenshteinDistance = 100;
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Pron")) {
-                if (reading.contains(" wh")){
-                    int pp = levenshteinDistance(app_pos, "PP");
-                    if (pp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = pp;
-                        bestReading = reading;
-                    }
-                    int ppz = levenshteinDistance(app_pos, "PP$");
-                    if (ppz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = ppz;
-                        bestReading = reading;
-                    }
+    private String compareTime(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (!morphologicalAppReading.getLingTime().equals("")){
+            // solution has a case marker
+            if (!morphologicalLearnerReading.getLingTime().equals("")){
+                // learner also has an case marker
+                if (morphologicalAppReading.getLingTime().equals(morphologicalLearnerReading.getLingTime())) {
+                    return "";
                 }
                 else {
-                    int wp = levenshteinDistance(app_pos, "WP");
-                    if (wp < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wp;
-                        bestReading = reading;
-                    }
-                    int wpz = levenshteinDistance(app_pos, "WPZ");
-                    if (wpz < bestLevenshteinDistance){
-                        bestLevenshteinDistance = wpz;
-                        bestReading = reading;
-                    }
+                    return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime())
+                            + "gesucht, nicht in " + timeToString(morphologicalLearnerReading.getLingTime())
+                            + ".";
+                }
+            }
+            else {
+                return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime())
+                        + "gesucht.";
+            }
+        }
+        else {
+            // solution has no case marker
+            if (!morphologicalLearnerReading.getLingTime().equals("")){
+                // learner has case marker
+                return "Deine Eingabe ist in " + timeToString(morphologicalLearnerReading.getLingTime())
+                        + ". Bist du sicher ob das richtig ist?";
+            }
+        }
+        return "";
+    }
+
+    private String compareInfinitive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsInfinitive()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsInfinitive()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                if (!morphologicalLearnerReading.getLingTime().equals("")) {
+                    // has a time marker
+                    return "Das Wort wird in Infinitiv gesucht. Du hast" + timeToString(morphologicalAppReading.getLingTime())
+                            + ".";
+                }
+                else {
+                    return "Das Wort wird in Infinitiv gesucht.";
                 }
             }
         }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsInfinitive()){
 
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
+                if (!morphologicalAppReading.getLingTime().equals("")) {
+                    // has a time marker
+                    return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime()) + " gesucht. " +
+                            "Du hast es im Infinitiv";
+                }
+                else {
+                    return "Das Wort wird nicht in Infinitiv gesucht.";
+                }
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
 
-    private MorphInfoObject getBestAdverbReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 3).equals("Adv")) {
-                bestReading = reading;
             }
         }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
     }
 
-    private MorphInfoObject getBestPrepositionReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Prep")) {
-                bestReading = reading;
+    private String compareNegation(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsNegation()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsNegation()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Das Wort wird in Negation gesucht";
             }
         }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsNegation()){
+                return "Wir suchen das Wort nicht in Negation.";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
 
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
-    }
-
-    private MorphInfoObject getBestConjunctionReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 4).equals("Conj")) {
-                bestReading = reading;
             }
         }
-
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
-        }
-        else {
-            return new MorphInfoObject(bestReading);
-        }
     }
 
-    private MorphInfoObject getBestSentenceMarkerReading(String[] allReadings) {
-        String bestReading = "";
-
-        for (String reading : allReadings) {
-            if (reading.substring(0, 5).equals("Punct")) {
-                bestReading = reading;
+    private String compareWeak(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsWeakVerb()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsWeakVerb()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Das Wort das gesucht wird ist ein schwaches Verb.";
             }
         }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsWeakVerb()){
+                return "Das Wort das gesucht wird ist kein schwaches Verb.";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
 
-        if (bestReading.isEmpty()){
-            return new MorphInfoObject(allReadings[0]);
+            }
+        }
+    }
+
+    private String compareStrong(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsStrongVerb()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsStrongVerb()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Das Wort das gesucht wird ist ein starkes Verb.";
+            }
+        }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsStrongVerb()){
+                return "Das Wort das gesucht wird ist kein starkes Verb.";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
+    private String comparePassive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsPassive()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsPassive()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Das Verb wird im Passiv gesucht.";
+            }
+        }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsPassive()){
+                return "Das Verb wird nicht im Passiv gesucht";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
+    private String compareGenders(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (!morphologicalAppReading.getGender().equals("")){
+            // solution has a case marker
+            if (!morphologicalLearnerReading.getGender().equals("")){
+                // learner also has an case marker
+                if (morphologicalAppReading.getGender().equals(morphologicalLearnerReading.getGender())) {
+                    return "";
+                }
+                else {
+                    return "Das Wort wird im " + genderToString(morphologicalAppReading.getGender())
+                            + "gesucht, nicht im " + genderToString(morphologicalLearnerReading.getGender())
+                            + ".";
+                }
+            }
+            else {
+                return "Das Wort wird im " + genderToString(morphologicalAppReading.getGender())
+                        + "gesucht.";
+            }
         }
         else {
-            return new MorphInfoObject(bestReading);
+            // solution has no case marker
+            if (!morphologicalLearnerReading.getGender().equals("")){
+                // learner has case marker
+                return "Deine Eingabe ist im " + genderToString(morphologicalLearnerReading.getGender())
+                        + ". Bist du sicher ob das richtig ist?";
+            }
+        }
+        return "";
+    }
+
+    private String compareWh(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsWh()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsWh()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Es wird ein W-Wort gesucht.";
+            }
+        }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsWh()){
+                return "Es wird kein W-Wort gesucht.";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
+    private String compareComperativeSuperlative(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsComparative()){
+            // is compartive
+            if (morphologicalLearnerReading.getIsComparative()){
+                // is comparative
+                return "";
+            }
+            else if (morphologicalLearnerReading.getIsSuperlative()){
+                return "Das Adjektiv ist im Comparativ, du hast eins im Superlativ.";
+            }
+            else {
+                return "Das Adjektiv ist im Comparativ, du hast eins in einfacher Form.";
+            }
+        }
+        else if (morphologicalAppReading.getIsSuperlative()){
+            // is superlativ
+            if (morphologicalLearnerReading.getIsSuperlative()){
+                // is superlativ
+                return "";
+            }
+            else if (morphologicalLearnerReading.getIsComparative()){
+                return "Das Adjektiv ist im Superlativ, du hast eins im Comparativ.";
+            }
+            else {
+                return "Das Adjektiv ist im Superlativ, du hast eins in einfacher Form.";
+            }
+        }
+        else {
+            if (morphologicalLearnerReading.getIsSuperlative()){
+                // is comparative
+                return "Das Adjektiv ist in normaler Form, du hast eins im Superlativ.";
+            }
+            else if (morphologicalLearnerReading.getIsComparative()){
+                return "Das Adjektiv ist in normaler Form, du hast eins im Comparativ.";
+            }
+            else {
+                return "";
+            }
         }
     }
 
 
-    //
-    // HELPER METHODS: SOUNDEX & LEVENSHTEIN
-    //
+    /*
+    HELPER METHODS: TO STRING
+    */
+    private String timeToString(String lTime) {
+        switch (lTime){
+            case "PAST": return "Vergangenheit";
+            case "PRES": return "Gegenwart";
+            case "PPART": return "Partizip II";
+            case "PROG": return "Verlaufsform der Gegenwart";
+            default: return "Fehler";
+        }
+    }
+
+    private String posToString(String pos){
+        switch (pos) {
+            case "A":  return "Adjektiv";
+            case "Adv":  return "Adverb" ;
+            case "Comp": return "Komparativ";
+            case "Conj": return "Konjuktion";
+            case "Det": return "Artikel";
+            case "G": return "Genitive Nomen";
+            case "I": return "Interjektion";
+            case "N": return "Nomen";
+            case "NVC": return "Nomen Verb Kombination";
+            case "Part": return "Partikel";
+            case "Punct": return "Satzzeichen";
+            case "Pron": return "Pronomen";
+            case "Prep": return "Preposition";
+            case "PropN": return "Eigenname";
+            case "V": return "Verb";
+            case "VVC": return "Verb Verb Kombination";
+            default: return "Fehler";
+        }
+
+    }
+
+    private String numberToString(String number){
+        switch (number){
+            case "pl": return "Plural";
+            case "SG": return "Singular";
+            case "1sg": return "erste Person Singular";
+            case "1pl": return "erste Person Plural";
+            case "2sg": return "zweite Person Singular";
+            case "2pl": return "zweite Person Plural";
+            case "3sg": return "dritte Person Singular";
+            case "3pl": return "dritte Person Plural";
+            case "2nd": return "zweite Person";
+            case "3rd": return "dritte Person";
+            case "ref1sg": return "erste Person Singular reflexive";
+            case "ref2sg": return "zweite Person Singular reflexive";
+            case "ref3sg": return "dritte Person Singular reflexive";
+            case "ref1pl": return "erste Person Plural reflexive";
+            case "ref2pl": return "zweite Person Plural reflexive";
+            case "ref3pl": return "dritte Person Plural reflexive";
+            default: return "Fehler: nicht vorhandene Nummer";
+        }
+    }
+
+    private String caseToString(String lCase){
+        // "acc", "nom", "GEN", "nomacc"
+        switch (lCase){
+            case "acc": return "Akkusativ";
+            case "nom": return "Nominative";
+            case "GEN": return "Genetiv";
+            case "nomacc": return "Nominative oder Akkusative";
+            default: return "Fehler: nicht vorhandener Case";
+        }
+    }
+
+    private String genderToString(String lTime) {
+        switch (lTime){
+            case "masc": return "Maskulin";
+            case "fem": return "Feminim";
+            case "neut": return "Neutrum";
+            case "reffem": return "reflexiv Feminim";
+            case "refmasc": return "reflexiv Maskulin";
+            default: return "Fehler";
+        }
+    }
+
+
+    /*
+     HELPER METHODS: SOUNDEX, LEVENSHTEIN
+     */
+
     private String generateSoundex(String learner_word) {
         // digits holds the soundex values for the alphabet
         char[] digits = "01230120022455012623010202".toCharArray();
@@ -663,7 +1125,9 @@ public class Feedback {
         return concat_string.trim();
     }
 
-    public int levenshteinDistance (CharSequence lhs, CharSequence rhs) {
+    //todo generate german soundex
+
+    private int levenshteinDistance (CharSequence lhs, CharSequence rhs) {
         // todo https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Java
         int len0 = lhs.length() + 1;
         int len1 = rhs.length() + 1;
@@ -704,748 +1168,4 @@ public class Feedback {
         return cost[len0 - 1];
     }
 
-
-    //
-    // COMPARE POS TAGS
-    //
-    private String comparePOSTags(MorphInfoObject mio, String app_pos) {
-        String pos_app = "";
-        for (Map.Entry<String, List> entry : postags.entrySet()) {
-            if (entry.getValue().equals(app_pos)) {
-                pos_app = entry.getKey();
-            }
-            switch (pos_app) {
-
-                case "NOUN": return compareNouns(pos_app, mio);
-                case "DETERMINER": return compareDeterminers(pos_app, mio);
-                case "ADJECTIVE": return compareAdjectives(pos_app, mio);
-                case "VERB": return compareVerbs(pos_app, mio);
-                case "PRONOUN": return comparePronouns(pos_app, mio);
-                case "ADVERB": return compareAdverbs(pos_app, mio);
-                case "PREPOSITION": return "Du brauchst eine Präposition.";
-                case "CONJUNCTION": return "Du brauchst eine Konjunktion.";
-                case "SENTENCE_MARKER": return "Dir fehlt ein Satzzeichen.";
-                default: return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-
-            }
-        }
-        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-    }
-
-    private String compareNouns(String pos_app, MorphInfoObject mio) {
-        // xtag "N", "PropN"
-        //      - setNumberTag(mReading);
-        //      - setCaseTag(mReading);
-        //      - setGenderTag(mReading); - not poss.
-        switch (pos_app){
-            case "NN":      // noun, singular or mass
-                if (mio.getPOS().equals("N")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("sg") || number.contains("2nd") || number.contains("3rd")) {
-                        return "Es tut mir leid ich kann dir leider nicht weiterhelfen.";
-                    }
-                    else {
-                        return "Es wird ein Noun mit der Eigenschaft: Singular gesucht, du hast " +
-                                "eins in Plural.";
-                    }
-                }
-                else {
-                    return "Es wird ein Noun mit den Eigenschaften: Singular oder Stoffname " +
-                            "gesucht, hast du eventuel einen Eigennamen eingegeben?.";
-                }
-            case "NNS":     // noun plural
-                if (mio.getPOS().equals("N")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("pl")) {
-                        return "Es tut mir leid ich kann dir leider nicht weiterhelfen.";
-                    }
-                    else {
-                        return "Es wird ein Noun mit der Eigenschaft: Plural gesucht, du hast " +
-                                "eins in Singular.";
-                    }
-                }
-                else {
-                    return "Es wird ein Noun mit der Eigenschaft: Plural gesucht, hast du eventuel " +
-                            "einen Eigennamen eingegeben?.";
-                }
-            case "NNSZ":    // possesive noun plural
-                if (mio.getPOS().equals("N")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("pl")) {
-                        return "Es tut mir leid ich kann dir leider nicht weiterhelfen.";
-                    }
-                    else {
-                        return "Es wird ein Noun mit den Eigenschaften: Possesive und Plural " +
-                                "gesucht, du hast eins in Singular.";
-                    }
-                }
-                else {
-                    return "Es wird ein Noun mit den Eigenschaften: Possesive und Plural gesucht, " +
-                            "hast du eventuel einen Eigennamen eingegeben?.";
-                }
-            case "NNZ":     // possesive noun, singular or mass
-                if (mio.getPOS().equals("N")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("sg") || number.contains("2nd") || number.contains("3rd")) {
-                        return "Es wird ein Noun mit den Eigenschaften: Possesive und " +
-                                "(Singular oder Stoffname) gesucht. Ist dein Nomen eventuell " +
-                                "nicht Possesive?";
-                    }
-                    else {
-                        return "Es wird ein Noun mit den Eigenschaften: Possesive und " +
-                                "(Singular oder Stoffname) gesucht, du hast eins in Plural.";
-                    }
-                }
-                else {
-                    return "Es wird ein Noun mit den Eigenschaften: Possesive und " +
-                            "(Singular oder Stoffname) gesucht, hast du eventuel einen " +
-                            "Eigennamen eingegeben?.";
-                }
-            case "NP":      // proper noun, singular
-                if (mio.getPOS().equals("PropN")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("sg") || number.contains("2nd") || number.contains("3rd")) {
-                        return "Es tut mir leid ich kann dir leider nicht weiterhelfen.";
-                    }
-                    else {
-                        return "Es wird ein Eigenname mit der Eigenschaft: Singular gesucht, du " +
-                                "hast eins in Plural.";
-                    }
-                }
-                else {
-                    return "Es wird ein Eigenname mit der Eigenschaft: Singular gesucht, " +
-                            "hast du eventuel eine Nomen eingegeben?.";
-                }
-            case "NPS":     // proper noun, plural
-                if (mio.getPOS().equals("PropN")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("pl")) {
-                        return "Es tut mir leid ich kann dir leider nicht weiterhelfen.";
-                    }
-                    else {
-                        return "Es wird ein Eigenname mit der Eigenschaft: Plural gesucht, du " +
-                                "hast eins in Singular.";
-                    }
-                }
-                else {
-                    return "Es wird ein Eigenname mit der Eigenschaft: Plural gesucht, " +
-                            "hast du eventuel eine Nomen eingegeben?.";
-                }
-            case "NPSZ":    // possesive proper noun, plural
-                if (mio.getPOS().equals("PropN")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("pl")) {
-                        return "Es wird ein Eigenname mit den Eigenschaften: Possesive und " +
-                                "Plural gesucht. Ist dein Eigenname eventuell " +
-                                "nicht Possesive?";
-                    }
-                    else {
-                        return "Es wird ein Eigenname mit den Eigenschaften: Possesive und Plural " +
-                                "gesucht, du hast eins in Singular.";
-                    }
-                }
-                else {
-                    return "Es wird ein Eigenname mit den Eigenschaft: Possesive und Plural gesucht, " +
-                            "hast du eventuel eine Nomen eingegeben?.";
-                }
-            case "NPZ":     // possesive proper noun, singular
-                if (mio.getPOS().equals("PropN")){
-                    // check number, poss. {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
-                    // "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
-                    String number = mio.getNumber().toLowerCase();
-                    if (number.contains("sg") || number.contains("2nd") || number.contains("3rd")) {
-                        return "Es wird ein Eigenname mit den Eigenschaften: Possesive und " +
-                                "Singular gesucht. Ist dein Eigenname eventuell " +
-                                "nicht Possesive?";
-                    }
-                    else {
-                        return "Es wird ein Eigenname mit den Eigenschaften: Possesive und Singular " +
-                                "gesucht, du hast eins in Plural.";
-                    }
-                }
-                else {
-                    return "Es wird ein Eigenname mit den Eigenschaft: Possesive und Singular gesucht, " +
-                            "hast du eventuel eine Nomen eingegeben?.";
-                }
-            default:
-                return "Es tut mir leid irgendetwas ist schief gelaufen.";
-        }
-    }
-
-    private String compareDeterminers(String pos_app, MorphInfoObject mio) {
-        // xtag "Det":
-        //      - setNumberTag(mReading);
-        //      - setCaseTag(mReading);
-        //      - setGenderTag(mReading);
-        //      - setWhTag(mReading);
-        switch (pos_app){
-            case "DT":
-                if (mio.getIsWh()) {
-                    return "Ein Artikel ist schon richtig, wir suchen aber keinen wh-Artikel.";
-                }
-                else {
-                    return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                }
-            case "WDT":
-                if (!mio.getIsWh()) {
-                    return "Ein Artikel ist schon richtig, wir suchen aber einen wh-Artikel.";
-                }
-                else {
-                    return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                }
-        }
-        return pos_app;
-    }
-
-    private String compareAdjectives(String pos_app, MorphInfoObject mio) {
-        // xtag "A"
-        //      - isComparative
-        //      - isSuperlative
-        switch (pos_app) {
-            case "JJ":  // adjective
-                if (mio.getIsComparative()){
-                    return "Du hast ein Adjective im Komparativ du brauchst aber eins im Posetiv.";
-                }
-                else if (mio.getIsSuperlative()) {
-                    return "Du hast ein Adjective im Superlativ du brauchst aber eins im Posetiv";
-                }
-                else {
-                    return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                }
-            case "JJR": // adjective, comparative
-                if (mio.getIsComparative()){
-                    return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                }
-                else if (mio.getIsSuperlative()) {
-                    return "Du hast ein Adjective im Superlativ du brauchst aber eins im Komparativ";
-                }
-                else {
-                    return "Du hast ein Adjective im Posetiv du brauchst aber eins im Komparativ";
-                }
-            case "JJS": // adjective, superlative
-                if (mio.getIsComparative()){
-                    return "Du hast ein Adjective im Komparativ du brauchst aber eins im Superlativ";
-                }
-                else if (mio.getIsSuperlative()) {
-                    return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                }
-                else {
-                    return "Du hast ein Adjective im Posetiv du brauchst aber eins im Superlativ";
-                }
-                default: return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-
-        }
-    }
-
-    private String compareVerbs(String pos_app, MorphInfoObject mio) {
-        // xtag "V", "VVC"
-        //      - setNumberTag(mReading);
-        //      - setINDAUXTag(mReading);
-        //      - setNegationTag(mReading);
-        //      - setInfinitiveTag(mReading);
-        //      - setTimeTag(mReading);
-        //      - setTOTag(mReading);
-        //      - setStrongVerbTag(mReading);
-        //      - setWeakVerbTag(mReading);
-        //      - setPassiveTag(mReading);
-        //      - setCONTRTag(mReading);
-
-        switch (pos_app){
-            case "MD":      // modal
-                // ;can;can;V INF#can;V PRES;
-                // ;could;could;V PRES;
-                return "Es wird ein Modalverb gesucht.";
-
-            case "VB":      // verb be, base form
-                // ;be;be;V INF;
-                if (mio.getLemma().equals("be")){
-                    if (mio.getIsInfinitive()){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()){
-                        return "Du hast das richtige Wort, wir suchen es aber im Infinitiv. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Infinitiv.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VBD":     // verb be, past tense
-                // ;was;be;V 1sg PAST STR#be;V 3sg PAST STR;
-                if (mio.getLemma().equals("be")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Vergangenheitsform.";
-                    }
-                    else if (mio.getLingTime().equals("PAST")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Vergangenheitsform. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Vergangenheitsform.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VBG":     // verb be, gerund/present participle
-                // ;being;being;N 3sg#be;V PROG;
-                if (mio.getLemma().equals("be")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Verlaufsform der Gegenwart.";
-                    }
-                    else if (mio.getLingTime().equals("PROG")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Verlaufsform der Gegenwart. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Verlaufsform der Gegenwart.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VBN":     // verb be, past participle
-                // ;been;be;V PPART STR;
-                if (mio.getLemma().equals("be")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern im Partizip II.";
-                    }
-                    else if (mio.getLingTime().equals("PPART")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber im Partizip II. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Partizip II.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VBP":     // verb be, sing. present, non-3d
-                // ;am;be;V 1sg PRES;
-                if (mio.getLemma().equals("be")){
-                    String number = mio.getNumber();
-                    // "1sg", "2sg"
-                    if (number.matches("[1|2]sg")) {
-                        if (mio.getIsInfinitive()) {
-                            return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                    "sondern in der Gegenwart";
-                        } else if (mio.getLingTime().equals("PRES")) {
-                            return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                        } else if (!mio.getLingTime().isEmpty()) {
-                            return "Du hast das richtige Wort, wir suchen es aber in der Gegenwart. " +
-                                    "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                        } else {
-                            return "Du brauchst das Wort in der Gegenwart, Singular und es darf " +
-                                    "nicht in 3ter Form sein.";
-                        }
-                    }
-                    else {
-                        return "Das Wort muss im Singular und nicht in 3ter Form sein.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VBZ":     // verb be, 3rd person sing. present
-                // ;is;be;V 3sg PRES;
-                if (mio.getLemma().equals("be")){
-                    String number = mio.getNumber();
-                    // "3sg"
-                    if (number.equals("3sg")) {
-                        if (mio.getIsInfinitive()) {
-                            return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                    "sondern in der Gegenwart";
-                        } else if (mio.getLingTime().equals("PRES")) {
-                            return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                        } else if (!mio.getLingTime().isEmpty()) {
-                            return "Du hast das richtige Wort, wir suchen es aber in der Gegenwart. " +
-                                    "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                        } else {
-                            return "Du brauchst das Wort in der Gegenwart und muss in der 3ter " +
-                                    "Form Singular sein.";
-                        }
-                    }
-                    else {
-                        return "Das Wort muss in der 3ter Form Singular sein.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VH":      // verb have, base form
-                // ;have;have;V INF;
-                if (mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()){
-                        return "Du hast das richtige Wort, wir suchen es aber im Infinitiv. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Infinitiv.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VHD":     // verb have, past tense
-                // ;had;have;V PAST STR#have;V PPART STR;
-                if (mio.getLemma().equals("be")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Vergangenheitsform.";
-                    }
-                    else if (mio.getLingTime().equals("PAST")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Vergangenheitsform. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Vergangenheitsform.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VHG":     // verb have, gerund/present participle
-                // ;having;have;V PROG;
-                if (mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Verlaufsform der Gegenwart.";
-                    }
-                    else if (mio.getLingTime().equals("PROG")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Verlaufsform der Gegenwart. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Verlaufsform der Gegenwart.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VHN":     // verb have, past participle
-                // ;had;have;V PAST STR#have;V PPART STR;
-                if (mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern im Partizip II.";
-                    }
-                    else if (mio.getLingTime().equals("PPART")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber im Partizip II. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Partizip II.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VHP":     // verb have, sing. present, non-3d
-                // ;have;have;V INF;
-                if (mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()) {
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    } else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber im Infinitiv. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    } else {
-                        return "Du brauchst das Wort im Infinitiv.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VHZ":     // verb have, 3rd person sing. present
-                // ;has;have;V 3sg PRES;
-                if (mio.getLemma().equals("have")){
-                    String number = mio.getNumber();
-                    // "3sg""
-                    if (number.equals("3sg")) {
-                        if (mio.getIsInfinitive()) {
-                            return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                    "sondern in der Gegenwart";
-                        } else if (mio.getLingTime().equals("PRES")) {
-                            return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                        } else if (!mio.getLingTime().isEmpty()) {
-                            return "Du hast das richtige Wort, wir suchen es aber in der Gegenwart. " +
-                                    "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                        } else {
-                            return "Du brauchst das Wort in der Gegenwart und muss in der 3ter " +
-                                    "Form Singular sein.";
-                        }
-                    }
-                    else {
-                        return "Das Wort muss in der 3ter Form Singular sein.";
-                    }
-                }
-                else {
-                    return "Ein Verb ist richtig, du brauch allerdings ein anderes.";
-                }
-
-            case "VV":      // verb, base form
-                //
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()){
-                        return "Du hast das richtige Wort, wir suchen es aber im Infinitiv. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Infinitiv.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-
-            case "VVD":     // verb, past tense
-                //
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Vergangenheitsform.";
-                    }
-                    else if (mio.getLingTime().equals("PAST")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Vergangenheitsform. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Vergangenheitsform.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-            case "VVG":     // verb, gerund/present participle
-                //
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern in der Verlaufsform der Gegenwart.";
-                    }
-                    else if (mio.getLingTime().equals("PROG")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Verlaufsform der Gegenwart. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort in der Verlaufsform der Gegenwart.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-
-            case "VVN":     // verb, past participle
-                //
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    if (mio.getIsInfinitive()){
-                        return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                "sondern im Partizip II.";
-                    }
-                    else if (mio.getLingTime().equals("PPART")){
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    }
-                    else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber im Partizip II. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    }
-                    else {
-                        return "Du brauchst das Wort im Partizip II.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-
-            case "VVP":     // verb, sing. present, non-3d
-                // travel;travel;V INF;
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    String number = mio.getNumber();
-                    // "1sg", "2sg"
-                    if (mio.getIsInfinitive()) {
-                        return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                    } else if (!mio.getLingTime().isEmpty()) {
-                        return "Du hast das richtige Wort, wir suchen es aber in der Gegenwart. " +
-                                "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                    } else {
-                        return "Du brauchst das Wort in der Gegenwart, Singular und es darf " +
-                                "nicht in 3ter Form sein.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-
-            case "VVZ":     // verb, 3rd person sing. present
-                // ;sings;sing;N 3pl#sing;V 3sg PRES;
-                if (!mio.getLemma().equals("be") || !mio.getLemma().equals("have")){
-                    String number = mio.getNumber();
-                    // "3sg""
-                    if (number.equals("3sg")) {
-                        if (mio.getIsInfinitive()) {
-                            return "Du hast das richtige Wort wir suchen es aber nicht im Infinitiv " +
-                                    "sondern in der Gegenwart";
-                        } else if (mio.getLingTime().equals("PRES")) {
-                            return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-                        } else if (!mio.getLingTime().isEmpty()) {
-                            return "Du hast das richtige Wort, wir suchen es aber in der Gegenwart. " +
-                                    "Du hast das Wort in der/im " + timeToString(mio.getLingTime());
-                        } else {
-                            return "Du brauchst das Wort in der Gegenwart und muss in der 3ter " +
-                                    "Form Singular sein.";
-                        }
-                    }
-                    else {
-                        return "Das Wort muss in der 3ter Form Singular sein.";
-                    }
-                }
-                else {
-                    return "Du hast eine Form von 'have' oder 'be' benutzt hier hier brauchst du " +
-                            "aber eine anderes Verb";
-                }
-
-            default: return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-        }
-    }
-
-    private String comparePronouns(String pos_app, MorphInfoObject mio) {
-        // xtag "Pron"
-        //      - setNumberTag(mReading);
-        //      - setGenderTag(mReading);
-        //      - setWhTag(mReading);
-        //      - setCaseTag(mReading);
-        //      - setNegationTag(mReading);
-        //      - setReflexiveTag(mReading);
-        switch (pos_app) {
-            // This category includes the personal pronouns proper, without regard for case
-            // distictions (I, me, you, he, him, etc.), the reflexive pronouns ending
-            // in -self or -selves, and the nominal possessive pronouns mine, yours, his, hers,
-            // ours and theirs.
-            case "PP":      // personal pronoun
-                // ;I;I;N 3sg#I;Pron 1sg nom;
-                // ;myself;myself;Pron 1sg refl;
-                // ;mine;mine;Pron GEN ref1sg#mine;
-                // ;yours;your;Pron GEN ref2nd;         -- nothing they have in common
-
-                return  "Es wird ein (reflexives) Pronomen gesucht";
-
-
-            // This category includes the adjectival possessive forms my, your, his, her, its,
-            // one's, our and their.
-            case "PP$":     // possessive pronoun
-                // ;your;your;Pron GEN ref2nd;
-                // ;her;her;Pron 3sg acc fem#her;
-                if (mio.getLingCase().equals("refl")){
-                    return "Du hast ein reflexifes Pronomen eingegeben, gesucht wird aber ein " +
-                            "possessives (reflexives) Pronomen";
-                }
-                else {
-                    return "Es wird ein possessives (reflexives) Pronomen gesucht";
-                }
-
-            // This category includes what, who, and whom
-            case "WP":      // wh-pronoun
-                // ;what;what;Pron 3sg wh;
-                return  "Es wird ein wh-Pronomen gesucht";
-            // This category includes the wh-word whose
-            case "WPZ":     // possessive wh-pronouns
-                return  "Es wird ein possessives wh-Pronomen gesucht";
-
-            default: return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-        }
-    }
-
-    private String compareAdverbs(String pos_app, MorphInfoObject mio) {
-        // xtag 'Adv'
-        //      - setWhTag(mReading);
-
-        switch (pos_app){
-            case "RB":      // adverb
-                return "Du brauchst ein Adverb in der normalen Form, hast du vielleicht eins im " +
-                        "Komparativ oder Superlativ verwendet?";
-            case "RBR":     // adverb, comparative
-                return "Du brauchst ein Adverb im Komparativ, hast du vielleicht eins im " +
-                        "in der normalen Form oder Superlativ verwendet?";
-            case "RBS":     // adverb, superlative
-                return "Du brauchst ein Adverb im Superlativ, hast du vielleicht eins in der " +
-                        "normalen Form oder im  Komparativ oder verwendet?";
-            default: return "Es tut mir leid aber ich kann dir keinen weiteren Hinweis geben.";
-        }
-    }
-
-    private String timeToString(String lTime) {
-        switch (lTime){
-            case "PAST": return "Vergangenheit";
-            case "PRES": return "Gegenwart";
-            case "PPART": return "Partizip II";
-            case "PROG": return "Verlaufsform der Gegenwart";
-            default: return "Fehler";
-        }
-    }
 }

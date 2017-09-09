@@ -111,28 +111,31 @@
             android:orientation="horizontal"
             android:layout_gravity="center_horizontal">
 
-            <CheckBox
+            <android.support.v7.widget.AppCompatCheckBox
                 android:text="A"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_A"
                 android:layout_weight="1"
-                android:paddingRight="15dp"/>
+                android:paddingRight="15dp"
+                app:buttonTint="@color/bg_red"/>
 
-            <CheckBox
+            <android.support.v7.widget.AppCompatCheckBox
                 android:text="B"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_B"
                 android:layout_weight="1"
-                android:paddingRight="15dp"/>
+                android:paddingRight="15dp"
+                app:buttonTint="@color/bg_red"/>
 
-            <CheckBox
+            <android.support.v7.widget.AppCompatCheckBox 
                 android:text="C"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_C"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                app:buttonTint="@color/bg_red"/>
         </LinearLayout>
 
         <TextView
@@ -168,34 +171,4 @@
             app:gAllowTrackClickToDrag="true"/>
     </LinearLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
-
-        <RelativeLayout
-            android:layout_width="65dp"
-            android:layout_height="65dp"
-            android:layout_alignParentBottom="true">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/ic_buch_auswahl">
-                <Button
-                    android:text=""
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:id="@+id/btn_back"
-                    android:background="@drawable/ic_buch"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginBottom="5dp"/>
-            </RelativeLayout>
-        </RelativeLayout>
-    </RelativeLayout>
 </RelativeLayout>

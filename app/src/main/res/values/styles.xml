@@ -7,6 +7,7 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="gSeekBarStyle">@style/Genius.Widget.SeekBar</item>
+        <item name="colorControlActivated">@color/colorPrimary</item>
     </style>
 
     <style name="Genius.Widget.BalloonMarker.TextAppearance" parent="android:TextAppearance.Small">

@@ -26,6 +26,7 @@ import android.widget.TextView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
@@ -36,7 +37,6 @@ import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
 import com.example.kathrin1.vokabeltrainer_newlayout.network.NetworkError;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxBuilder;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SimInterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
@@ -85,7 +85,7 @@ public class TrainAndTest extends AppCompatActivity
     private VocObject currentWord;
     private InterxBuilder currInterx;
     private String currExerciseType;
-    private SentObject currSentence;
+    private BookObject currSentence;
 
     private final Set<VocObject> wordsToIgnore = new HashSet<>();
 
@@ -320,7 +320,7 @@ public class TrainAndTest extends AppCompatActivity
             if (currSentence.isEmpty())
                 currSentence = dbManager.getExampleGDEXSentence(word);
             if (currSentence.isEmpty())
-                currSentence = SentObject.buildForSingleWord(word.getVoc());
+                currSentence = BookObject.buildForSingleWord(word.getVoc());
 
             Date currTime = new Date();
             float preActivation = model.recalcSingleActivation(
@@ -1035,7 +1035,7 @@ public class TrainAndTest extends AppCompatActivity
      * @param sentence The sentence used as context for the word, used to determine
      *                 the duration to delay
      */
-    private void scheduleTrainDelayTimer(final String word, SentObject sentence)
+    private void scheduleTrainDelayTimer(final String word, BookObject sentence)
     {
         // Clear existing text
         txt_voc.setText("");

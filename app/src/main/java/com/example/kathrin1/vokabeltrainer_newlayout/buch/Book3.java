@@ -51,6 +51,7 @@ public class Book3 extends Fragment {
 
         Button btn_back = (Button) view.findViewById(R.id.btn_back);
         btn_chap0 = (Button) view.findViewById(R.id.btn_chap0);
+        btn_chap0.setVisibility(view.INVISIBLE);
         btn_chap1 = (Button) view.findViewById(R.id.btn_chap1);
         btn_chap2 = (Button) view.findViewById(R.id.btn_chap2);
         btn_chap3 = (Button) view.findViewById(R.id.btn_chap3);
@@ -64,13 +65,12 @@ public class Book3 extends Fragment {
 
         final SeekBar seek = (SeekBar) view.findViewById(R.id.seek_level);
 
-        btn_chap0.setText("");
-        btn_chap1.setText("");
-        btn_chap2.setText("");
-        btn_chap3.setText("");
-        btn_chap4.setText("");
-        btn_chap5.setText("");
-        btn_chap6.setText("");
+        btn_chap1.setText("On the move");
+        btn_chap2.setText("Welcome to Wales!");
+        btn_chap3.setText("Famous Brits");
+        btn_chap4.setText("Keep me posted");
+        btn_chap5.setText("The German exchange");
+        btn_chap6.setText("The Great Outdoors");
 
         if (seek != null) {
             seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -97,12 +97,12 @@ public class Book3 extends Fragment {
                 .getInt("unit", 0);
         seek.setProgress(pref_level);
 
-        btn_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mSlidingLayer.closeLayer(true);
-            }
-        });
+//        btn_back.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                mSlidingLayer.closeLayer(true);
+//            }
+//        });
 
         btn_chap0.setOnClickListener(new View.OnClickListener() {
             @Override

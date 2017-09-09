@@ -26,7 +26,6 @@ import net.qiujuer.genius.ui.widget.SeekBar;
 public class Book2 extends Fragment {
 
     private SlidingLayer mSlidingLayer;
-    private Lektion parent;
     private View view;
     private SeekBar mBar;
     private AppCompatActivity a;
@@ -50,6 +49,7 @@ public class Book2 extends Fragment {
 
         Button btn_back = (Button) view.findViewById(R.id.btn_back);
         btn_chap0 = (Button) view.findViewById(R.id.btn_chap0);
+        btn_chap0.setVisibility(view.INVISIBLE);
         btn_chap1 = (Button) view.findViewById(R.id.btn_chap1);
         btn_chap2 = (Button) view.findViewById(R.id.btn_chap2);
         btn_chap3 = (Button) view.findViewById(R.id.btn_chap3);
@@ -63,13 +63,12 @@ public class Book2 extends Fragment {
 
         final SeekBar seek = (SeekBar) view.findViewById(R.id.seek_level);
 
-        btn_chap0.setText("");
-        btn_chap1.setText("");
-        btn_chap2.setText("");
-        btn_chap3.setText("");
-        btn_chap4.setText("");
-        btn_chap5.setText("");
-        btn_chap6.setText("");
+        btn_chap1.setText("After the Holidays\n");
+        btn_chap2.setText("Let’s get the Party Started");
+        btn_chap3.setText("London\n\n");
+        btn_chap4.setText("School Life");
+        btn_chap5.setText("Going Green");
+        btn_chap6.setText("Fun and games");
 
         if (seek != null) {
             seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -96,29 +95,12 @@ public class Book2 extends Fragment {
                 .getInt("unit", 0);
         seek.setProgress(pref_level);
 
-        btn_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mSlidingLayer.closeLayer(true);
-            }
-        });
-
-        btn_chap0.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                now = btn_chap0;
-                now.setBackgroundResource(R.drawable.ic_button_rot);
-                if(previous != null && previous != now){
-                    previous.setBackgroundResource(R.drawable.ic_button_exercise);
-                    previous = now;
-                }
-                else{
-                    previous = btn_chap0;
-                }
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("chapter", "Welcome").commit();
-            }
-        });
+//        btn_back.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                mSlidingLayer.closeLayer(true);
+//            }
+//        });
 
         btn_chap1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -292,14 +274,12 @@ public class Book2 extends Fragment {
 
     private Button stringToButton(String s_btn){
         switch (s_btn){
-            case "Welcome": return btn_chap0;
             case "1": return btn_chap1;
             case "2": return btn_chap2;
             case "3": return btn_chap3;
             case "4": return btn_chap4;
             case "5": return btn_chap5;
             case "6": return btn_chap6;
-            case "0": return btn_chap0;
         }
         return null;
 

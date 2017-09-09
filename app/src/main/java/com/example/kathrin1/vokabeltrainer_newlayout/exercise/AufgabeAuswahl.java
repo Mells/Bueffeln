@@ -16,6 +16,7 @@ import android.widget.RelativeLayout;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyEntry;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
@@ -34,52 +35,10 @@ public class AufgabeAuswahl extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.exercise_selection);
 
-        // ----------------TABS---------------------
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Book 1"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 2"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 3"));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter
-                (getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(setCurrentBook());
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        viewPager.setCurrentItem(setCurrentBook());
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                ExerciseUtils.updateBook(AufgabeAuswahl.this, tab);
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
-
-        // --------------------------------------------
-
-        // ----------------SLIDER---------------------
-
-        mSlidingLayer = (SlidingLayer) findViewById(R.id.slidingLayer1);
-        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) mSlidingLayer.getLayoutParams();
-        rlp.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-        mSlidingLayer.setLayoutParams(rlp);
-
-        // --------------------------------------------
-
         Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         Button btn_kartei = (Button) findViewById(R.id.btn_open_kartei);
         Button btn_kontext = (Button) findViewById(R.id.btn_open_kontext);
-        Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
+        Button btn_auswahl = (Button) findViewById(R.id.btn_book_menu);
         Button btn_exercise3 = (Button) findViewById(R.id.btn_open_ex3);
 
         btn_kartei.setOnClickListener(new View.OnClickListener() {
@@ -112,8 +71,8 @@ public class AufgabeAuswahl extends AppCompatActivity {
         btn_auswahl.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mSlidingLayer.openLayer(true);
-
+                Intent intent = new Intent(AufgabeAuswahl.this, TheBook.class);
+                startActivity(intent);
             }
         });
 

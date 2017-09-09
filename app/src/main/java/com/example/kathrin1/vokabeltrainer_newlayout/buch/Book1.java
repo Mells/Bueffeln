@@ -94,12 +94,12 @@ public class Book1 extends Fragment {
                 .getInt("unit", 0);
         seek.setProgress(pref_level);
 
-        btn_back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mSlidingLayer.closeLayer(true);
-            }
-        });
+//        btn_back.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                mSlidingLayer.closeLayer(true);
+//            }
+//        });
 
         btn_chap0.setOnClickListener(new View.OnClickListener() {
             @Override

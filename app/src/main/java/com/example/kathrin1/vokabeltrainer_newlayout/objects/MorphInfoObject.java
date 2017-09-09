@@ -46,10 +46,28 @@ public class MorphInfoObject {
      */
     public MorphInfoObject(String reading){
 
-        String[] mReading_withLemma = reading.split("#");
-        lemma = mReading_withLemma[1].trim();
+        //String[] mReading_withLemma = reading.split("#");
+        //lemma = mReading_withLemma[1].trim();
 
-        String[] mReading = mReading_withLemma[0].trim().split("\\s");;
+        //String[] mReading = mReading_withLemma[0].trim().split("\\s");
+
+        String[] readingWithLemma;
+        if (reading.contains("#")) {
+            readingWithLemma = reading.split("#");
+            // print("MorpInfo: lemmaSplit", reading_with_lemma)
+            lemma = readingWithLemma[1].trim();
+        }
+        else {
+            readingWithLemma = new String[]{reading};
+            // print("MorpInfo: NoLemmaSplit", reading_with_lemma)
+        }
+        // self.word_reading = reading_with_lemma[0]
+        String[] mReading = readingWithLemma[0].trim().split(" ");
+
+
+
+
+
         switch (mReading[0]){
             case "Punct":
                 setPOSTag(mReading);
@@ -79,7 +97,7 @@ public class MorphInfoObject {
                 setAdjectiveTag(mReading);
                 break;
             case "VVC":
-                setVVCTag(mReading);
+                setVerbVerbCombinationTag(mReading);
                 break;
             case "PropN":
                 setProperNounTag(mReading);
@@ -91,7 +109,7 @@ public class MorphInfoObject {
                 setDeterminerTag(mReading);
                 break;
             case "NVC":
-                setNVCTag(mReading);
+                setNounVerbCombinationTag(mReading);
                 break;
             case "V":
                 setVerbTag(mReading);
@@ -120,7 +138,7 @@ public class MorphInfoObject {
     }
 
     // VVC {'PRES', 'INF'}
-    private void setVVCTag(String[] mReading){
+    private void setVerbVerbCombinationTag(String[] mReading){
         setPOSTag(mReading);
         setTimeTag(mReading);
         setInfinitiveTag(mReading);
@@ -151,10 +169,10 @@ public class MorphInfoObject {
     }
 
     // NVC {'1sg', '3sg', 'masc', 'fem', 'neut', 'STR', 'wh', '3pl', 'PAST', 'PRES', '1pl', '2nd'}
-    private void setNVCTag(String[] mReading){
+    private void setNounVerbCombinationTag(String[] mReading){
         setPOSTag(mReading);
         setNumberTag(mReading);
-        setCaseTag(mReading);
+        // setCaseTag(mReading);
         setGenderTag(mReading);
         setWhTag(mReading);
         setTimeTag(mReading);

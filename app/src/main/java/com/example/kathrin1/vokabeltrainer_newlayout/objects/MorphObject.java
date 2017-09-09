@@ -18,13 +18,12 @@ public class MorphObject {
     private String reading5;
     private String reading6;
     private String reading7;
-    private String reading8;
 
     private boolean isEmpty = false;
 
     public MorphObject(int id, String word, String lemma, String reading1, String reading2,
                        String reading3, String reading4, String reading5, String reading6,
-                       String reading7, String reading8) {
+                       String reading7) {
         this.id = id;
         this.word = word;
         this.lemma = lemma;
@@ -35,7 +34,6 @@ public class MorphObject {
         this.reading5 = reading5;
         this.reading6 = reading6;
         this.reading7 = reading7;
-        this.reading8 = reading8;
 
     }
 
@@ -63,7 +61,6 @@ public class MorphObject {
         reading5 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING5));
         reading6 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING6));
         reading7 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING7));
-        reading8 = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.MORPH_READING8));
     }
 
     public int getId() {
@@ -90,8 +87,6 @@ public class MorphObject {
 
     public String getReading7() { return reading7; }
 
-    public String getReading8() { return reading8; }
-
     public int getNumberOfReadings() {
         int counter = 0;
         if (!reading1.equals("")){
@@ -115,9 +110,6 @@ public class MorphObject {
         if (!reading7.equals("")){
             counter ++;
         }
-        if (!reading8.equals("")){
-            counter ++;
-        }
         return counter;
     }
 
@@ -137,15 +129,13 @@ public class MorphObject {
                 return getReading6();
             case 7:
                 return getReading7();
-            case 8:
-                return getReading8();
             default:
                 return "";
         }
     }
 
     public String[] getAllReadings() {return new String[] {reading1, reading2, reading3, reading4,
-            reading5, reading6, reading7, reading8};}
+            reading5, reading6, reading7};}
 
     private MorphObject setEmpty(boolean empty)
     {
@@ -164,7 +154,7 @@ public class MorphObject {
      */
     public static MorphObject emptyObject()
     {
-        return new MorphObject(-1, "", "", "", "", "", "", "", "", "", "").setEmpty(true);
+        return new MorphObject(-1, "", "", "", "", "", "", "", "", "").setEmpty(true);
     }
     @Override
     public boolean equals(Object o)
@@ -197,7 +187,6 @@ public class MorphObject {
                 ", reading5='" + reading5 + '\'' +
                 ", reading6='" + reading6 + '\'' +
                 ", reading7='" + reading7 + '\'' +
-                ", reading8='" + reading8 + '\'' +
                '}';
     }
 }

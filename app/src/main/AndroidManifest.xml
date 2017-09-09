@@ -47,7 +47,7 @@
     <activity android:name=".exercise.Translation"
         android:configChanges="orientation"
         android:screenOrientation="portrait"
-       >
+        android:windowSoftInputMode="stateHidden">
         <meta-data
             android:name="android.support.PARENT_ACTIVITY"
             android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
@@ -74,6 +74,10 @@
             android:name="android.support.PARENT_ACTIVITY"
             android:value="com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl" />
     </activity>
+
+    <activity android:name=".buch.TheBook"
+        android:configChanges="orientation"
+        android:screenOrientation="portrait"/>
 
     <activity android:name=".Help"
         android:configChanges="orientation"

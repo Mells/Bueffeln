@@ -28,7 +28,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
@@ -333,7 +333,7 @@ public class Lektion extends AppCompatActivity {
         txt_voc_de.setText(vocable.getTranslation());
         txt_voc_en.setText(vocable.getVoc());
         // Replace all brackets and apostrophes
-        txt_lemma.setText(vocable.getLemma().replaceAll("[\\[\\]']", ""));
+        txt_lemma.setText(vocable.getLemmaVocable().toString().replaceAll("[\\[\\]']", ""));
         txt_status.setText(vocable.getStatus());
         txt_wortart.setText(vocable.getPOS());
         //txt_bsp.setText();
@@ -345,7 +345,7 @@ public class Lektion extends AppCompatActivity {
         int index = randomGenerator.nextInt(sentenceList.size());
         Log.d("EN-SentenceList", sentenceList.toString());
 
-        SentObject sentence = dbManager.getSentence(sentenceList.get(index));
+        BookObject sentence = dbManager.getSentence(sentenceList.get(index));
         // TODO - highlight the word in bsp
         txt_bsp.setText(ExerciseUtils.fromHtml(
                 ExerciseUtils.replaceWordInSentence(sentence, vocable, "<b><big>%s</big></b>")));

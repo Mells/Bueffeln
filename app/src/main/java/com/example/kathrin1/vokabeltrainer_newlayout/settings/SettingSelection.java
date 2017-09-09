@@ -65,7 +65,7 @@ public class SettingSelection extends AppCompatActivity{
                             case DialogInterface.BUTTON_POSITIVE:
                                 //Yes button clicked
                                 dbManager = DatabaseManager.build(SettingSelection.this);
-                                for (int i = 1; i <= 3024; i++) {
+                                for (int i = 1; i <= 3018; i++) {
                                     dbManager.updateTested(0, i);
                                 }
                                 break;

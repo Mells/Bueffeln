@@ -9,7 +9,7 @@ import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -17,8 +17,6 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * For housing some useful static methods used by exercises
@@ -39,7 +37,7 @@ public abstract class ExerciseUtils
      * @param word     The word (or words) to replace in the sentence
      * @return The generated string to display
      */
-    public static String deleteWordFromSentence(SentObject sentence, VocObject word)
+    public static String deleteWordFromSentence(BookObject sentence, VocObject word)
     {
         return replaceWordInSentence(sentence, word, "____");
     }
@@ -57,12 +55,12 @@ public abstract class ExerciseUtils
      *                          being replaced, allowing for wrapping the word in HTML tags.
      * @return The generated string to display
      */
-    public static String replaceWordInSentence(SentObject sentence, VocObject word,
+    public static String replaceWordInSentence(BookObject sentence, VocObject word,
                                                String replacementString)
     {
-        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getMapped());
+        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getLemmaToken());
 
-        List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemma());
+        List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemmaVocable().toString());
         String sent = sentence.getSentence();
 
         // TODO:  Probably move this bit somewhere more sensible
@@ -134,7 +132,7 @@ public abstract class ExerciseUtils
      * @param german   True if the user is looking for the German exercise_translation, false otherwise.
      * @return Returns true if the answer is deemed correct, false otherwise.
      */
-    public static Answer isAnswerCorrect(SentObject sentence, VocObject word, String input, boolean german)
+    public static Answer isAnswerCorrect(BookObject sentence, VocObject word, String input, boolean german)
     {
         String wordString = german ? word.getTranslation()
                                    : word.getVoc();
@@ -142,7 +140,7 @@ public abstract class ExerciseUtils
 
         input = input.toLowerCase().trim();
 
-        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getMapped());
+        Map<String, List<String>> smap = DBUtils.stringOfJSONTagsToMap(sentence.getLemmaToken());
 
         List<String> wordsToMatch;
         if (!german && smap.containsKey(wordString))
@@ -221,11 +219,11 @@ public abstract class ExerciseUtils
      * @param voc The vocable for which the sentence is queried
      * @return The sentence
      */
-    public static SentObject getTranslationPreferenceSentence(Context c, DatabaseManager dbManager, VocObject voc){
+    public static BookObject getTranslationPreferenceSentence(Context c, DatabaseManager dbManager, VocObject voc){
         //Get first preference sentence
         String pref_first_sentence = PreferenceManager.getDefaultSharedPreferences(c)
                 .getString("word_first", "");
-        SentObject sentence = null;
+        BookObject sentence = null;
         switch(pref_first_sentence) {
             case "":
                 sentence = dbManager.getExampleOldSentence(voc);
@@ -290,13 +288,13 @@ public abstract class ExerciseUtils
      * @param part String which denotes which number of sentence is needed
      * @return The sentence
      */
-    public static SentObject getKontextPreferenceSentence(Context c, DatabaseManager dbManager,
+    public static BookObject getKontextPreferenceSentence(Context c, DatabaseManager dbManager,
                                                           VocObject voc, String part,
                                                           String sentence1, String sentence2){
 
         String firstPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
                 .getString("kontext_"+part+"_first", "");
-        SentObject sentence = null;
+        BookObject sentence = null;
         switch(firstPrefForSentence) {
             case "":
                 Log.d("ExersiseUtils", "No first preference for sentence saved");

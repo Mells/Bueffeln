@@ -39,17 +39,25 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_TABLENAME = "vocabulary";
     public static final String WORD_ID = "_id";
     public static final String WORD_WORD = "Vokabel";
+    public static final String WORD_PROCESSED_VOCABLE = "processed_vocable";
+    public static final String WORD_TAGGED_PROCESSED_VOCABLE = "tagged_processed_vocable";
+    public static final String WORD_PROCESSED_VOCABLE_SOUNDEX = "processed_vocable_soundex";
+    public static final String WORD_LEMMA_VOCABLE = "lemma_vocable";
+    public static final String WORD_TAGGED_LEMMA_VOCABLE = "tagged_lemma_vocable";
+    public static final String WORD_TAGGED_LEMMA_SIMPLE_VOCABLE = "tagged_lemma_simple_vocable";
     public static final String WORD_TRANSLATION = "Uebersetzung";
-    public static final String WORD_VOCLEMMA = "VocLemma";
+    public static final String WORD_PROCESSED_TRANSLATION = "processed_translation";
+    public static final String WORD_TAGGED_PROCESSED_TRANSLATION = "tagged_processed_translation";
+    public static final String WORD_PROCESSED_TRANSLATION_SOUNDEX = "processed_translation_soundex";
+    public static final String WORD_LEMMA_TRANSLATION = "lemma_translation";
+    public static final String WORD_TAGGED_LEMMA_TRANSLATION = "tagged_lemma_translation";
     public static final String WORD_STATUS = "Status";
     public static final String WORD_BOOK = "Band";
     public static final String WORD_CHAPTER = "Fundstelle";
     public static final String WORD_POS = "Wortart";
     public static final String WORD_EXAMPLE = "Beispielsatz";
     public static final String WORD_NOTE = "Hinweis";
-    public static final String WORD_TAGGED = "Tagged";
-    public static final String WORD_LEMMA = "Lemma";
-    public static final String WORD_SENTID = "SentId";
+    public static final String WORD_BOOKID = "BookId";
     public static final String WORD_GDEX = "GDEX";
     public static final String WORD_LEARNER = "Learner";
     public static final String WORD_LEVEL = "Tested";
@@ -62,15 +70,15 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_ALPHA_d = "alpha_d"; // Default activation of word (DEPRECATED)
     public static final String WORD_SIGMA = "sigma_i"; // Frequency modifier for word
     public static final String WORD_ACTIVATION = "activation"; // Activation of the word
-    public static final String[] WORD_COLUMNS = {WORD_ID, WORD_WORD, WORD_TRANSLATION,
-                                                 WORD_VOCLEMMA, WORD_STATUS, WORD_BOOK,
-                                                 WORD_CHAPTER, WORD_POS, WORD_SENTID,
-                                                 WORD_GDEX, WORD_LEARNER,
-                                                 WORD_PARSEID, WORD_BETA_si, WORD_BETA_i,
-                                                 WORD_ALPHA, WORD_SIGMA, WORD_LABEL,
-                                                 WORD_EXAMPLE, WORD_NOTE, WORD_TAGGED,
-                                                 WORD_LEVEL, WORD_LEMMA, WORD_ACTIVATION,
-                                                 WORD_USERINFO_PARSEID};
+    public static final String[] WORD_COLUMNS = {WORD_ID, WORD_WORD, WORD_PROCESSED_VOCABLE,
+            WORD_TAGGED_PROCESSED_VOCABLE, WORD_PROCESSED_VOCABLE_SOUNDEX, WORD_LEMMA_VOCABLE,
+            WORD_TAGGED_LEMMA_VOCABLE, WORD_TAGGED_LEMMA_SIMPLE_VOCABLE, WORD_TRANSLATION,
+            WORD_PROCESSED_TRANSLATION, WORD_TAGGED_PROCESSED_TRANSLATION,
+            WORD_PROCESSED_TRANSLATION_SOUNDEX, WORD_LEMMA_TRANSLATION,
+            WORD_TAGGED_LEMMA_TRANSLATION, WORD_STATUS, WORD_BOOK, WORD_CHAPTER, WORD_POS,
+            WORD_BOOKID, WORD_GDEX, WORD_LEARNER, WORD_PARSEID, WORD_BETA_si, WORD_BETA_i, WORD_ALPHA,
+            WORD_SIGMA, WORD_LABEL, WORD_EXAMPLE, WORD_NOTE, WORD_LEVEL,
+            WORD_ACTIVATION, WORD_USERINFO_PARSEID};
 
     public static final String INDEX_WORD_LABEL = "index_word_label";
     public static final String INDEX_WORD_PARSEID = "index_word_parseid";
@@ -78,66 +86,100 @@ public class DBHandler extends SQLiteAssetHelper
     // NO LONGER USED
     final private static String CREATE_WORD_TABLE =
 
-            "CREATE TABLE " + WORD_TABLENAME + " (" +
-            WORD_ID + " INTEGER NOT NULL, " +
-            WORD_WORD + " TEXT, " +
-            WORD_TRANSLATION + " TEXT, " +
-            WORD_VOCLEMMA + " TEXT, " +
-            WORD_STATUS + " TEXT, " +
-            WORD_BOOK + " TEXT, " +
-            WORD_CHAPTER + " TEXT, " +
-            WORD_POS + " TEXT, " +
-            WORD_EXAMPLE + " TEXT, " +
-            WORD_NOTE + " TEXT, " +
-            WORD_TAGGED + " TEXT, " +
-            WORD_LEMMA + " TEXT, " +
-            WORD_SENTID + " TEXT, " +
-            WORD_GDEX + " TEXT, " +
-            WORD_LEARNER + " TEXT, " +
-            WORD_LABEL + " TEXT, " +
-            WORD_LEVEL + " INTEGER DEFAULT 0, " +
-            WORD_PARSEID + " TEXT DEFAULT '', " +
-            WORD_USERINFO_PARSEID + " TEXT DEFAULT '', " +
-            WORD_BETA_si + " DECIMAL DEFAULT 0.0, " +
-            WORD_BETA_i + " DECIMAL DEFAULT 0.0, " +
-            WORD_ALPHA + " DECIMAL DEFAULT 0.0, " +
-            WORD_SIGMA + " DECIMAL DEFAULT 0.0, " +
-            WORD_ACTIVATION + " DECIMAL, " + // If not filled, treated as negative infinity
-            "PRIMARY KEY (" + WORD_ID + ") )";
+            "CREATE TABLE IF NOT EXISTS " + WORD_TABLENAME + " (" +
+                    WORD_ID + " INTEGER NOT NULL, " +
+                    WORD_WORD + " TEXT, " +
+                    WORD_PROCESSED_VOCABLE + " TEXT, " +
+                    WORD_TAGGED_PROCESSED_VOCABLE + " TEXT, " +
+                    WORD_PROCESSED_VOCABLE_SOUNDEX + " TEXT, " +
+                    WORD_LEMMA_VOCABLE + " TEXT, " +
+                    WORD_TAGGED_LEMMA_VOCABLE + " TEXT, " +
+                    WORD_TAGGED_LEMMA_SIMPLE_VOCABLE + " TEXT, " +
+                    WORD_TRANSLATION + " TEXT, " +
+                    WORD_PROCESSED_TRANSLATION + " TEXT, " +
+                    WORD_TAGGED_PROCESSED_TRANSLATION + " TEXT, " +
+                    WORD_PROCESSED_TRANSLATION_SOUNDEX + " TEXT, " +
+                    WORD_LEMMA_TRANSLATION + " TEXT, " +
+                    WORD_TAGGED_LEMMA_TRANSLATION + " TEXT, " +
+                    WORD_STATUS + " TEXT, " +
+                    WORD_CHAPTER + " TEXT, " +
+                    WORD_BOOK + " TEXT, " +
+                    WORD_POS + " TEXT, " +
+                    WORD_EXAMPLE + " TEXT, " +
+                    WORD_NOTE + " TEXT, " +
+                    WORD_BOOKID + " TEXT, " +
+                    WORD_GDEX + " TEXT, " +
+                    WORD_LEARNER + " TEXT, " +
+                    WORD_LEVEL + " INTEGER DEFAULT 0, " +
+                    WORD_LABEL + " TEXT, " +
+                    WORD_PARSEID + " TEXT DEFAULT '', " +
+                    WORD_USERINFO_PARSEID + " TEXT DEFAULT '', " +
+                    WORD_BETA_si + " DECIMAL DEFAULT 0.0, " +
+                    WORD_BETA_i + " DECIMAL DEFAULT 0.0, " +
+                    WORD_ALPHA + " DECIMAL DEFAULT 0.0, " +
+                    WORD_SIGMA + " DECIMAL DEFAULT 0.0, " +
+                    WORD_ACTIVATION + " DECIMAL, " + // If not filled, treated as negative infinity
+                    "PRIMARY KEY (" + WORD_ID + ") )";
 
 
     /**
-     * SENTENCES TABLE
+     * SENTENCES BOOK TABLE
+     * _id;Chapter;Book;Page;Sentence;Tagged;Lemma;LemmaToken;LemmaTag
      * ======================================================================
      */
-    public static final String SENT_TABLENAME = "sentences";
-    public static final String SENT_TABLENAME_OLD = "sentences_old";
-    public static final String SENT_ID = "_id";
-    public static final String SENT_BOOK = "Book";
-    public static final String SENT_PAGE = "Page";
-    public static final String SENT_CHAPTER = "Chapter";
-    public static final String SENT_SENTENCE = "Sentence";
-    public static final String SENT_TAGGED = "Tagged";
-    public static final String SENT_MAPPED = "Mapped";
-    public static final String SENT_LEMMA = "Lemma";
-    public static final String[] SENT_COLUMNS = {SENT_ID, SENT_BOOK, SENT_CHAPTER, SENT_PAGE,
-                                                 SENT_SENTENCE, SENT_TAGGED, SENT_MAPPED, SENT_LEMMA};
+    public static final String BOOK_TABLENAME = "sentences_book";
+    public static final String BOOK_ID = "_id";
+    public static final String BOOK_BOOK = "Book";
+    public static final String BOOK_PAGE = "Page";
+    public static final String BOOK_CHAPTER = "Chapter";
+    public static final String BOOK_SENTENCE = "Sentence";
+    public static final String BOOK_TAGGED = "Tagged";
+    public static final String BOOK_LEMMA = "Lemma";
+    public static final String BOOK_LEMMA_TOKEN = "LemmaToken";
+    public static final String BOOK_LEMMA_TAG = "LemmaTag";
+    public static final String[] BOOK_COLUMNS = {BOOK_ID, BOOK_BOOK, BOOK_CHAPTER, BOOK_PAGE, 
+            BOOK_SENTENCE, BOOK_TAGGED, BOOK_LEMMA, BOOK_LEMMA_TOKEN, BOOK_LEMMA_TAG};
 
     // NO LONGER USED
-    final private static String CREATE_SENT_TABLE =
+    final private static String CREATE_BOOK_TABLE =
 
-            "CREATE TABLE " + SENT_TABLENAME + " (" +
-            SENT_ID + " INTEGER NOT NULL, " +
-            SENT_BOOK + " TEXT, " +
-            SENT_CHAPTER + " TEXT, " +
-            SENT_PAGE + " INTEGER, " +
-            SENT_SENTENCE + " TEXT, " +
-            SENT_TAGGED + " TEXT, " +
-            SENT_MAPPED + " TEXT, " +
-            SENT_LEMMA + " TEXT, " +
-            "PRIMARY KEY (" + SENT_ID + ") )";
+            "CREATE TABLE IF NOT EXISTS " + BOOK_TABLENAME + " (" +
+                    BOOK_ID + " INTEGER NOT NULL, " + 
+                    BOOK_CHAPTER + " TEXT, " +
+                    BOOK_BOOK + " TEXT, " +
+                    BOOK_PAGE + " INTEGER, " +
+                    BOOK_SENTENCE + " TEXT, " +
+                    BOOK_TAGGED + " TEXT, " +
+                    BOOK_LEMMA + " TEXT, " +
+                    BOOK_LEMMA_TOKEN + " TEXT, " +
+                    BOOK_LEMMA_TAG + " TEXT, " +
+            "PRIMARY KEY (" + BOOK_ID + ") )";
 
+    /**
+     * SENTENCES CORPUS TABLE
+     * _id;sentence;wordTag;lemmaWord
+     * ======================================================================
+     */
+    public static final String CORPUS_TABLENAME = "sentences_corpus";
+    public static final String CORPUS_ID = "_id";
+    public static final String CORPUS_SENTENCE = "sentence";
+    public static final String CORPUS_TAGGED = "wordTag";
+    public static final String CORPUS_MAPPED = "lemmaWord";
+    public static final String[] CORPUS_COLUMNS = {CORPUS_ID, CORPUS_SENTENCE, CORPUS_TAGGED,
+            CORPUS_MAPPED};
 
+    // NO LONGER USED
+    final private static String CREATE_CORPUS_TABLE =
+
+            "CREATE TABLE IF NOT EXISTS " + CORPUS_TABLENAME + " (" +
+                    CORPUS_ID + " INTEGER NOT NULL, " +
+                    CORPUS_SENTENCE + " TEXT, " +
+                    CORPUS_TAGGED + " TEXT, " +
+                    CORPUS_MAPPED + " TEXT, " +
+                    "PRIMARY KEY (" + CORPUS_ID + ") )";
+
+    
+    
     /**
      * STUDY SESSIONS TABLE
      * ======================================================================
@@ -154,7 +196,7 @@ public class DBHandler extends SQLiteAssetHelper
     // NO LONGER USED
     private static final String CREATE_SESSION_TABLE =
 
-            "CREATE TABLE " + SESSION_TABLENAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + SESSION_TABLENAME + " (" +
             SESSION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
             SESSION_START + " TIMESTAMP, " +
             SESSION_END + " TIMESTAMP, " +
@@ -189,7 +231,7 @@ public class DBHandler extends SQLiteAssetHelper
     // NO LONGER USED
     private static final String CREATE_INTERX_TABLE =
 
-            "CREATE TABLE " + INTERX_TABLENAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + INTERX_TABLENAME + " (" +
             INTERX_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
             INTERX_WORD + " TEXT, " +
             INTERX_WORD_DBID + " INTEGER, " +
@@ -206,7 +248,7 @@ public class DBHandler extends SQLiteAssetHelper
             "FOREIGN KEY (" + INTERX_SESSION + ") " +
             "REFERENCES " + SESSION_TABLENAME + "(" + SESSION_ID + ") )";
 
-    //TODO
+
     /**
      * MORPHO TABLE
      * ======================================================================
@@ -222,15 +264,14 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String MORPH_READING5 = "Reading5";
     public static final String MORPH_READING6 = "Reading6";
     public static final String MORPH_READING7 = "Reading7";
-    public static final String MORPH_READING8 = "Reading8";
     public static final String[] MORPH_COLUMNS = {MORPH_ID, MORPH_WORD, MORPH_LEMMA, MORPH_READING1,
             MORPH_READING2, MORPH_READING3, MORPH_READING4, MORPH_READING5, MORPH_READING6,
-            MORPH_READING7, MORPH_READING8};
+            MORPH_READING7};
 
     // NO LONGER USED
     final private static String CREATE_MORPH_TABLE =
 
-            "CREATE TABLE " + MORPH_TABLENAME + " (" +
+            "CREATE TABLE IF NOT EXISTS " + MORPH_TABLENAME + " (" +
                     MORPH_ID + " INTEGER NOT NULL, " +
                     MORPH_WORD + " TEXT, " +
                     MORPH_LEMMA + " TEXT, " +
@@ -241,13 +282,13 @@ public class DBHandler extends SQLiteAssetHelper
                     MORPH_READING5 + " TEXT, " +
                     MORPH_READING6 + " TEXT, " +
                     MORPH_READING7 + " TEXT, " +
-                    MORPH_READING8 + " TEXT, " +
                     "PRIMARY KEY (" + MORPH_ID + ") )";
 
 
     // CSV file paths
     private static final String WORD_CSV = "databases/vocabulary.csv";
-    private static final String SENT_CSV = "databases/sentences.csv";
+    private static final String BOOK_CSV = "databases/sentences_book.csv";
+    private static final String CORPUS_CSV = "databases/sentences_corpus.csv";
     private static final String MORPH_CSV = "databases/xtagmorph.csv";
 
     // Date formats.  The timezones of these formats are set to UTC inside the constructor
@@ -266,10 +307,10 @@ public class DBHandler extends SQLiteAssetHelper
 
     // INCREMENT THIS VALUE TO FORCE UPDATE
     // ======================================
-    private static final int VERSION = 17;
+    private static final int VERSION = 31;
     // ======================================
 
-    private static final int FORCED_UPGRADE_VERSION = 17;
+    private static final int FORCED_UPGRADE_VERSION = 31;
 
 
     private final Context c;
@@ -392,6 +433,28 @@ public class DBHandler extends SQLiteAssetHelper
             Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
         }*/
 
+        // VERSION 21 UPGRADE
+        // ==================
+        /*if (oldVersion < 21 && newVersion >= 21)
+        {
+            db.execSQL("DROP TABLE " + WORD_TABLENAME);
+            db.execSQL("DROP TABLE sentences");
+            db.execSQL("DROP TABLE sentences_old");
+            db.execSQL(CREATE_WORD_TABLE);
+            db.execSQL(CREATE_BOOK_TABLE);
+            db.execSQL(CREATE_CORPUS_TABLE);
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }*/
+
+        /*if (oldVersion < 22 && newVersion >= 22)
+        {
+            //db.execSQL(CREATE_WORD_TABLE);
+            db.execSQL(CREATE_BOOK_TABLE);
+            db.execSQL(CREATE_CORPUS_TABLE);
+            Log.d(LOG_TAG, String.format("Updated database to version [%d].", newVersion));
+        }*/
+
+        Log.d("create:", CREATE_WORD_TABLE);
         // This denotes which versions should not include CSV updates.  This could be simplified,
         // but I think it's clearer when each ignored version is specifically listed
         if (newVersion != 8
@@ -403,7 +466,20 @@ public class DBHandler extends SQLiteAssetHelper
                 && newVersion != 14
                 && newVersion != 15
                 && newVersion != 16
-                && newVersion != 17)
+                && newVersion != 17
+                && newVersion != 18
+                && newVersion != 19
+                && newVersion != 20
+                && newVersion != 21
+                && newVersion != 22
+                && newVersion != 23
+                && newVersion != 24
+                && newVersion != 25
+                && newVersion != 26
+                && newVersion != 27
+                && newVersion != 28
+                && newVersion != 29
+                && newVersion != 30)
         {
             // Whenever the version number of the database increases, synchronize with the CSV files
             syncWithCSV(db);
@@ -440,8 +516,8 @@ public class DBHandler extends SQLiteAssetHelper
             protected Void doInBackground(Void... params)
             {
                 readCSVIntoTable(db, WORD_TABLENAME, WORD_CSV);
-                readCSVIntoTable(db, SENT_TABLENAME, SENT_CSV);
-                //TODO
+                readCSVIntoTable(db, BOOK_TABLENAME, BOOK_CSV);
+                readCSVIntoTable(db, CORPUS_TABLENAME, CORPUS_CSV);
                 readCSVIntoTable(db, MORPH_TABLENAME, MORPH_CSV);
 
                 return null;
@@ -492,8 +568,8 @@ public class DBHandler extends SQLiteAssetHelper
             reader = new CSVReader(new InputStreamReader(csvStream));
 
             String[] columns = reader.readNext(); // First row contains column names
+            columns = columns[0].split(";");
             String[] dataTypes = reader.readNext(); // Second row contains data types of columns
-
             String idColumn = null;
 
             // Convert data type strings to lowercase, for consistency
@@ -501,18 +577,18 @@ public class DBHandler extends SQLiteAssetHelper
             for (int i = 0; i < dataTypes.length; i++)
             {
                 dataTypes[i] = dataTypes[i].trim().toLowerCase();
-                if (dataTypes[i].equals("id"))
+                if (dataTypes[i].equals("_id"))
                 {
                     if (idColumn == null)
                         idColumn = columns[i];
                     else
-                        throw new DatabaseHandlerException("CSV file should have only one 'id' column");
+                        throw new DatabaseHandlerException("CSV file should have only one '_id' column");
                 }
             }
 
             // If no column with the 'id' type is found, throw error
             if (idColumn == null)
-                throw new DatabaseHandlerException("CSV file is missing column with 'id' type.");
+                throw new DatabaseHandlerException("CSV file is missing column with '_id' type.");
 
 
             if (columns.length != dataTypes.length)

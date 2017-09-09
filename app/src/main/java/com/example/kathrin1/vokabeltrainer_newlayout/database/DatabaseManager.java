@@ -7,9 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.learnmodel.ModelMath;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.InterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphObject;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.SessionObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
@@ -193,13 +193,13 @@ public class DatabaseManager
      * @return Example sentence for the given word, or an empty sentence if no example sentence
      * is found
      */
-    public SentObject getExampleLearnerSentence(VocObject word)
+    public BookObject getExampleLearnerSentence(VocObject word)
     {
         String listString = word.getLearnerSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
-        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME);
+        return pickSentence(sentenceList, DBHandler.CORPUS_TABLENAME);
     }
 
     /**
@@ -210,13 +210,13 @@ public class DatabaseManager
      * @return Example sentence for the given word, or an empty sentence if no example sentence
      * is found
      */
-    public SentObject getExampleGDEXSentence(VocObject word)
+    public BookObject getExampleGDEXSentence(VocObject word)
     {
         String listString = word.getGDEXSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
-        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME);
+        return pickSentence(sentenceList, DBHandler.CORPUS_TABLENAME);
     }
 
     /**
@@ -227,13 +227,13 @@ public class DatabaseManager
      * @return Example sentence for the given word, or an empty sentence if no example sentence
      * is found
      */
-    public SentObject getExampleOldSentence(VocObject word)
+    public BookObject getExampleOldSentence(VocObject word)
     {
         String listString = word.getOldSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
-        return pickSentence(sentenceList, DBHandler.SENT_TABLENAME_OLD);
+        return pickSentence(sentenceList, DBHandler.BOOK_TABLENAME);
     }
 
     /**
@@ -243,7 +243,7 @@ public class DatabaseManager
      * @param sentenceList List of IDs to select from
      * @return The selected sentence object
      */
-    private SentObject pickSentence(List<String> sentenceList, String tableName)
+    private BookObject pickSentence(List<String> sentenceList, String tableName)
     {
         Random randomGenerator = new Random();
         int index = randomGenerator.nextInt(sentenceList.size());
@@ -257,7 +257,7 @@ public class DatabaseManager
                   String.format("Error parsing integer string (%s).  Returning default sentence instead.",
                                 sentenceList.get(index)));
 
-            return SentObject.emptySentence(c);
+            return BookObject.emptySentence(c);
         }
     }
     /**
@@ -268,7 +268,7 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public SentObject getOldSentence(String id)
+    public BookObject getOldSentence(String id)
     {
         try
         {
@@ -279,7 +279,7 @@ public class DatabaseManager
                   String.format("Error parsing integer string (%s).  Returning default sentence instead.",
                                 id));
 
-            return SentObject.emptySentence(c);
+            return BookObject.emptySentence(c);
         }
     }
     /**
@@ -289,9 +289,9 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public SentObject getOldSentence(int id)
+    public BookObject getOldSentence(int id)
     {
-        return getSentence(id, DBHandler.SENT_TABLENAME_OLD);
+        return getSentence(id, DBHandler.BOOK_TABLENAME);
     }
 
 
@@ -303,7 +303,7 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public SentObject getSentence(String id)
+    public BookObject getSentence(String id)
     {
         try
         {
@@ -314,7 +314,7 @@ public class DatabaseManager
                   String.format("Error parsing integer string (%s).  Returning default sentence instead.",
                                 id));
 
-            return SentObject.emptySentence(c);
+            return BookObject.emptySentence(c);
         }
     }
 
@@ -325,9 +325,9 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public SentObject getSentence(int id)
+    public BookObject getSentence(int id)
     {
-        return getSentence(id, DBHandler.SENT_TABLENAME);
+        return getSentence(id, DBHandler.BOOK_TABLENAME);
     }
 
     /**
@@ -338,24 +338,33 @@ public class DatabaseManager
      * @param tableName Name of the table to retrieve sentence data from.
      * @return The retrieved sentence.
      */
-    private SentObject getSentence(int id, String tableName)
+    private BookObject getSentence(int id, String tableName)
     {
-        Cursor cursor = db.query(tableName, DBHandler.SENT_COLUMNS,
-                                 DBHandler.SENT_ID + " = " + id,
-                                 null, null, null, null);
+        Cursor cursor;
+        if (tableName.equals("sentences_book")) {
+            cursor = db.query(tableName, DBHandler.BOOK_COLUMNS,
+                    DBHandler.BOOK_ID + " = " + id,
+                    null, null, null, null);
+        }
+        else {
+            cursor = db.query(tableName, DBHandler.CORPUS_COLUMNS,
+                    DBHandler.CORPUS_ID + " = " + id,
+                    null, null, null, null);
+        }
 
         if (cursor.getCount() != 1)
         {
             Log.e(LOG_TAG, "Sentence with the given id [" + id + "] not found.  " +
-                           "Returning error sentence instead.");
-            return SentObject.emptySentence(c);
+                    "Returning error sentence instead.");
+            return BookObject.emptySentence(c);
         }
 
         cursor.moveToFirst();
 
-        SentObject returnObj = new SentObject(cursor);
+        BookObject returnObj = new BookObject(cursor, tableName);
 
         cursor.close();
+
 
         return returnObj;
     }

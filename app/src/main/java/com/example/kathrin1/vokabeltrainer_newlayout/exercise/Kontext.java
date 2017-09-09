@@ -27,7 +27,7 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -358,11 +358,11 @@ public class Kontext extends AppCompatActivity {
             List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
 
             // get first preference sentence
-            SentObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first", "", "");
+            BookObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first", "", "");
             // get second preference sentence
-            SentObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second", first_sentence.getSentence(), "");
+            BookObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second", first_sentence.getSentence(), "");
             // get third preference sentence
-            SentObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third", first_sentence.getSentence(), second_sentence.getSentence());
+            BookObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third", first_sentence.getSentence(), second_sentence.getSentence());
 
             txt_sent01.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(first_sentence, voc)));
             txt_sent02.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(second_sentence, voc)));

@@ -21,11 +21,9 @@ import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
-import com.example.kathrin1.vokabeltrainer_newlayout.objects.SentObject;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -64,7 +62,7 @@ public class VocabularyEntry extends AppCompatActivity {
 
         txt_voc_de.setText(vocable.getTranslation());
         txt_voc_en.setText(vocable.getVoc());
-        txt_lemma.setText(vocable.getLemma().replaceAll("\\[", "").replaceAll("\\'","").replaceAll("\\]",""));
+        txt_lemma.setText(vocable.getLemmaVocable().toString().replaceAll("\\[", "").replaceAll("\\'","").replaceAll("\\]",""));
         txt_status.setText(vocable.getStatus());
         txt_wortart.setText(vocable.getPOS());
         //txt_bsp.setText();
@@ -79,7 +77,7 @@ public class VocabularyEntry extends AppCompatActivity {
         Log.d("EN-SentenceList", bookList.toString());
         try {
             int numberSentence = Integer.parseInt(bookList.get(index));
-            SentObject sentence = dbManager.getOldSentence(numberSentence);
+            BookObject sentence = dbManager.getOldSentence(numberSentence);
             // TODO - highlight the word in bsp
             txt_bsp.setText(ExerciseUtils.fromHtml(
                     ExerciseUtils.replaceWordInSentence(sentence, vocable, "<b><big>%s</big></b>")));
@@ -89,7 +87,7 @@ public class VocabularyEntry extends AppCompatActivity {
             // If the sentence list value cannot be parsed as an integer, just display it
             txt_bsp.setText("");
         }
-        //SentObject sentence = databaseQuery.getSentence(numberSentence);
+        //BookObject sentence = databaseQuery.getSentence(numberSentence);
 
 
 
