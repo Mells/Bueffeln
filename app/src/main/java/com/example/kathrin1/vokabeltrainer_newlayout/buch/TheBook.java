@@ -1,23 +1,15 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.buch;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
-
-/**
- * Created by kathrin1 on 08.09.17.
- */
 
 public class TheBook extends AppCompatActivity {
 
@@ -59,7 +51,6 @@ public class TheBook extends AppCompatActivity {
                 viewPager.setCurrentItem(tab.getPosition());
             }
         });
-
         btn_go_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
