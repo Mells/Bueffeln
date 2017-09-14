@@ -1,12 +1,13 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.TabLayout;
 import android.support.v4.app.NavUtils;
-import android.support.v4.view.ViewPager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -20,28 +21,28 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
-import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
-import com.wunderlist.slidinglayer.SlidingLayer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-/**
- * Created by kathrin1 on 21.12.16.
- */
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Kontext extends AppCompatActivity {
+
+    private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
 
     private DatabaseManager dbManager = null;
 
@@ -50,60 +51,24 @@ public class Kontext extends AppCompatActivity {
     private TextView txt_sent02;
     private TextView txt_sent03;
     private VocObject voc;
-    private SlidingLayer mSlidingLayer;
 
     private String book;
     private String chapter;
     private String unit;
     private int level;
 
+    String feedback_answer;
+
+    private int currentLayoutId = -1;
+
     private List<String> copyOfSentenceList;
+
+    ArrayList<String> currentlyUsedSentences;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //todo change to exercise_kontext and look why its dying
+
         setContentView(R.layout.exercise_kontext);
-
-        // ----------------TABS---------------------
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Book 1"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 2"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 3"));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter
-                (getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(ExerciseUtils.setCurrentBook(Kontext.this));
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                ExerciseUtils.updateBook(Kontext.this, tab);
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
-
-        // --------------------------------------------
-
-        // ----------------SLIDER---------------------
-
-        mSlidingLayer = (SlidingLayer) findViewById(R.id.slidingLayer1);
-        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) mSlidingLayer.getLayoutParams();
-        rlp.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-        mSlidingLayer.setLayoutParams(rlp);
-
-        // --------------------------------------------
 
         dbManager = DatabaseManager.build(Kontext.this);
 
@@ -111,28 +76,26 @@ public class Kontext extends AppCompatActivity {
         final Button btn_next = (Button) findViewById(R.id.btn_next);
         final Button btn_solution = (Button) findViewById(R.id.btn_solution);
         final Button btn_hint = (Button) findViewById(R.id.btn_hint);
-        Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
+        Button btn_menu = (Button) findViewById(R.id.btn_menu);
+        final Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
 
         final LinearLayout lay_vocabel = (LinearLayout) findViewById(R.id.lay_vocabel);
-        final LinearLayout lay_button_menu = (LinearLayout) findViewById(R.id.lay_button_menu);
-        final RelativeLayout lay_trans_down = (RelativeLayout) findViewById(R.id.lay_trans_down);
+        final RelativeLayout lay_eingabe = (RelativeLayout) findViewById(R.id.lay_eingabe);
+        final LinearLayout lay_menu_buttons = (LinearLayout) findViewById(R.id.lay_menu_buttons);
 
         txt_sent01 = (TextView) findViewById(R.id.txt_sentence01);
         txt_sent02 = (TextView) findViewById(R.id.txt_sentence02);
         txt_sent03 = (TextView) findViewById(R.id.txt_sentence03);
 
         final EditText edit_solution = (EditText) findViewById(R.id.edit_solution);
-        final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
-
-        //hide feedback until its needed
-        final RelativeLayout lay_feedback = (RelativeLayout) findViewById(R.id.lay_feedback);
-        lay_feedback.setVisibility(View.INVISIBLE);
-
+        final RelativeLayout lay_feedback_scroll = (RelativeLayout) findViewById(R.id.lay_feedback_scroll);
+        final ScrollView scroll = (ScrollView) findViewById(R.id.scrollView);
 
         // on inatiating the activity
         setBookValues();
 
-        txt_feedback.setText("");
+        currentlyUsedSentences = new ArrayList<>();
+
         allVocabulary = dbManager.getWordsByBookChapterUnitLevel(book, chapter, unit, level);
 
         getVocabularyEnglishGerman();
@@ -140,9 +103,8 @@ public class Kontext extends AppCompatActivity {
         btn_next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lay_feedback.setVisibility(View.INVISIBLE);
                 edit_solution.setEnabled(true);
-                txt_feedback.setText("");
+                btn_hint.setEnabled(true);
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -153,6 +115,25 @@ public class Kontext extends AppCompatActivity {
                 }else{
                     Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                             "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
+                }
+                if (lay_feedback_scroll.getChildCount() > 0) {
+                    (lay_feedback_scroll).removeAllViews();
+                }
+            }
+        });
+
+        btn_menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lay_eingabe.getVisibility() == View.VISIBLE){
+                    lay_eingabe.setVisibility(View.INVISIBLE);
+                    lay_menu_buttons.setVisibility(View.VISIBLE);
+                    btn_book_menu.setVisibility(View.VISIBLE);
+                }
+                else {
+                    lay_eingabe.setVisibility(View.VISIBLE);
+                    lay_menu_buttons.setVisibility(View.INVISIBLE);
+                    btn_book_menu.setVisibility(View.INVISIBLE);
                 }
             }
         });
@@ -166,45 +147,22 @@ public class Kontext extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                                 "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
                     } else {
-                        if (copyOfSentenceList.size() > 0){
-//                            <TextView
-//                            android:text=""
-//                            android:layout_width="wrap_content"
-//                            android:layout_height="wrap_content"
-//                            android:layout_marginTop="10dp"
-//                            android:layout_marginLeft="60dp"
-//                            android:layout_marginRight="15dp"
-//                            android:layout_marginBottom="10dp"
-//                            android:id="@+id/txt_sentence03" />
+                        //if (copyOfSentenceList.size() > 0){
+                        Log.d("Kontext: inHint", currentlyUsedSentences.toString());
+                        BookObject hint_sentence = ExerciseUtils.getSentence(
+                                                Kontext.this, dbManager, voc, "hint", currentlyUsedSentences);
+                        if (!hint_sentence.getSentence().equals("")){
+                            currentlyUsedSentences.add(hint_sentence.getSentence());
 
-                            TextView newSent = new TextView(Kontext.this);
-                            // TODO: NO SAME SENTENCE
-                            newSent.setText(ExerciseUtils.fromHtml(
-                                           ExerciseUtils.deleteWordFromSentence(ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "hint", "", ""), voc)));
-                            //newSent.setText(ExerciseUtils.fromHtml(
-                            //        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(copyOfSentenceList.get(0)), voc)));
-                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-                            //converting pixels into dp, so that is the same scale as in the layout
-                            int dpLeft = 60; // margin in dips
-                            int dpRight = 15; // margin in dips
-                            int dpBottom = 10; // margin in dips
-                            float d = Kontext.this.getResources().getDisplayMetrics().density;
-                            int marginLeft = (int)(dpLeft * d); // margin in pixels
-                            int marginRight = (int)(dpRight * d); // margin in pixels
-                            int marginBottom = (int)(dpBottom * d); // margin in pixels
-
-                            // left, top, right, bottom
-                            params.setMargins(marginLeft, 0, marginRight, marginBottom);
-                            newSent.setLayoutParams(params);
-
-                            lay_vocabel.addView(newSent);
-
-                            copyOfSentenceList.remove(0);
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(ExerciseUtils.deleteWordFromSentence(hint_sentence, voc)));
+                            scroll.postDelayed(new Runnable() { @Override public void run() {
+                                scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                         }
                         else {
-                            lay_feedback.setVisibility(View.VISIBLE);
-                            txt_feedback.setText(ExerciseUtils.fromHtml("Es tud mir leid, es gibt keine weiteren Sätze für dieses Wort"));
+                            feedback_answer = "Es tut mir leid, es gibt keine weiteren Sätze für dieses Wort";
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            scroll.postDelayed(new Runnable() { @Override public void run() {
+                                scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                         }
                     }
                 }else{
@@ -217,17 +175,21 @@ public class Kontext extends AppCompatActivity {
         btn_solution.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lay_feedback.setVisibility(View.VISIBLE);
                 edit_solution.setEnabled(false);
-                txt_feedback.setText(ExerciseUtils.fromHtml("Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und Übersetzt <b><i>" + voc.getTranslation() + "</i></b>"));
+                btn_hint.setEnabled(false);
+                feedback_answer = "Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>.";
+                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                scroll.postDelayed(new Runnable() { @Override public void run() {
+                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
             }
         });
 
-        btn_auswahl.setOnClickListener(new View.OnClickListener() {
+        btn_book_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mSlidingLayer.openLayer(true);
-
+                Intent intent = new Intent(Kontext.this, TheBook.class);
+                startActivity(intent);
+                setBookValues();
             }
 
         });
@@ -235,29 +197,36 @@ public class Kontext extends AppCompatActivity {
         edit_solution.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-
-                Log.d("TextEdit", "in TextEdit");
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    Log.d("TextEdit", "in if");
+
+                    // hide keyboard after input
                     InputMethodManager inputManager = (InputMethodManager)
                             getSystemService(Context.INPUT_METHOD_SERVICE);
-
                     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
                             InputMethodManager.HIDE_NOT_ALWAYS);
+
                     if (edit_solution.getText().toString().length() > 0) {
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
-                                lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText("Gratulation, das ist korrekt.");
+
+                                feedback_answer = "Gratulation, das ist korrekt.";
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                scroll.postDelayed(new Runnable() { @Override public void run() {
+                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+
                                 allVocabulary.remove(voc);
+
                                 if (voc.getId() > 6) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
                             } else {
                                 // Todo - feedback
-                                lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
-                                        edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
+                                Feedback feedback = new Feedback(edit_solution.getText().toString(),
+                                        voc, true, Kontext.this);
+                                feedback_answer = feedback.generateFeedback();
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                scroll.postDelayed(new Runnable() { @Override public void run() {
+                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                             }
                     }
                     handled = true;
@@ -276,69 +245,16 @@ public class Kontext extends AppCompatActivity {
     }
 
     private void setBookValues() {
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book_book", "0");
 
-        if (!pref_book.equals("0")){
-            book = pref_book;
-        }
-        else{
-            book = "I";
-        }
+        book = ExerciseUtils.getPreferenceBook(this);
 
-        String pref_chapter = PreferenceManager.getDefaultSharedPreferences(this)
+        chapter = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString("chapter", "Welcome");
 
+        unit = ExerciseUtils.getPreferenceUnit(this);
 
-        chapter = pref_chapter;
-
-        Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", true);
-        Boolean pref_unit_B = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
-        Boolean pref_unit_C = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
-
-        if (pref_unit_A){
-            if (pref_unit_B){
-                if (pref_unit_C){
-                    unit = "A B C";
-                }
-                else{
-                    unit = "A B";
-                }
-            }
-            else {
-                if (pref_unit_C){
-                    unit = "A C";
-                }
-                else{
-                    unit = "A";
-                }
-            }
-        }
-        else{
-            if (pref_unit_B){
-                if (pref_unit_C){
-                    unit = "B C";
-                }
-                else{
-                    unit = "B";
-                }
-            }
-            else {
-                if (pref_unit_C){
-                    unit = "C";
-                }
-                else{
-                    unit = "A";
-                }
-            }
-        }
-
-        int pref_level = PreferenceManager.getDefaultSharedPreferences(this)
+        level = PreferenceManager.getDefaultSharedPreferences(this)
                 .getInt("level", 0);
-        level = pref_level;
     }
 
     private void getVocabularyEnglishGerman() {
@@ -358,61 +274,115 @@ public class Kontext extends AppCompatActivity {
             List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
 
             // get first preference sentence
-            BookObject first_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "first", "", "");
+            BookObject first_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "first", currentlyUsedSentences);
+            if(!first_sentence.getSentence().equals("")) {
+                currentlyUsedSentences.add(first_sentence.getSentence());
+            }
+            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
+
             // get second preference sentence
-            BookObject second_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "second", first_sentence.getSentence(), "");
+            BookObject second_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "second", currentlyUsedSentences);
+            if(!first_sentence.getSentence().equals("")) {
+                currentlyUsedSentences.add(second_sentence.getSentence());
+            }
+            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
+
             // get third preference sentence
-            BookObject third_sentence = ExerciseUtils.getKontextPreferenceSentence(Kontext.this, dbManager, voc, "third", first_sentence.getSentence(), second_sentence.getSentence());
+            BookObject third_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "third", currentlyUsedSentences);
+            if(!first_sentence.getSentence().equals("")) {
+                currentlyUsedSentences.add(third_sentence.getSentence());
+            }
+            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
 
             txt_sent01.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(first_sentence, voc)));
             txt_sent02.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(second_sentence, voc)));
             txt_sent03.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(third_sentence, voc)));
-
-            //Todo OLD
-            /**List<String> sentenceList = DBUtils.splitListString(voc.getGDEXSentences());
-            copyOfSentenceList = sentenceList;
-            
-            Log.d("TRANSLATION", Integer.toString(sentenceList.size()));
-            if (sentenceList.size() >= 3) {
-                Log.d("Kontext: sentenceList", sentenceList.toString());
-                // MOVED HANDLING OF PARSING INTEGERS FROM STRINGS TO DatabaseManager.getSentence(String)
-                txt_sent01.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
-                txt_sent02.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1)), voc)));
-                txt_sent03.setText(ExerciseUtils.fromHtml(
-                        ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(2)), voc)));
-
-                copyOfSentenceList.remove(0);
-                copyOfSentenceList.remove(1);
-                copyOfSentenceList.remove(2);
-            }
-            else{
-                // todo supplement sentences
-                if (sentenceList.size() == 1){
-                    txt_sent01.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
-                    txt_sent02.setText("");
-                    txt_sent03.setText("");
-
-                    copyOfSentenceList.remove(0);
-                }
-                else if (sentenceList.size() == 2){
-                    txt_sent01.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(0)), voc)));
-                    txt_sent02.setText(ExerciseUtils.fromHtml(
-                            ExerciseUtils.deleteWordFromSentence(dbManager.getSentence(sentenceList.get(1)), voc)));
-                    txt_sent03.setText("");
-
-                    copyOfSentenceList.remove(0);
-                    copyOfSentenceList.remove(1);
-                }
-            }**/
         }
     }
 
-    public SlidingLayer getSlidingLayer(){
-        return mSlidingLayer;
+    private RelativeLayout createNewRelativeLayoutView(String s){
+
+
+        //android:layout_width="match_parent"
+        //android:layout_height="wrap_content"
+        final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        //android:layout_marginTop="30dp"
+        params.setMargins(0, pixelToDips(15), 0, 0);
+        if (currentLayoutId != -1) {
+            Log.d("below", String.valueOf(currentLayoutId));
+            params.addRule(RelativeLayout.BELOW, currentLayoutId);
+        }
+
+        final RelativeLayout relativeLayout = new RelativeLayout(this);
+        relativeLayout.setLayoutParams(params);
+
+        //android:background="@drawable/ic_sprechblase_main_rechts"
+        relativeLayout.setBackground(ContextCompat.getDrawable(Kontext.this, R.drawable.ic_sprechblase_main_rechts));
+
+        int theId = generateViewId();
+        Log.d("ID", String.valueOf(theId));
+        relativeLayout.setId(theId);
+        currentLayoutId = theId;
+
+        relativeLayout.addView(createNewTextView(String.valueOf(s)));
+        return relativeLayout;
+    }
+
+    private TextView createNewTextView(String text) {
+        //android:layout_width="wrap_content"
+        //android:layout_height="wrap_content"
+        final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        //android:layout_marginLeft="15dp"
+        //android:layout_marginRight="60dp"
+        params.setMargins(pixelToDips(15), 0, pixelToDips(60), 0);
+
+        //android:layout_centerVertical="true"
+        params.addRule(RelativeLayout.CENTER_VERTICAL);
+
+        //android:layout_alignParentLeft="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+
+        //android:layout_alignParentStart="true"
+        // todo changed to ALIGN_PARENT_TOP
+        params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+
+        //android:layout_alignParentRight="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        //android:layout_alignParentEnd="true"
+        // todo changed to ALIGN_PARENT_BOTTOM
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        final TextView textView = new TextView(this);
+        textView.setLayoutParams(params);
+        textView.setText(ExerciseUtils.fromHtml(text));
+        return textView;
+    }
+
+    private int pixelToDips(int x){
+        float d = Kontext.this.getResources().getDisplayMetrics().density;
+        return (int)(x * d);
+    }
+
+    @SuppressLint("NewApi")
+    public int generateViewId() {
+        if (Build.VERSION.SDK_INT < 17) {
+            for (;;) {
+                final int result = sNextGeneratedId.get();
+                // aapt-generated IDs have the high byte nonzero; clamp to the range under that.
+                int newValue = result + 1;
+                if (newValue > 0x00FFFFFF)
+                    newValue = 1; // Roll over to 1, not 0.
+                if (sNextGeneratedId.compareAndSet(result, newValue)) {
+                    return result;
+                }
+            }
+        } else {
+            return View.generateViewId();
+        }
     }
 
     @Override

@@ -14,9 +14,9 @@ public class MorphInfoObject {
     private String pos = "";
     private String number = "";
     private String lingTime = "";
-    private String infoLemma = "";
     private String lingCase = "";
     private String gender = "";
+    private String reading;
 
     private String[] posList = {"A", "Adv", "Comp", "Conj", "Det", "G", "I", "N", "NVC", "Part",
             "Punct", "Pron", "Prep", "PropN", "V", "VVC"};
@@ -42,80 +42,77 @@ public class MorphInfoObject {
 
     /**
      *
-     * @param reading
+     * @param mReading
      */
-    public MorphInfoObject(String reading){
+    public MorphInfoObject(String mReading){
 
-        //String[] mReading_withLemma = reading.split("#");
+        //String[] mReading_withLemma = readingInformation.split("#");
         //lemma = mReading_withLemma[1].trim();
 
         //String[] mReading = mReading_withLemma[0].trim().split("\\s");
 
         String[] readingWithLemma;
-        if (reading.contains("#")) {
-            readingWithLemma = reading.split("#");
+        if (mReading.contains("#")) {
+            readingWithLemma = mReading.split("#");
             // print("MorpInfo: lemmaSplit", reading_with_lemma)
             lemma = readingWithLemma[1].trim();
         }
         else {
-            readingWithLemma = new String[]{reading};
+            readingWithLemma = new String[]{mReading};
             // print("MorpInfo: NoLemmaSplit", reading_with_lemma)
         }
+        reading = readingWithLemma[0];
         // self.word_reading = reading_with_lemma[0]
-        String[] mReading = readingWithLemma[0].trim().split(" ");
+        String[] readingInformation = readingWithLemma[0].trim().split(" ");
 
-
-
-
-
-        switch (mReading[0]){
+        switch (readingInformation[0]){
             case "Punct":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "Prep":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "Conj":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "Comp":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "G":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "I":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "Part":
-                setPOSTag(mReading);
+                setPOSTag(readingInformation);
                 break;
             case "Adv":
-                setAdverbTag(mReading);
+                setAdverbTag(readingInformation);
                 break;
             case "A":
-                setAdjectiveTag(mReading);
+                setAdjectiveTag(readingInformation);
                 break;
             case "VVC":
-                setVerbVerbCombinationTag(mReading);
+                setVerbVerbCombinationTag(readingInformation);
                 break;
             case "PropN":
-                setProperNounTag(mReading);
+                setProperNounTag(readingInformation);
                 break;
             case "N":
-                setNounTag(mReading);
+                setNounTag(readingInformation);
                 break;
             case "Det":
-                setDeterminerTag(mReading);
+                setDeterminerTag(readingInformation);
                 break;
             case "NVC":
-                setNounVerbCombinationTag(mReading);
+                setNounVerbCombinationTag(readingInformation);
                 break;
             case "V":
-                setVerbTag(mReading);
+                setVerbTag(readingInformation);
                 break;
             case "Pron":
-                setPronounTag(mReading);
+                setPronounTag(readingInformation);
                 break;
         }
     }
@@ -276,15 +273,15 @@ public class MorphInfoObject {
     }
 
     private void setNumberTag(String[] mReading){
-        number = intersection(Arrays.asList(mReading), Arrays.asList(timeList));
+        number = intersection(Arrays.asList(mReading), Arrays.asList(numberList));
     }
 
     private void setCaseTag(String[] mReading){
-        lingCase = intersection(Arrays.asList(mReading), Arrays.asList(timeList));
+        lingCase = intersection(Arrays.asList(mReading), Arrays.asList(caseList));
     }
 
     private void setGenderTag(String[] mReading){
-        gender = intersection(Arrays.asList(mReading), Arrays.asList(timeList));
+        gender = intersection(Arrays.asList(mReading), Arrays.asList(genderList));
     }
 
     private String intersection(List list1, List list2) {
@@ -306,7 +303,6 @@ public class MorphInfoObject {
     public String getPOS() { return pos; }
     public String getNumber() { return number; }
     public String getLingTime() { return lingTime; }
-    public String getInfoLemma() { return infoLemma; }
     public String getLingCase() { return lingCase; }
     public String getGender() { return gender; }
     public Boolean getIsWeakVerb() { return isWeakVerb; }
@@ -322,4 +318,10 @@ public class MorphInfoObject {
     public Boolean getIsTO() { return isTO; };
     public Boolean getIsWh() { return isWh; };
     public Boolean getIsCONTR() { return isCONTR; };
+
+    @Override
+    public String toString()
+    {
+        return reading;
+    }
 }

@@ -28,8 +28,6 @@ import com.wunderlist.slidinglayer.SlidingLayer;
 
 public class AufgabeAuswahl extends AppCompatActivity {
 
-    SlidingLayer mSlidingLayer;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +36,7 @@ public class AufgabeAuswahl extends AppCompatActivity {
         Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         Button btn_kartei = (Button) findViewById(R.id.btn_open_kartei);
         Button btn_kontext = (Button) findViewById(R.id.btn_open_kontext);
-        Button btn_auswahl = (Button) findViewById(R.id.btn_book_menu);
+        Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
         Button btn_exercise3 = (Button) findViewById(R.id.btn_open_ex3);
 
         btn_kartei.setOnClickListener(new View.OnClickListener() {
@@ -68,7 +66,7 @@ public class AufgabeAuswahl extends AppCompatActivity {
 
         });
 
-        btn_auswahl.setOnClickListener(new View.OnClickListener() {
+        btn_book_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(AufgabeAuswahl.this, TheBook.class);
@@ -82,27 +80,6 @@ public class AufgabeAuswahl extends AppCompatActivity {
                 NavUtils.navigateUpFromSameTask(AufgabeAuswahl.this);
             }
         });
-    }
-
-    private int setCurrentBook() {
-        int tab = 0;
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book_book", "0");
-        switch (pref_book){
-            case "0": tab = 0;
-                break;
-            case "I": tab = 0;
-                break;
-            case "II": tab = 1;
-                break;
-            case "III": tab = 2;
-                break;
-        }
-        return tab;
-    }
-
-    public SlidingLayer getSlidingLayer(){
-        return mSlidingLayer;
     }
 
     @Override

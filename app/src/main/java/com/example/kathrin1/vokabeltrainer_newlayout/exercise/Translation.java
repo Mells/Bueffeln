@@ -59,12 +59,13 @@ public class Translation extends AppCompatActivity {
     private List<VocObject> allVocabulary;
     private TextView txt_voc;
     private TextView txt_bsp;
-    private SlidingLayer mSlidingLayer;
 
     private String book;
     private String chapter;
     private String unit;
     private int level;
+
+    private String feedback_answer;
 
     private int currentLayoutId = -1;
 
@@ -77,8 +78,7 @@ public class Translation extends AppCompatActivity {
         Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         Button btn_next = (Button) findViewById(R.id.btn_next);
         Button btn_solution = (Button) findViewById(R.id.btn_solution);
-        Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
-        Button btn_menu = (Button) findViewById(R.id.btn_menu);
+        final Button btn_menu = (Button) findViewById(R.id.btn_menu);
         final Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
 
 
@@ -87,7 +87,7 @@ public class Translation extends AppCompatActivity {
 
         final EditText edit_solution = (EditText) findViewById(R.id.edit_solution);
         final Switch sw_language = (Switch) findViewById(R.id.sw_language);
-        final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
+        //final TextView txt_feedback = (TextView) findViewById(R.id.txt_feedback);
 
         final RelativeLayout lay_feedback = (RelativeLayout) findViewById(R.id.lay_feedback);
         final RelativeLayout lay_eingabe = (RelativeLayout) findViewById(R.id.lay_eingabe);
@@ -181,27 +181,32 @@ public class Translation extends AppCompatActivity {
              public void onClick(View v) {
                  Intent intent = new Intent(Translation.this, TheBook.class);
                  startActivity(intent);
+                 setBookValues();
              }
         });
 
         edit_solution.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                Log.d("TextEdit", "in TextEdit");
+
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    Log.d("TextEdit", "in if");
+
+                    // hide keyboard after input
                     InputMethodManager inputManager = (InputMethodManager)
                             getSystemService(Context.INPUT_METHOD_SERVICE);
-
                     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
                             InputMethodManager.HIDE_NOT_ALWAYS);
+
                     if (edit_solution.getText().toString().length() > 0) {
                         // German Input
                         if (!sw_language.isChecked()) {
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
-                                lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText("Gratulation, das ist korrekt.");
+                                feedback_answer = "Gratulation, das ist korrekt.";
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                scroll.postDelayed(new Runnable() { @Override public void run() {
+                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+
                                 allVocabulary.remove(voc);
                                 // write to database
                                 if (voc.getId() > 6) {
@@ -210,9 +215,11 @@ public class Translation extends AppCompatActivity {
 
                             } else {
                                 // TODO feedback
-                                lay_feedback.setVisibility(View.VISIBLE);
-                                txt_feedback.setText(ExerciseUtils.fromHtml("Es tut mir leid, aber <i><b>" +
-                                        edit_solution.getText().toString() + "</b></i> ist nicht korrekt."));
+                                feedback_answer = "Es tut mir leid, aber <i><b>" +
+                                        edit_solution.getText().toString() + "</b></i> ist nicht korrekt.";
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                scroll.postDelayed(new Runnable() { @Override public void run() {
+                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                             }
                         // English Input
                         } else {
@@ -220,6 +227,8 @@ public class Translation extends AppCompatActivity {
                                 lay_feedback_scroll.addView(createNewRelativeLayoutView("Gratulation, das ist korrekt."));
                                 scroll.postDelayed(new Runnable() { @Override public void run() {
                                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+                                edit_solution.setEnabled(false);
+                                btn_menu.performClick();
                                 //lay_feedback.setVisibility(View.VISIBLE);
                                 //txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
@@ -229,11 +238,10 @@ public class Translation extends AppCompatActivity {
                                 }
 
                             } else {
-                                // TODO - feedback
                                 Feedback feedback = new Feedback(edit_solution.getText().toString(),
                                         voc, true, Translation.this);
-                                String answer = feedback.generateFeedback();
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(answer));
+                                feedback_answer = feedback.generateFeedback();
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
                                 scroll.postDelayed(new Runnable() { @Override public void run() {
                                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                                 //lay_feedback.setVisibility(View.VISIBLE);
@@ -251,11 +259,8 @@ public class Translation extends AppCompatActivity {
         sw_language.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 edit_solution.setEnabled(false);
-                txt_feedback.setText("");
-                lay_feedback.setVisibility(View.INVISIBLE);
                 if(!sw_language.isChecked()){
                     txt_voc.setText(voc.getVoc());
-
                     // TODO:  get original sentence
                     BookObject sentence = dbManager.getExampleGDEXSentence(voc);
                     txt_bsp.setText(ExerciseUtils.fromHtml(
@@ -280,61 +285,16 @@ public class Translation extends AppCompatActivity {
     }
 
     private void setBookValues() {
-        book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book_book", "I");
+
+        book = ExerciseUtils.getPreferenceBook(this);
 
         chapter = PreferenceManager.getDefaultSharedPreferences(this)
                 .getString("chapter", "Welcome");
 
-        Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", true);
-        Boolean pref_unit_B = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
-        Boolean pref_unit_C = PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("unit_A", false);
+        unit = ExerciseUtils.getPreferenceUnit(this);
 
-        if (pref_unit_A){
-            if (pref_unit_B){
-                if (pref_unit_C){
-                    unit = "A B C";
-                }
-                else{
-                    unit = "A B";
-                }
-            }
-            else {
-                if (pref_unit_C){
-                    unit = "A C";
-                }
-                else{
-                    unit = "A";
-                }
-            }
-        }
-        else{
-            if (pref_unit_B){
-                if (pref_unit_C){
-                    unit = "B C";
-                }
-                else{
-                    unit = "B";
-                }
-            }
-            else {
-                if (pref_unit_C){
-                    unit = "C";
-                }
-                else{
-                    unit = "A";
-                }
-            }
-        }
-
-        int pref_level = PreferenceManager.getDefaultSharedPreferences(this)
+        level = PreferenceManager.getDefaultSharedPreferences(this)
                 .getInt("level", 0);
-        level = pref_level;
-
-        Log.d("BOOKVALUE ", book + " " + chapter + " " + unit + " " + level);
     }
 
     private void getVocabularyGerman() {
@@ -372,10 +332,6 @@ public class Translation extends AppCompatActivity {
         }
     }
 
-    public SlidingLayer getSlidingLayer(){
-        return mSlidingLayer;
-    }
-
     private TextView createNewTextView(String text) {
         //android:layout_width="wrap_content"
         //android:layout_height="wrap_content"
@@ -406,24 +362,25 @@ public class Translation extends AppCompatActivity {
     }
 
     private RelativeLayout createNewRelativeLayoutView(String s){
-        //android:id="@+id/lay_feedback1"
         //android:layout_width="match_parent"
         //android:layout_height="wrap_content"
-        //android:layout_marginTop="30dp"
-        //android:background="@drawable/ic_sprechblase_main_rechts"
-
         final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT);
 
+        //android:layout_marginTop="30dp"
         params.setMargins(0, pixelToDips(15), 0, 0);
         if (currentLayoutId != -1) {
             Log.d("below", String.valueOf(currentLayoutId));
             params.addRule(RelativeLayout.BELOW, currentLayoutId);
         }
+
         final RelativeLayout relativeLayout = new RelativeLayout(this);
         relativeLayout.setLayoutParams(params);
+
+        //android:background="@drawable/ic_sprechblase_main_rechts"
         relativeLayout.setBackground(ContextCompat.getDrawable(Translation.this, R.drawable.ic_sprechblase_main_rechts));
+
         int theId = generateViewId();
         Log.d("ID", String.valueOf(theId));
         relativeLayout.setId(theId);

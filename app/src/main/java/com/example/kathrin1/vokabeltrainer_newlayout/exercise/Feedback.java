@@ -104,7 +104,7 @@ public class Feedback {
             if (singleTarget.split("\\s").length == learnerAnswer.split("\\s").length) {
                 // have the same number of words
 
-                ArrayList<Pair> newAppAnswerTag = getCorrectTaggedByIndex(appAnswerTag);
+                ArrayList<Pair> newAppAnswerTag = getCorrectTaggedByIndex(singleTarget, appAnswer, appAnswerTag);
 
                 String[] learnerWords = learnerAnswer.split("\\s");
                 StringBuilder theFeedback = new StringBuilder();
@@ -115,13 +115,24 @@ public class Feedback {
                     Pair aWord = newAppAnswerTag.get(i);
                     String lWord = learnerWords[i];
 
-                    theFeedback.append(lWord + ":");
+                    // todo theFeedback lacks newlines I think
+                    theFeedback.append("<b>" + lWord + "</b>" + ": ");
 
-                    learnerWordReading = dbManager.getMorphInformation(lWord);
+                    // todo check if lWord = aWord
+
+                    if (lWord.equals(aWord.getKey())){
+                        theFeedback.append("Dieses Wort ist korrekt.");
+                        if (i < newAppAnswerTag.size()){
+                            theFeedback.append("<br/>");
+                        }
+                        continue;
+                    }
+
+                    learnerWordReading = dbManager.getMorphInformation(lWord.replace("'", "''"));
 
                     if (learnerWordReading.isEmpty()) {
 
-                        theFeedback.append(feedbackForWordNotFound((String) aWord.getKey()));
+                        theFeedback.append(feedbackForWordNotFound((String) aWord.getKey(), lWord));
 
                     } else {
                         String appReading = (String) aWord.getValue();
@@ -131,16 +142,17 @@ public class Feedback {
 
                         theFeedback.append(compareReadings(learnerWordReading, morphologicalReading, bestAppReading));
                     }
+                    if (i < newAppAnswerTag.size()){
+                        theFeedback.append("<br/>");
+                    }
                 }
+                return theFeedback.toString();
             }
             else { // have not the same number of words
                 return "Die Antwort hat " + singleTarget.split("\\s").length + " Wörter. " +
                         "Deine Antwort hat " + learnerAnswer.split("\\s").length + " Wörter.";
             }
-//
         }
-
-        return "Es tut mir leid, irgendetwas ist schief gelaufen.";
     }
 
     private String getSingleTarget(){
@@ -177,12 +189,12 @@ public class Feedback {
 
     private String singleWordComparison(String singleTarget){
         //	<xtag> the morphological database
-        MorphObject learnerWordReading = dbManager.getMorphInformation(learnerAnswer);
+        MorphObject learnerWordReading = dbManager.getMorphInformation(learnerAnswer.replace("'", "''"));
 
         // <SingleTarget> is not known in <xtag>
         if (learnerWordReading.isEmpty()) {
 
-            return feedbackForWordNotFound(singleTarget);
+            return feedbackForWordNotFound(singleTarget, learnerAnswer);
 
         } else {
             // <SingleTarget> is known in <xtag>
@@ -200,17 +212,17 @@ public class Feedback {
         }
     }
 
-    private String feedbackForWordNotFound(String singleTarget) {
+    private String feedbackForWordNotFound(String singleTarget, String mLearnerAnswer) {
         Log.d("Feedback: in empty", "TRUE");
         // calculate  <soundex> of learner word
-        String learner_soundex = generateSoundex(learnerAnswer);
+        String learner_soundex = generateSoundex(mLearnerAnswer);
 
         // calculate <sound_levenshtein> between soundex
-        // TODO HERE IS NOT SOUNDEX USED BUT SINGLETARGET
-        int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTarget);
+        String singleTargetSoundex = getCorrectSoundexByIndex(singleTarget, appAnswer, appSoundex);
+        int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTargetSoundex);
 
         // calculate <word_levenshtein> between words
-        int levenshtein_spelling = levenshteinDistance(learnerAnswer, singleTarget);
+        int levenshtein_spelling = levenshteinDistance(mLearnerAnswer, singleTarget);
 
         levenshtein_soundex = 1;
         Log.d("Feedback: learnerSound", learner_soundex);
@@ -225,6 +237,7 @@ public class Feedback {
         }
         else if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
             Log.d("Feedback in", "same");
+            // todo threshold
             return "Muss noch konstruiert werden";
         } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
             // return "Das Wort klingt gleich"
@@ -342,38 +355,65 @@ public class Feedback {
 
     }
 
-    private ArrayList<Pair> getCorrectTaggedByIndex(ArrayList theList) {
-        String[][] answer = {{"to expect a baby"}, {"to have a baby"}};
+    private ArrayList<Pair> getCorrectTaggedByIndex(String voc, ArrayList vocableProcessed, ArrayList vocableProcessedTagged){
+
         int tmpX = 0;
         int tmpY = 0;
-        String max = "to have a baby";
+        //String max = "to have a baby";
         // there are some changes here. in addition to the caching
-        for (int i = 0; i < answer.length; i++) {
-            String[] inner = answer[i];
+        for (int i = 0; i < vocableProcessed.size(); i++) {
+            ArrayList<String> inner = (ArrayList<String>) vocableProcessed.get(i);
             // caches inner variable so that it does not have to be looked up
             // as often, and it also tests based on the inner loop's length in
             // case the inner loop has a different length from the outer loop.
-            for (int y = 0; y < inner.length; y++) {
-                System.out.println(inner[y] + " - " + max);
-                if (inner[y].equals(max)) {
-                    max = inner[y];
+            for (int y = 0; y < inner.size(); y++) {
+                System.out.println(inner.get(y) + " - " + voc);
+                if (inner.get(y).equals(voc)) {
+                    voc = inner.get(y);
                     // store the coordinates of max
-                    tmpX = i;
-                    tmpY = y;
+                    tmpX = i; tmpY = y;
                 }
             }
         }
-        System.out.println(max);
+        System.out.println(voc);
         // convert to string before outputting:
-        System.out.println("The (x,y) is: (" + tmpX + "," + tmpY + ")");
-        System.out.println(theList.get(tmpX));
-        return (ArrayList<Pair>) theList.get(tmpX);
+        System.out.println("The (x,y) is: ("+tmpX+","+tmpY+")");
+        System.out.println(vocableProcessedTagged.get(tmpX));
+        return (ArrayList<Pair>) vocableProcessedTagged.get(tmpX);
+    }
+
+    private String getCorrectSoundexByIndex(String voc, ArrayList vocableProcessed, ArrayList vocableSoundex){
+
+        int tmpX = 0;
+        int tmpY = 0;
+        //String max = "to have a baby";
+        // there are some changes here. in addition to the caching
+        for (int i = 0; i < vocableProcessed.size(); i++) {
+            ArrayList<String> inner = (ArrayList<String>) vocableProcessed.get(i);
+            // caches inner variable so that it does not have to be looked up
+            // as often, and it also tests based on the inner loop's length in
+            // case the inner loop has a different length from the outer loop.
+            for (int y = 0; y < inner.size(); y++) {
+                System.out.println(inner.get(y) + " - " + voc);
+                if (inner.get(y).equals(voc)) {
+                    voc = inner.get(y);
+                    // store the coordinates of max
+                    tmpX = i; tmpY = y;
+                }
+            }
+        }
+        System.out.println(voc);
+        // convert to string before outputting:
+        System.out.println("The (x,y) is: ("+tmpX+","+tmpY+")");
+        System.out.println(vocableSoundex.get(tmpX));
+        return ((ArrayList<String>) vocableSoundex.get(tmpX)).get(0);
     }
 
     /*
     COMPARE THE SAME PART OF SPEECH TAGS
      */
     private String compareMorphologicalInformation(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        Log.d("Feedback: CMI:", morphologicalAppReading.toString() + " - " + morphologicalLearnerReading.toString());
         switch (morphologicalAppReading.getPOS()) {
             case "A":
                 return compareAdjectives(morphologicalAppReading, morphologicalLearnerReading);
@@ -681,13 +721,13 @@ public class Feedback {
                 }
                 else {
                     return "Das Wort wird in " + numberToString(morphologicalAppReading.getNumber())
-                            + "gesucht, nicht in " + numberToString(morphologicalLearnerReading.getNumber())
+                            + " gesucht, nicht in " + numberToString(morphologicalLearnerReading.getNumber())
                             + ".";
                 }
             }
             else {
                 return "Das Wort wird in " + numberToString(morphologicalAppReading.getNumber())
-                        + "gesucht.";
+                        + " gesucht.";
             }
         }
         else {

@@ -308,31 +308,9 @@ public class Book3 extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
         //AppCompatActivity a;
-
-        if (context instanceof AppCompatActivity){
+        if (context instanceof AppCompatActivity) {
             a = (AppCompatActivity) context;
-            String className = a.getClass().getSimpleName();
-
-            if (className.equals(Lektion.class.getSimpleName())) {
-                mSlidingLayer = ((Lektion) a).getSlidingLayer();
-            }
-            else if (className.equals(Kontext.class.getSimpleName())) {
-                mSlidingLayer = ((Kontext) a).getSlidingLayer();
-            }
-            else if (className.equals(Translation.class.getSimpleName())) {
-                mSlidingLayer = ((Translation) a).getSlidingLayer();
-            }
-            else if (className.equals(MainActivity.class.getSimpleName())) {
-                mSlidingLayer = ((MainActivity) a).getSlidingLayer();
-            }
-            else if (className.equals(AufgabeAuswahl.class.getSimpleName())) {
-                mSlidingLayer = ((AufgabeAuswahl) a).getSlidingLayer();
-            } else if (className.equals(TrainAndTest.class.getSimpleName())) {
-                mSlidingLayer = ((TrainAndTest) a).getSlidingLayer();
-            }
         }
-
     }
 }

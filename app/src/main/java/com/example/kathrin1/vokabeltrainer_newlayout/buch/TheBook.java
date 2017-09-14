@@ -14,7 +14,6 @@ import android.widget.Button;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation_backup;
 
 /**
  * Created by kathrin1 on 08.09.17.

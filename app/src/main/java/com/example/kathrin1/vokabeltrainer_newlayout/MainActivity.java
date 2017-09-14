@@ -14,70 +14,27 @@ import android.widget.RelativeLayout;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.achievement.AchievementMain;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
+import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.status.Status;
-import com.wunderlist.slidinglayer.SlidingLayer;
 
 public class MainActivity extends AppCompatActivity {
-
-    private SlidingLayer mSlidingLayer;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // ----------------TABS---------------------
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Book 1"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 2"));
-        tabLayout.addTab(tabLayout.newTab().setText("Book 3"));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter
-                (getSupportFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(setCurrentBook());
-        viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                ExerciseUtils.updateBook(MainActivity.this, tab);
-                viewPager.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
-
-        // --------------------------------------------
-
-        // ----------------SLIDER---------------------
-
-        mSlidingLayer = (SlidingLayer) findViewById(R.id.slidingLayer1);
-        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) mSlidingLayer.getLayoutParams();
-        rlp.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-        mSlidingLayer.setLayoutParams(rlp);
-
-        // --------------------------------------------
-
         Button btn_dictionary = (Button) findViewById(R.id.btn_dict);
         Button btn_lektion = (Button) findViewById(R.id.btn_lektion);
         Button btn_aufgabe = (Button) findViewById(R.id.btn_aufgabe);
         Button btn_status = (Button) findViewById(R.id.btn_status);
-        Button btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
+        Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
 
         btn_dictionary.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,33 +68,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btn_auswahl.setOnClickListener(new View.OnClickListener() {
+        btn_book_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                        mSlidingLayer.openLayer(true);
+                Intent intent = new Intent(MainActivity.this, TheBook.class);
+                startActivity(intent);
             }
         });
     }
-
-    private int setCurrentBook() {
-        int tab = 0;
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                .getString("book_book", "I");
-        switch (pref_book){
-            case "I": tab = 0;
-                break;
-            case "II": tab = 1;
-                break;
-            case "III": tab = 2;
-                break;
-        }
-        return tab;
-    }
-
-    public SlidingLayer getSlidingLayer(){
-        return mSlidingLayer;
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

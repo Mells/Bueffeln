@@ -68,7 +68,6 @@
     </RelativeLayout>
 
     <Button
-        android:layout_above="@+id/btn_menu"
         android:id="@+id/btn_book_menu"
         android:layout_width="50dp"
         android:layout_height="50dp"

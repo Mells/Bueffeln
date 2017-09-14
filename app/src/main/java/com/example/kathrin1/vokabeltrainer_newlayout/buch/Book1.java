@@ -311,48 +311,12 @@ public class Book1 extends Fragment {
         }
         return null;
     }
-
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        // Toast.makeText(getActivity(), "Book 1", Toast.LENGTH_LONG).show();
         //AppCompatActivity a;
-
-        if (context instanceof AppCompatActivity){
+        if (context instanceof AppCompatActivity) {
             a = (AppCompatActivity) context;
-            className = a.getClass().getSimpleName();
-
-            if (className.equals(Lektion.class.getSimpleName())) {
-                mSlidingLayer = ((Lektion) a).getSlidingLayer();
-            }
-            else if (className.equals(Kontext.class.getSimpleName())) {
-                mSlidingLayer = ((Kontext) a).getSlidingLayer();
-            }
-            else if (className.equals(Translation.class.getSimpleName())) {
-                mSlidingLayer = ((Translation) a).getSlidingLayer();
-            }
-            else if (className.equals(MainActivity.class.getSimpleName())) {
-                mSlidingLayer = ((MainActivity) a).getSlidingLayer();
-            }
-            else if (className.equals(AufgabeAuswahl.class.getSimpleName())) {
-                mSlidingLayer = ((AufgabeAuswahl) a).getSlidingLayer();
-            }
-            else if (className.equals(TrainAndTest.class.getSimpleName())) {
-                mSlidingLayer = ((TrainAndTest) a).getSlidingLayer();
-            }
         }
-
     }
-
-
-/*    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        try {
-
-        } catch (ClassCastException castException) {
-            *//** The activity does not implement the listener. *//*
-        }
-    }*/
 }

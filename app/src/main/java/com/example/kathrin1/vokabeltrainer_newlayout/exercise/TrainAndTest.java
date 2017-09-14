@@ -20,12 +20,14 @@ import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
+import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
@@ -96,12 +98,12 @@ public class TrainAndTest extends AppCompatActivity
     private TextView txt_bsp;
     private TextView txt_feedback;
     private EditText edit_solution;
-    private RelativeLayout feedbackLayout, inputLayout;
-    private Button btn_next, btn_solution, btn_auswahl, btn_hint, btn_go_back;
+    private RelativeLayout feedbackLayout, inputLayout, lay_eingabe;
+    private LinearLayout lay_menu_buttons;
+    private Button btn_next, btn_solution, btn_book_menu, btn_hint, btn_go_back, btn_menu;
 
     private LoadingBarView loadingBar;
 
-    private SlidingLayer mSlidingLayer;
     //-----------------------------------------------------------
 
     private String book;
@@ -394,21 +396,16 @@ public class TrainAndTest extends AppCompatActivity
      */
     private void initializeUI()
     {
-
-        // ----------------SLIDER---------------------
-
-        mSlidingLayer = (SlidingLayer) findViewById(R.id.slidingLayer1);
-        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) mSlidingLayer.getLayoutParams();
-        rlp.width = RelativeLayout.LayoutParams.MATCH_PARENT;
-        mSlidingLayer.setLayoutParams(rlp);
-
-
         //The action buttons at the bottom
         btn_next = (Button) findViewById(R.id.btn_next);
         btn_solution = (Button) findViewById(R.id.btn_solution);
-        btn_auswahl = (Button) findViewById(R.id.btn_auswahl);
+        btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
         btn_hint = (Button) findViewById(R.id.btn_hint);
         btn_go_back = (Button) findViewById(R.id.btn_go_back);
+        btn_menu = (Button) findViewById(R.id.btn_menu);
+        lay_eingabe = (RelativeLayout) findViewById(R.id.lay_eingabe);
+        lay_menu_buttons = (LinearLayout) findViewById(R.id.lay_menu_buttons);
+
 
         //the input field
         edit_solution = (EditText) findViewById(R.id.edit_solution);
@@ -451,48 +448,32 @@ public class TrainAndTest extends AppCompatActivity
             }
         });
 
-        btn_auswahl.setOnClickListener(new View.OnClickListener()
+        btn_menu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (lay_eingabe.getVisibility() == View.VISIBLE){
+                    lay_eingabe.setVisibility(View.INVISIBLE);
+                    lay_menu_buttons.setVisibility(View.VISIBLE);
+                    btn_book_menu.setVisibility(View.VISIBLE);
+                }
+                else {
+                    lay_eingabe.setVisibility(View.VISIBLE);
+                    lay_menu_buttons.setVisibility(View.INVISIBLE);
+                    btn_book_menu.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+
+        btn_book_menu.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
             {
-                mSlidingLayer.openLayer(true);
+                Intent intent = new Intent(TrainAndTest.this, TheBook.class);
+                startActivity(intent);
+                setBookValues();
             }
 
-        });
-
-        mSlidingLayer.setOnInteractListener(new SlidingLayer.OnInteractListener()
-        {
-            @Override
-            public void onOpen()
-            {
-            }
-
-            @Override
-            public void onShowPreview()
-            {
-            }
-
-            @Override
-            public void onClose()
-            {
-            }
-
-            @Override
-            public void onOpened()
-            {
-            }
-
-            @Override
-            public void onPreviewShowed()
-            {
-            }
-
-            @Override
-            public void onClosed()
-            {
-                onSlidingLayerClosed();
-            }
         });
 
         btn_go_back.setOnClickListener(new View.OnClickListener() {
@@ -859,83 +840,14 @@ public class TrainAndTest extends AppCompatActivity
     }
 
     //------------------------BOOK, CHAPTER AND UNIT ------------------------
-    private void setBookValues()
-    {
-        String pref_book = PreferenceManager.getDefaultSharedPreferences(this)
-                                            .getString("book_book", "0");
+    private void setBookValues() {
 
-        if (!pref_book.equals("0"))
-        {
-            book = pref_book;
-        }
-        else
-        {
-            book = "I";
-        }
+        book = ExerciseUtils.getPreferenceBook(this);
 
-        String pref_chapter = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getString("chapter", "Welcome");
+        chapter = PreferenceManager.getDefaultSharedPreferences(this)
+                .getString("chapter", "Welcome");
 
-
-        chapter = pref_chapter;
-
-        Boolean pref_unit_A = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getBoolean("unit_A", true);
-        Boolean pref_unit_B = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getBoolean("unit_B", false);
-        Boolean pref_unit_C = PreferenceManager.getDefaultSharedPreferences(this)
-                                               .getBoolean("unit_C", false);
-
-        if (pref_unit_A)
-        {
-            if (pref_unit_B)
-            {
-                if (pref_unit_C)
-                {
-                    unit = "A B C";
-                }
-                else
-                {
-                    unit = "A B";
-                }
-            }
-            else
-            {
-                if (pref_unit_C)
-                {
-                    unit = "A C";
-                }
-                else
-                {
-                    unit = "A";
-                }
-            }
-        }
-        else
-        {
-            if (pref_unit_B)
-            {
-                if (pref_unit_C)
-                {
-                    unit = "B C";
-                }
-                else
-                {
-                    unit = "B";
-                }
-            }
-            else
-            {
-                if (pref_unit_C)
-                {
-                    unit = "C";
-                }
-                else
-                {
-                    unit = "A";
-                }
-            }
-        }
+        unit = ExerciseUtils.getPreferenceUnit(this);
     }
 
     private int setCurrentBook()
@@ -960,13 +872,6 @@ public class TrainAndTest extends AppCompatActivity
         }
         return tab;
     }
-
-    // gets called in Book1, Book2, Book3
-    public SlidingLayer getSlidingLayer()
-    {
-        return mSlidingLayer;
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)

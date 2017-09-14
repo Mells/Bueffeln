@@ -133,11 +133,13 @@ public abstract class DBUtils
 
             for (int i=0; i < jArr.length(); i++)
             {
-                Object elem = jArr.get(i);
+                //Object elem = jArr.get(i);
+                Object elem = ((JSONArray)jArr.get(i)).get(0);
                 if (elem instanceof JSONArray)
                     split.addAll(splitJSONListString(jArr.getString(i)));
                 else
-                    split.add(jArr.getString(i));
+                    //split.add(jArr.getString(i));
+                    split.add(elem.toString());
             }
 
         } catch (JSONException e) {
@@ -202,8 +204,8 @@ public abstract class DBUtils
                     for (int i=0; i < jArr.length(); i++)
                         tagList.add(jArr.getString(i));
 
-
-                    smap.put(key.toLowerCase(), tagList);
+                    smap.put(key, tagList);
+                    //smap.put(key.toLowerCase(), tagList);
                 }
                 else
                 {
