@@ -126,11 +126,13 @@ public abstract class DBUtils
 
     public static List<String> splitJSONListString(String listString)
     {
+        Log.d("DBUtils: splitJSON", listString);
         List<String> split = new ArrayList<>();
 
         try {
             JSONArray jArr = new JSONArray(listString);
 
+            Log.d("DBUtils: JSONArray", jArr.toString());
             for (int i=0; i < jArr.length(); i++)
             {
                 //Object elem = jArr.get(i);

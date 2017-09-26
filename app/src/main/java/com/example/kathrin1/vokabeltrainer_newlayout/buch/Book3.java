@@ -11,13 +11,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 
-import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.TrainAndTest;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import net.qiujuer.genius.ui.widget.SeekBar;
@@ -104,22 +99,22 @@ public class Book3 extends Fragment {
 //            }
 //        });
 
-        btn_chap0.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                now = btn_chap0;
-                now.setBackgroundResource(R.drawable.ic_button_rot);
-                if(previous != null && previous != now){
-                    previous.setBackgroundResource(R.drawable.ic_button_exercise);
-                    previous = now;
-                }
-                else{
-                    previous = btn_chap0;
-                }
-                PreferenceManager.getDefaultSharedPreferences(a).edit()
-                        .putString("chapter", "Welcome").commit();
-            }
-        });
+//        btn_chap0.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                now = btn_chap0;
+//                now.setBackgroundResource(R.drawable.ic_button_rot);
+//                if(previous != null && previous != now){
+//                    previous.setBackgroundResource(R.drawable.ic_button_exercise);
+//                    previous = now;
+//                }
+//                else{
+//                    previous = btn_chap0;
+//                }
+//                PreferenceManager.getDefaultSharedPreferences(a).edit()
+//                        .putString("chapter", "Welcome").commit();
+//            }
+//        });
 
         btn_chap1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -292,16 +287,14 @@ public class Book3 extends Fragment {
 
     private Button stringToButton(String s_btn){
         switch (s_btn){
-            case "Welcome": return btn_chap0;
             case "1": return btn_chap1;
             case "2": return btn_chap2;
             case "3": return btn_chap3;
             case "4": return btn_chap4;
             case "5": return btn_chap5;
             case "6": return btn_chap6;
-            case "0": return btn_chap0;
         }
-        return null;
+        return btn_chap1;
 
     }
 

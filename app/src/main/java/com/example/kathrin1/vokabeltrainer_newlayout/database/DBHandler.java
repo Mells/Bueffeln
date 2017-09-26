@@ -58,8 +58,8 @@ public class DBHandler extends SQLiteAssetHelper
     public static final String WORD_EXAMPLE = "Beispielsatz";
     public static final String WORD_NOTE = "Hinweis";
     public static final String WORD_BOOKID = "BookId";
-    public static final String WORD_GDEX = "GDEX";
-    public static final String WORD_LEARNER = "Learner";
+    public static final String WORD_GDEXID = "GDEX";
+    public static final String WORD_LEARNERID = "Learner";
     public static final String WORD_LEVEL = "Tested";
     public static final String WORD_LABEL = "label"; // Unique identifier for synchronization
     public static final String WORD_PARSEID = "ParseId"; // ID of word in Parse database
@@ -76,7 +76,7 @@ public class DBHandler extends SQLiteAssetHelper
             WORD_PROCESSED_TRANSLATION, WORD_TAGGED_PROCESSED_TRANSLATION,
             WORD_PROCESSED_TRANSLATION_SOUNDEX, WORD_LEMMA_TRANSLATION,
             WORD_TAGGED_LEMMA_TRANSLATION, WORD_STATUS, WORD_BOOK, WORD_CHAPTER, WORD_POS,
-            WORD_BOOKID, WORD_GDEX, WORD_LEARNER, WORD_PARSEID, WORD_BETA_si, WORD_BETA_i, WORD_ALPHA,
+            WORD_BOOKID, WORD_GDEXID, WORD_LEARNERID, WORD_PARSEID, WORD_BETA_si, WORD_BETA_i, WORD_ALPHA,
             WORD_SIGMA, WORD_LABEL, WORD_EXAMPLE, WORD_NOTE, WORD_LEVEL,
             WORD_ACTIVATION, WORD_USERINFO_PARSEID};
 
@@ -108,8 +108,8 @@ public class DBHandler extends SQLiteAssetHelper
                     WORD_EXAMPLE + " TEXT, " +
                     WORD_NOTE + " TEXT, " +
                     WORD_BOOKID + " TEXT, " +
-                    WORD_GDEX + " TEXT, " +
-                    WORD_LEARNER + " TEXT, " +
+                    WORD_GDEXID + " TEXT, " +
+                    WORD_LEARNERID + " TEXT, " +
                     WORD_LEVEL + " INTEGER DEFAULT 0, " +
                     WORD_LABEL + " TEXT, " +
                     WORD_PARSEID + " TEXT DEFAULT '', " +

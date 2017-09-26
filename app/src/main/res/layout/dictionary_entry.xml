@@ -30,14 +30,15 @@
         android:layout_height="wrap_content"
         android:layout_marginRight="20dp"
         android:layout_marginTop="10dp"
-        android:background="@drawable/ic_eingabe_hg"
+        android:padding="5dp"
+        android:background="@drawable/ic_eingabe_hg_dark"
         android:id="@+id/lay_entry">
 
         <View
             android:id="@+id/v_divider"
             android:layout_width="300dp"
             android:layout_height="2dip"
-            android:background="#000dff"
+            android:background="#BFC0C0"
             android:layout_marginTop="37dp"
             android:layout_below="@+id/txt_voc_de"
             android:layout_centerHorizontal="true" />
@@ -51,7 +52,9 @@
             android:textSize="25sp"
             android:layout_below="@+id/v_divider"
             android:layout_marginBottom="20dp"
-            android:layout_centerHorizontal="true"/>
+            android:textColor="#BFC0C0"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
 
         <TextView
             android:text="Deutsch"
@@ -59,7 +62,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:id="@+id/txt_voc_de"
+            android:textColor="#BFC0C0"
             android:layout_marginTop="20dp"
             android:textSize="25sp" />
     </RelativeLayout>
@@ -79,14 +84,14 @@
             android:layout_height="match_parent" >
 
             <TextView
-                android:text="Lemma:"
+                android:text="Grundform:"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/txt_lemma"
                 android:layout_centerVertical="true"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentStart="true"
-                android:textColor="#000dff"
+                android:textColor="@color/colorPrimaryDark"
                 />
 
             <TextView
@@ -109,7 +114,7 @@
                 android:layout_above="@+id/txt_lemma"
                 android:layout_alignLeft="@+id/txt_lemma"
                 android:layout_alignStart="@+id/txt_lemma"
-                android:textColor="#000dff"/>
+                android:textColor="@color/colorPrimaryDark"/>
 
             <TextView
                 android:text="TextView"
@@ -133,7 +138,7 @@
                 android:layout_below="@+id/txt_lemma"
                 android:layout_alignLeft="@+id/txt_lemma"
                 android:layout_alignStart="@+id/txt_lemma"
-                android:textColor="#000dff"/>
+                android:textColor="@color/colorPrimaryDark"/>
 
             <TextView
                 android:text="TextView"
@@ -157,7 +162,7 @@
                 android:layout_below="@+id/txt_wortart"
                 android:layout_alignLeft="@+id/txt_wortart"
                 android:layout_alignStart="@+id/txt_wortart"
-                android:textColor="#000dff"/>
+                android:textColor="@color/colorPrimaryDark"/>
 
             <TextView
                 android:text="TextView"
@@ -182,7 +187,7 @@
                 android:layout_below="@+id/txt_example"
                 android:layout_alignLeft="@+id/txt_example"
                 android:layout_alignStart="@+id/txt_example"
-                android:textColor="#000dff"/>
+                android:textColor="@color/colorPrimaryDark"/>
 
             <TextView
                 android:text="TextView"
@@ -191,98 +196,5 @@
                 android:id="@+id/txt_fundort_answer"
                 android:layout_marginTop="24dp"/>
         </TableRow>
-
     </TableLayout>
-
-    <!--android:layout_below="@+id/toolbar" TODO:  THIS IS THROWING ERRORS -->
-    <com.wunderlist.slidinglayer.SlidingLayer
-        xmlns:slidingLayer="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/slidingLayer1"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="2dip"
-        slidingLayer:stickTo="left"
-        >
-        <!--slidingLayer:shadowDrawable="@drawable/sidebar_shadow"
-        slidingLayer:shadowSize="@dimen/shadow_size"
-        slidingLayer:offsetDistance="@dimen/offset_distance"
-        slidingLayer:previewOffsetDistance="@dimen/preview_offset_distance"
-        slidingLayer:stickTo="top|bottom|right|left"
-        slidingLayer:changeStateOnTap="true">-->
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/colorPrimary">>
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_marginLeft="11dp"
-                android:layout_marginStart="11dp"
-                android:layout_marginTop="11dp"
-                android:id="@+id/button3" />
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/button7"
-                android:layout_alignBaseline="@+id/button3"
-                android:layout_alignBottom="@+id/button3"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentEnd="true"
-                android:layout_marginRight="15dp"
-                android:layout_marginEnd="15dp" />
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/button8"
-                android:layout_alignBaseline="@+id/button3"
-                android:layout_alignBottom="@+id/button3"
-                android:layout_centerHorizontal="true" />
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_below="@+id/button3"
-                android:layout_marginTop="53dp"
-                android:id="@+id/button9"
-                android:layout_alignRight="@+id/button7"
-                android:layout_alignEnd="@+id/button7"
-                android:layout_height="150dp"
-                android:layout_alignLeft="@+id/button3"
-                android:layout_alignStart="@+id/button3" />
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/button9"
-                android:layout_marginTop="52dp"
-                android:id="@+id/button10"
-                android:layout_alignRight="@+id/button9"
-                android:layout_alignEnd="@+id/button9"
-                android:layout_alignLeft="@+id/button9"
-                android:layout_alignStart="@+id/button9" />
-
-            <Button
-                android:text="Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:id="@+id/btn_back" />
-
-        </RelativeLayout>
-
-    </com.wunderlist.slidinglayer.SlidingLayer>
-
 </RelativeLayout>

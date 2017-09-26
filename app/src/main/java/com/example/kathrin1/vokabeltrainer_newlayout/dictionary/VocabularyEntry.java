@@ -13,17 +13,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.WordTest;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -60,34 +64,45 @@ public class VocabularyEntry extends AppCompatActivity {
         TextView txt_bsp = (TextView) findViewById(R.id.txt_example_answer);
         TextView txt_fundort = (TextView) findViewById(R.id.txt_fundort_answer);
 
-        txt_voc_de.setText(vocable.getTranslation());
-        txt_voc_en.setText(vocable.getVoc());
+        String german = vocable.getTranslation();
+        if (vocable.getProcessedTranslation().size() > 1) {
+            german = german + "<\\br><small>";
+            for (ArrayList<String> g_array : (ArrayList<ArrayList<String>>) vocable.getProcessedTranslation()) {
+                for (String s : g_array) {
+                    german = german + s + ", ";
+                }
+            }
+            german = german.replaceAll(", $", "");
+            german = german + "<\\small>";
+
+        }
+        txt_voc_de.setText(ExerciseUtils.fromHtml(german));
+
+        String english = vocable.getVoc();
+        if (vocable.getProcessedVocable().size() > 1) {
+            english = english + "<\\br><small>";
+            for (ArrayList<String> g_array : (ArrayList<ArrayList<String>>) vocable.getProcessedVocable()) {
+                for (String s : g_array) {
+                    english = english + s + ", ";
+                }
+            }
+            english = english.replaceAll(", $", "");
+            english = english + "<\\small>";
+
+        }
+        txt_voc_en.setText(ExerciseUtils.fromHtml(english));
         txt_lemma.setText(vocable.getLemmaVocable().toString().replaceAll("\\[", "").replaceAll("\\'","").replaceAll("\\]",""));
         txt_status.setText(vocable.getStatus());
-        txt_wortart.setText(vocable.getPOS());
-        //txt_bsp.setText();
+        txt_wortart.setText(posToString(vocable.getPOS()));
+
         txt_fundort.setText(vocable.getChapter()+" / "+vocable.getBook());
 
         dbManager = DatabaseManager.build(VocabularyEntry.this);
 
-        // TODO:  CHANGE SENTENCE TYPE HERE
-        List<String> bookList = DBUtils.splitListString(vocable.getOldSentences());
-        Random randomGenerator = new Random();
-        int index = randomGenerator.nextInt(bookList.size());
-        Log.d("EN-SentenceList", bookList.toString());
-        try {
-            int numberSentence = Integer.parseInt(bookList.get(index));
-            BookObject sentence = dbManager.getOldSentence(numberSentence);
-            // TODO - highlight the word in bsp
-            txt_bsp.setText(ExerciseUtils.fromHtml(
+        BookObject sentence = ExerciseUtils.getWorttestSentence(VocabularyEntry.this, dbManager, vocable);
+        txt_bsp.setText(ExerciseUtils.fromHtml(
                     ExerciseUtils.replaceWordInSentence(sentence, vocable, "<b><big>%s</big></b>")));
-        } // Thrown if there if the string could not be parsed as an int: NumberFormatException
-        catch (Exception e)
-        {
-            // If the sentence list value cannot be parsed as an integer, just display it
-            txt_bsp.setText("");
-        }
-        //BookObject sentence = databaseQuery.getSentence(numberSentence);
+        //BookObject sentence = databaseQuery.getKontextSentence(numberSentence);
 
 
 
@@ -99,8 +114,25 @@ public class VocabularyEntry extends AppCompatActivity {
                     @Override
                     public void onInit(int status) {
                         if(status != TextToSpeech.ERROR){
-                            convertToSpeech.setLanguage(Locale.ENGLISH);
-                            convertToSpeech.speak(vocable.getVoc(), TextToSpeech.QUEUE_FLUSH, null, null);
+                            if(status == TextToSpeech.SUCCESS)
+                            {
+                                ArrayList<ArrayList<String>> x = vocable.getProcessedVocable();
+
+                                convertToSpeech.setLanguage(Locale.UK);
+                                Log.d("VOcabularyEntry", x.toString());
+                                for (ArrayList<String> ar : x){
+                                    Log.d("VOcabularyEntry", ar.toString());
+                                    for (String s : ar){
+                                        Log.d("VOcabularyEntry", s);
+                                        convertToSpeech.speak(s, TextToSpeech.QUEUE_ADD, null, null);
+                                        convertToSpeech.playSilentUtterance(1, TextToSpeech.QUEUE_ADD, null);
+                                    }
+                                }
+                            }
+                            else {
+                                Toast.makeText(getApplicationContext(), "not init" , Toast.LENGTH_LONG).show();
+                            }
+
                         }
                     }
                 });
@@ -113,6 +145,27 @@ public class VocabularyEntry extends AppCompatActivity {
                 NavUtils.navigateUpFromSameTask(VocabularyEntry.this);
             }
         });
+    }
+
+    private String posToString(String pos){
+        String posToString = "";
+        switch (pos){
+            case "a": posToString = "Adjektive";
+            case "av": posToString = "Adverb";
+            case "d": posToString = "Artikel";
+            case "i": posToString = "Interjektion";
+            case "irr": posToString = "Irregulär";
+            case "k": posToString = "Konjuktion";
+            case "p": posToString = "Pronomen";
+            case "ph": posToString = "Phrase";
+            case "pr": posToString = "Präposition";
+            case "s": posToString = "Nomen";
+            case "v": posToString = "Verb";
+            case "a/av": posToString = "Adjektive/Adverb";
+            case "av/pr": posToString = "Adverb/Präposition";
+            case "s/a": posToString = "Nomen/Adjektive";
+        }
+        return posToString;
     }
 
     @Override

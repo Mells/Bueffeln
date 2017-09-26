@@ -2,6 +2,7 @@ package com.example.kathrin1.vokabeltrainer_newlayout.objects;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DBHandler;
 
@@ -9,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class VocObject {
 
@@ -123,8 +123,8 @@ public class VocObject {
         pos = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_POS));
 
         sentences_book = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_BOOKID));
-        sentences_gdex = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_GDEX));
-        sentences_learner = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEARNER));
+        sentences_gdex = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_GDEXID));
+        sentences_learner = cursor.getString(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEARNERID));
 
         tested = cursor.getInt(cursor.getColumnIndexOrThrow(DBHandler.WORD_LEVEL));
 
@@ -207,13 +207,13 @@ public class VocObject {
         return pos;
     }
 
-    public String getOldSentences() { return sentences_book; }
+    public String getIndexesBookSentences() { return sentences_book; }
 
-    public String getGDEXSentences() {
+    public String getIndexesGDEXSentences() {
         return sentences_gdex;
     }
 
-    public String getLearnerSentences() { return sentences_learner; }
+    public String getIndexesLearnerSentences() { return sentences_learner; }
 
     public int getTested() { return tested; }
 
@@ -326,8 +326,8 @@ public class VocObject {
         vals.put(DBHandler.WORD_CHAPTER, chapter);
         vals.put(DBHandler.WORD_POS, pos);
         vals.put(DBHandler.WORD_BOOKID, sentences_book);
-        vals.put(DBHandler.WORD_GDEX, sentences_gdex);
-        vals.put(DBHandler.WORD_LEARNER, sentences_learner);
+        vals.put(DBHandler.WORD_GDEXID, sentences_gdex);
+        vals.put(DBHandler.WORD_LEARNERID, sentences_learner);
         vals.put(DBHandler.WORD_LEVEL, tested);
         vals.put(DBHandler.WORD_LABEL, label);
         vals.put(DBHandler.WORD_PARSEID, parseId);
@@ -372,7 +372,7 @@ public class VocObject {
                '}';
     }
 
-    private static ArrayList toProcessedArrayList(String theString){
+    private static ArrayList<ArrayList<String>> toProcessedArrayList(String theString){
         ArrayList<ArrayList<String>> returnArray = new ArrayList<>();
         if (StringUtils.countMatches(theString, "[") > 1){
             theString = theString.substring(1, theString.length()-1);
@@ -387,10 +387,14 @@ public class VocObject {
             }
         }
         else {
-            theString = theString.replace("[", "").replace("]", "")
-                    .replace("'", "").replace("'", "");
+            String[] stringArray = theString.replace("[", "").replace("]", "")
+                    .split(", ");
             ArrayList<String> b = new ArrayList<>();
-            b.add(theString);
+            for (String s : stringArray) {
+                String h = s.substring(0,1);
+                s = s.replace(h, "");
+                b.add(s);
+            }
             returnArray.add(b);
         }
         return returnArray;
@@ -419,13 +423,19 @@ public class VocObject {
             }
         }
         else {
-            String[] arrayString = theString.replace("[", "").replace("]", "")
-                    .replace("'", "").replace("'", "").split("\\), ");
+            theString = theString.replaceAll("\\[", "").replaceAll("]", "");
+            String[] splitByTuple = theString.split("\\),");
+
             ArrayList<Pair> pairs = new ArrayList<>();
-            for (String s : arrayString){
-                s = s.replaceAll("\\(", "").replaceAll("\\)", "");
-                String[] t = s.split(", ", 2);
-                pairs.add(Pair.of(t[0], t[1]));
+            for (String tup : splitByTuple) {
+                tup = tup.replaceAll("\\(", "").replaceAll("\\)", "").trim();
+                String[] inTuple = tup.split(", ", 2);
+                ArrayList<String> helperTupleArray = new ArrayList<>();
+                for (String t : inTuple) {
+                    t = t.replaceAll(t.substring(0, 1), "");
+                    helperTupleArray.add(t);
+                }
+                pairs.add(Pair.of(helperTupleArray.get(0), helperTupleArray.get(1)));
             }
             returnArray.add(pairs);
         }

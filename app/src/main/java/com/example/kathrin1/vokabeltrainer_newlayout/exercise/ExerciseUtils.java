@@ -61,22 +61,31 @@ public abstract class ExerciseUtils
     {
         Map<String, List<String>> lemmaToken = DBUtils.stringOfJSONTagsToMap(sentence.getLemmaToken());
 
-        List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemmaVocable().toString());
+        //List<String> lemmaVocList = DBUtils.splitJSONListString(word.getLemmaVocable().toString());
+        List<String> lemmaVocList = new ArrayList<>();
+        for (Object o : word.getLemmaVocable()){
+            if (o instanceof List<?>){
+                for (Object i : (List) o){
+                    lemmaVocList.add((String) i);
+                }
+            }
+            else {
+                lemmaVocList.add((String) o);
+            }
+        }
         String sent = sentence.getSentence();
 
-        // TODO:  Probably move this bit somewhere more sensible
         // Cleans up spaces before punctuation
         sent = sent.replaceAll("\\s([.,!?])", "$1");
 
-        //Log.d("ExerciseUtils: lemaToke", String.valueOf(lemmaToken));
-        //Log.d("ExerciseUtils: lemVocLi", String.valueOf(lemmaVocList));
+        Log.d("ExerciseUtils: lemaToke", String.valueOf(lemmaToken));
+        Log.d("ExerciseUtils: lemVocLi", String.valueOf(lemmaVocList));
 
         for (String lemma : lemmaVocList)
         {
             if (lemmaToken.containsKey(lemma))
             {
                 List<String> bla = lemmaToken.get(lemma);
-                //Log.d("ExerciseUtils: Lemma", String.valueOf(bla));
                 for (String s : bla)
                 {
                     sent = sent.replaceAll("\\b" + s + "\\b", replacementString.replace("%s", s));
@@ -297,10 +306,10 @@ public abstract class ExerciseUtils
         BookObject sentence = null;
         switch(pref_first_sentence) {
             case "":
-                sentence = dbManager.getExampleOldSentence(voc);
+                sentence = dbManager.getExampleBookSentence(voc);
                 break;
             case "book":
-                sentence = dbManager.getExampleOldSentence(voc);
+                sentence = dbManager.getExampleBookSentence(voc);
                 break;
             case "learner":
                 sentence = dbManager.getExampleLearnerSentence(voc);
@@ -318,7 +327,7 @@ public abstract class ExerciseUtils
                     sentence = dbManager.getExampleLearnerSentence(voc);
                     break;
                 case "book":
-                    sentence = dbManager.getExampleOldSentence(voc);
+                    sentence = dbManager.getExampleBookSentence(voc);
                     break;
                 case "learner":
                     sentence = dbManager.getExampleLearnerSentence(voc);
@@ -337,7 +346,7 @@ public abstract class ExerciseUtils
                     sentence = dbManager.getExampleGDEXSentence(voc);
                     break;
                 case "book":
-                    sentence = dbManager.getExampleOldSentence(voc);
+                    sentence = dbManager.getExampleBookSentence(voc);
                     break;
                 case "learner":
                     sentence = dbManager.getExampleLearnerSentence(voc);
@@ -351,7 +360,8 @@ public abstract class ExerciseUtils
     }
 
     /**
-     * Determines the current example sentence in accord of the preferences of the user
+     * Determines the current example sentence in accord of the preferences of the user for the
+     * Kontext exercise
      *
      * @param c Context within which to perform the operation
      * @param dbManager The database manager
@@ -359,307 +369,92 @@ public abstract class ExerciseUtils
      * @param part String which denotes which number of sentence is needed
      * @return The sentence
      */
-    public static BookObject getKontextPreferenceSentence(Context c, DatabaseManager dbManager,
-                                                          VocObject voc, String part,
-                                                          ArrayList cus){
-
-        String firstPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
-                .getString("kontext_"+part+"_first", "");
-
-        Log.d("Pref", firstPrefForSentence);
+    public static BookObject getKontextSentence(Context c, DatabaseManager dbManager,
+                                                VocObject voc, String part,
+                                                ArrayList cus) {
 
         BookObject sentenceObj = null;
-        String sentence = "";
-
-        switch(firstPrefForSentence) {
-            case "":
-                Log.d("ExersiseUtils", "No first preference for sentence saved");
-                sentenceObj = dbManager.getExampleOldSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){ 
-                    List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-                    for (int i = 0; i <= bookList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(bookList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
-                break;
-            case "book":
-                Log.d("ExersiseUtils", "1st Taking a Book sentence");
-                sentenceObj = dbManager.getExampleOldSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){ 
-                    List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-                    for (int i = 0; i <= bookList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(bookList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
-                break;
-            case "learner":
-                Log.d("ExersiseUtils", "1st Taking a Learner sentence");
-                sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){ 
-                    List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                    for (int i = 0; i <= learnerList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(learnerList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
-                break;
-            case "gdex":
-                Log.d("ExersiseUtils", "1st Taking a Gdex sentence");
-                sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){ 
-                    List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
-                    for (int i = 0; i <= gdexList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(gdexList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
-        }
-
-        // get second preference sentence if sentence is "" (no sentence) or sentence in cus (same sentence)
-        // old: if (sentenceObj.getSentence().equals("") || sentenceObj.getSentence().equals(sentence1) || sentenceObj.getSentence().equals(sentence2)){
-        if (sentenceObj.getSentence().equals("") || cus.contains(sentence)){
-            String secondPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
-                    .getString("kontext_"+part+"_second", "");
-            switch(secondPrefForSentence) {
-                case "":
-                    Log.d("ExersiseUtils", "No second preference for sentence saved");
-                    sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                        for (int i = 0; i <= learnerList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(learnerList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "book":
-                    Log.d("ExersiseUtils", "2nd Taking a Book sentence");
-                    sentenceObj = dbManager.getExampleOldSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-                        for (int i = 0; i <= bookList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(bookList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "learner":
-                    Log.d("ExersiseUtils", "2nd Taking a Learner sentence");
-                    sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                        for (int i = 0; i <= learnerList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(learnerList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "gdex":
-                    Log.d("ExersiseUtils", "2nd Taking a GDEX sentence");
-                    sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
-                        for (int i = 0; i <= gdexList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(gdexList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-            }
-        }
-        // get second preference sentence if sentence is "" (no sentence) or sentence in cus (same sentence)
-        // old: if (sentenceObj.getSentence().equals("") || sentenceObj.getSentence().equals(sentence1) || sentenceObj.getSentence().equals(sentence2)){
-        if (sentenceObj.getSentence().equals("") || cus.contains(sentence)){
-            String thirdPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
-                    .getString("kontext_"+part+"_third", "");
-
-            switch(thirdPrefForSentence) {
-                case "":
-                    Log.d("ExersiseUtils", "No second preference for sentence saved");
-                    sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){
-                        List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                        for (int i = 0; i <= learnerList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(learnerList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "book":
-                    sentenceObj = dbManager.getExampleOldSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-                        for (int i = 0; i <= bookList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(bookList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "learner":
-                    sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                        for (int i = 0; i <= learnerList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(learnerList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case "gdex":
-                    sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                    sentence = sentenceObj.getSentence();
-                    if (cus.contains(sentence)){ 
-                        List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
-                        for (int i = 0; i <= gdexList.size()-1; i++) {
-                            sentenceObj = dbManager.getSentence(gdexList.get(i));
-                            if (cus.contains(sentence)) {
-                                // if is the same sentence as sent as the other sentence continue
-                                continue;
-                            } else {
-                                // unique sentence
-                                break;
-                            }
-                        }
-                    }
-
-            }
-
-            if (cus.contains(sentence)){
-                Log.d("EU", "empty Sentence");
-                sentenceObj = sentenceObj.emptySentence();
-            }
-        }
-        return sentenceObj;
-    }
-
-    public static BookObject getSentence (Context c, DatabaseManager dbManager,
-                                          VocObject voc, String part,
-                                          ArrayList cus) {
-
-        BookObject sentenceObj = null;
-        String sentence = "";
+        //String sentence = "";
 
         String firstPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
                 .getString("kontext_"+part+"_first", "");
         Log.d("Pref", firstPrefForSentence);
-        sentenceObj = sentence(firstPrefForSentence, sentenceObj, sentence, dbManager, cus, voc);
+        sentenceObj = sentence(firstPrefForSentence, "_first", dbManager, cus, voc);
 
 
         if (sentenceObj.getSentence().equals("") || cus.contains(sentenceObj.getSentence())) {
             String secondPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
                     .getString("kontext_" + part + "_second", "");
             Log.d("Pref", secondPrefForSentence);
-            sentenceObj = sentence(secondPrefForSentence, sentenceObj, sentence, dbManager, cus, voc);
+            sentenceObj = sentence(secondPrefForSentence, "_second", dbManager, cus, voc);
         }
 
         if (sentenceObj.getSentence().equals("") || cus.contains(sentenceObj.getSentence())) {
             String thirdPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
                     .getString("kontext_" + part + "_third", "");
             Log.d("Pref", thirdPrefForSentence);
-            sentenceObj = sentence(thirdPrefForSentence, sentenceObj, sentence, dbManager, cus, voc);
+            sentenceObj = sentence(thirdPrefForSentence, "_third", dbManager, cus, voc);
         }
 
-        if (cus.contains(sentence)){
+        if (cus.contains(sentenceObj.getSentence())){
             Log.d("EU", "empty Sentence");
             sentenceObj = sentenceObj.emptySentence();
+        }
+        return sentenceObj;
+    }
+
+    /**
+     * Determines the current example sentence in accord of the preferences of the user for the
+     * Worttest exercise
+     *
+     * @param c Context within which to perform the operation
+     * @param dbManager The database manager
+     * @param voc The vocable for which the sentence is queried
+     * @return The sentence
+     */
+    public static BookObject getWorttestSentence(Context c, DatabaseManager dbManager,
+                                                VocObject voc) {
+
+        BookObject sentenceObj = null;
+
+        ArrayList<String> emptyList = new ArrayList<>();
+        String firstPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
+                .getString("word_first", "");
+        Log.d("Pref", firstPrefForSentence);
+        sentenceObj = sentence(firstPrefForSentence, "_first", dbManager, emptyList, voc);
+
+
+        if (sentenceObj.getSentence().equals("")) {
+            String secondPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("word_second", "");
+            Log.d("Pref", secondPrefForSentence);
+            sentenceObj = sentence(secondPrefForSentence, "_second", dbManager, emptyList, voc);
+        }
+
+        if (sentenceObj.getSentence().equals("")) {
+            String thirdPrefForSentence = PreferenceManager.getDefaultSharedPreferences(c)
+                    .getString("word_third", "");
+            Log.d("Pref", thirdPrefForSentence);
+            sentenceObj = sentence(thirdPrefForSentence, "_third", dbManager, emptyList, voc);
         }
 
         return sentenceObj;
     }
 
-    private static BookObject sentence(String preference, BookObject sentenceObj, String sentence, DatabaseManager dbManager, ArrayList cus, VocObject voc) {
+    private static BookObject sentence(String preference, String preferenceEnding, DatabaseManager dbManager, ArrayList cus, VocObject voc) {
+        List<String> indexesOfSentences;
+        BookObject sentenceObj = null;
         switch(preference) {
             case "":
                 Log.d("ExersiseUtils", "No first preference for sentence saved");
-                if (preference.endsWith("first")){
-                    sentenceObj = dbManager.getExampleOldSentence(voc);
-                    sentence = sentenceObj.getSentence();
+                if (preferenceEnding.endsWith("first")){
+                    sentenceObj = getPreferenceSentenceForBook(voc, cus, dbManager);
                 }
-                else if (preference.endsWith("second")){
-                    sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                    sentence = sentenceObj.getSentence();
+                else if (preferenceEnding.endsWith("second")){
+                    sentenceObj = getPreferenceSentenceForLearner(voc, cus, dbManager);
                 }
-                else if (preference.endsWith("third")){
-                    sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                    sentence = sentenceObj.getSentence();
+                else if (preferenceEnding.endsWith("third")){
+                    sentenceObj = getPreferenceSentenceForGDEX(voc, cus, dbManager);
                 }
                 else {
                     try {
@@ -668,85 +463,78 @@ public abstract class ExerciseUtils
                         e.printStackTrace();
                     }
                 }
-                if (cus.contains(sentence)){
-                    List<String> bookList;
-                    if (preference.endsWith("first")){
-                        bookList = DBUtils.splitListString(voc.getOldSentences());
-                    }
-                    else if (preference.endsWith("second")){
-                        bookList = DBUtils.splitListString(voc.getLearnerSentences());
-                    }
-                    else {
-                        bookList = DBUtils.splitListString(voc.getGDEXSentences());
-                    }
-                    for (int i = 0; i <= bookList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(bookList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
                 break;
             case "book":
                 Log.d("ExersiseUtils", "1st Taking a Book sentence");
-                sentenceObj = dbManager.getExampleOldSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){
-                    List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-                    for (int i = 0; i <= bookList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(bookList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
+                sentenceObj = getPreferenceSentenceForBook(voc, cus, dbManager);
                 break;
             case "learner":
                 Log.d("ExersiseUtils", "1st Taking a Learner sentence");
-                sentenceObj = dbManager.getExampleLearnerSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){
-                    List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
-                    for (int i = 0; i <= learnerList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(learnerList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
+                sentenceObj = getPreferenceSentenceForLearner(voc, cus, dbManager);
                 break;
             case "gdex":
                 Log.d("ExersiseUtils", "1st Taking a Gdex sentence");
-                sentenceObj = dbManager.getExampleGDEXSentence(voc);
-                sentence = sentenceObj.getSentence();
-                if (cus.contains(sentence)){
-                    List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
-                    for (int i = 0; i <= gdexList.size()-1; i++) {
-                        sentenceObj = dbManager.getSentence(gdexList.get(i));
-                        if (cus.contains(sentence)) {
-                            // if is the same sentence as sent as the other sentence continue
-                            continue;
-                        } else {
-                            // unique sentence
-                            break;
-                        }
-                    }
-                }
+                sentenceObj = getPreferenceSentenceForGDEX(voc, cus, dbManager);
+        }
+
+        if (sentenceObj == null){
+            sentenceObj = sentenceObj.emptySentence();
+        }
+
+        return sentenceObj;
+
+
+    }
+
+    private static BookObject getPreferenceSentenceForBook(VocObject voc, ArrayList<String> cus, DatabaseManager dbManager){
+        List<String> indexesOfSentences = DBUtils.splitListString(voc.getIndexesBookSentences());
+        BookObject sentenceObj = null;
+        for (int i = 0; i <= indexesOfSentences.size()-1; i++) {
+            sentenceObj = dbManager.getBookSentence(indexesOfSentences.get(i));
+            if (cus.contains(sentenceObj.getSentence())) {
+                // if is the same sentence as sent as the other sentence continue
+                sentenceObj = null;
+                continue;
+            } else {
+                // unique sentence
+                break;
+            }
         }
         return sentenceObj;
     }
 
+    private static BookObject getPreferenceSentenceForLearner(VocObject voc, ArrayList<String> cus, DatabaseManager dbManager){
+        List<String> indexesOfSentences = DBUtils.splitListString(voc.getIndexesLearnerSentences());
+        BookObject sentenceObj = null;
+        for (int i = 0; i <= indexesOfSentences.size()-1; i++) {
+            sentenceObj = dbManager.getCorpusSentence(indexesOfSentences.get(i));
+            if (cus.contains(sentenceObj.getSentence())) {
+                // if is the same sentence as sent as the other sentence continue
+                sentenceObj = null;
+                continue;
+            } else {
+                // unique sentence
+                break;
+            }
+        }
+        return sentenceObj;
+    }
+
+    private static BookObject getPreferenceSentenceForGDEX(VocObject voc, ArrayList<String> cus, DatabaseManager dbManager){
+        List<String> indexesOfSentences = DBUtils.splitListString(voc.getIndexesGDEXSentences());
+        BookObject sentenceObj = null;
+        for (int i = 0; i <= indexesOfSentences.size()-1; i++) {
+            sentenceObj = dbManager.getCorpusSentence(indexesOfSentences.get(i));
+            if (cus.contains(sentenceObj.getSentence())) {
+                // if is the same sentence as sent as the other sentence continue
+                sentenceObj = null;
+                continue;
+            } else {
+                // unique sentence
+                break;
+            }
+        }
+        return sentenceObj;
+    }
 }
 

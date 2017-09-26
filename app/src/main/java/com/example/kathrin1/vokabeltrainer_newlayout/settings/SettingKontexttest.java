@@ -15,7 +15,6 @@ import android.widget.RadioButton;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
 
 /**
  * Created by kathrin1 on 28.05.17.

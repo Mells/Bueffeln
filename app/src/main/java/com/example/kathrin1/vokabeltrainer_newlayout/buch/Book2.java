@@ -11,13 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 
-import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.TrainAndTest;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import net.qiujuer.genius.ui.widget.SeekBar;
@@ -25,7 +19,6 @@ import net.qiujuer.genius.ui.widget.SeekBar;
 
 public class Book2 extends Fragment {
 
-    private SlidingLayer mSlidingLayer;
     private View view;
     private SeekBar mBar;
     private AppCompatActivity a;
@@ -209,13 +202,13 @@ public class Book2 extends Fragment {
 
         now = stringToButton(pref_chapter);
         now.setBackgroundResource(R.drawable.ic_button_rot);
-        if(previous != null && previous != now) {
+        if (previous != null && previous != now) {
             previous.setBackgroundResource(R.drawable.ic_button_exercise);
             previous = now;
-        }
-        else {
+        } else {
             previous = now;
         }
+
 
 
         cb_A.setOnClickListener(new View.OnClickListener() {
@@ -281,7 +274,7 @@ public class Book2 extends Fragment {
             case "5": return btn_chap5;
             case "6": return btn_chap6;
         }
-        return null;
+        return btn_chap1;
 
     }
 

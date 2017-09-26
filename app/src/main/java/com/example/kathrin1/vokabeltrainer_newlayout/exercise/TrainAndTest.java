@@ -44,7 +44,6 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.SimInterxObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.views.LoadingBarView;
 import com.opencsv.CSVWriter;
-import com.wunderlist.slidinglayer.SlidingLayer;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -316,7 +315,7 @@ public class TrainAndTest extends AppCompatActivity
             Log.v(LOG_TAG, "Word to display = " + word.toString());
 
             // Find a suitable example sentence for the word
-            currSentence = dbManager.getExampleOldSentence(word);
+            currSentence = dbManager.getExampleBookSentence(word);
             if (currSentence.isEmpty())
                 currSentence = dbManager.getExampleLearnerSentence(word);
             if (currSentence.isEmpty())

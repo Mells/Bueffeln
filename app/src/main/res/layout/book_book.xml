@@ -113,6 +113,7 @@
 
             <android.support.v7.widget.AppCompatCheckBox
                 android:text="A"
+                android:textColor="#BFC0C0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_A"
@@ -122,6 +123,7 @@
 
             <android.support.v7.widget.AppCompatCheckBox
                 android:text="B"
+                android:textColor="#BFC0C0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_B"
@@ -131,6 +133,7 @@
 
             <android.support.v7.widget.AppCompatCheckBox 
                 android:text="C"
+                android:textColor="#BFC0C0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/cb_C"
@@ -142,7 +145,8 @@
             android:text="Level"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="50dp" />
+            android:layout_marginLeft="50dp"
+            android:textColor="#BFC0C0"/>
 
         <net.qiujuer.genius.ui.widget.SeekBar
             android:id="@+id/seek_level"
@@ -151,7 +155,7 @@
             android:layout_marginRight="50dp"
             android:layout_marginLeft="50dp"
 
-            app:gMax="6"
+            app:gMax="4"
             app:gMin="0"
             app:gValue="0"
 

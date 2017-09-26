@@ -195,7 +195,7 @@ public class DatabaseManager
      */
     public BookObject getExampleLearnerSentence(VocObject word)
     {
-        String listString = word.getLearnerSentences();
+        String listString = word.getIndexesLearnerSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
@@ -212,7 +212,7 @@ public class DatabaseManager
      */
     public BookObject getExampleGDEXSentence(VocObject word)
     {
-        String listString = word.getGDEXSentences();
+        String listString = word.getIndexesGDEXSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
@@ -227,9 +227,9 @@ public class DatabaseManager
      * @return Example sentence for the given word, or an empty sentence if no example sentence
      * is found
      */
-    public BookObject getExampleOldSentence(VocObject word)
+    public BookObject getExampleBookSentence(VocObject word)
     {
-        String listString = word.getOldSentences();
+        String listString = word.getIndexesBookSentences();
 
         List<String> sentenceList = DBUtils.splitListString(listString);
 
@@ -250,7 +250,7 @@ public class DatabaseManager
 
         try
         {
-            return getSentence(Integer.parseInt(sentenceList.get(index)), tableName);
+            return getCorpusSentence(Integer.parseInt(sentenceList.get(index)), tableName);
         } catch (NumberFormatException e)
         {
             Log.e(LOG_TAG,
@@ -268,11 +268,11 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public BookObject getOldSentence(String id)
+    public BookObject getBookSentence(String id)
     {
         try
         {
-            return getOldSentence(Integer.parseInt(id));
+            return getBookSentence(Integer.parseInt(id));
         } catch (NumberFormatException e)
         {
             Log.e(LOG_TAG,
@@ -289,9 +289,9 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public BookObject getOldSentence(int id)
+    public BookObject getBookSentence(int id)
     {
-        return getSentence(id, DBHandler.BOOK_TABLENAME);
+        return getCorpusSentence(id, DBHandler.BOOK_TABLENAME);
     }
 
 
@@ -303,11 +303,11 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public BookObject getSentence(String id)
+    public BookObject getCorpusSentence(String id)
     {
         try
         {
-            return getSentence(Integer.parseInt(id));
+            return getCorpusSentence(Integer.parseInt(id));
         } catch (NumberFormatException e)
         {
             Log.e(LOG_TAG,
@@ -325,9 +325,9 @@ public class DatabaseManager
      * @param id ID of the sentence to retrieve.
      * @return The retrieved sentence.
      */
-    public BookObject getSentence(int id)
+    public BookObject getCorpusSentence(int id)
     {
-        return getSentence(id, DBHandler.BOOK_TABLENAME);
+        return getCorpusSentence(id, DBHandler.CORPUS_TABLENAME);
     }
 
     /**
@@ -338,7 +338,7 @@ public class DatabaseManager
      * @param tableName Name of the table to retrieve sentence data from.
      * @return The retrieved sentence.
      */
-    private BookObject getSentence(int id, String tableName)
+    private BookObject getCorpusSentence(int id, String tableName)
     {
         Cursor cursor;
         if (tableName.equals("sentences_book")) {

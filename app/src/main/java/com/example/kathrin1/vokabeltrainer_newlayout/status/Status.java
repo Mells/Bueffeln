@@ -13,7 +13,6 @@ import android.widget.ExpandableListView;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 
 import java.util.ArrayList;

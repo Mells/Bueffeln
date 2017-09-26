@@ -21,24 +21,22 @@ public class MorphInfoObject {
     private String[] posList = {"A", "Adv", "Comp", "Conj", "Det", "G", "I", "N", "NVC", "Part",
             "Punct", "Pron", "Prep", "PropN", "V", "VVC"};
     private String[] caseList = {"acc", "nom", "GEN", "nomacc"};
-    private String[] timeList = {"PAST", "PRES", "PPART", "PROG"};
+    private String[] timeList = {"PAST", "PRES", "PPART", "PROG", "INF"};
     private String[] genderList = {"masc", "fem", "neut", "reffem", "refmasc"};
     private String[] numberList = {"1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "pl", "SG", "2nd",
             "3rd", "ref1sg", "ref2sg", "ref3sg", "ref1pl", "ref2pl", "ref3pl"};
 
     private Boolean isWeakVerb = false;
     private Boolean isStrongVerb = false;
-    private Boolean isInfinitive = false;
-    private Boolean isContractions = false;
+    private Boolean isContraction = false;
     private Boolean isNegation = false;
     private Boolean isPassive = false;
-    private Boolean isIndaux = false;
+    private Boolean isIndicativeAuxiliary = false;
     private Boolean isComparative = false;
     private Boolean isSuperlative = false;
     private Boolean isReflexive = false;
     private Boolean isTO = false;
     private Boolean isWh = false;
-    private Boolean isCONTR = false;
 
     /**
      *
@@ -138,7 +136,6 @@ public class MorphInfoObject {
     private void setVerbVerbCombinationTag(String[] mReading){
         setPOSTag(mReading);
         setTimeTag(mReading);
-        setInfinitiveTag(mReading);
     }
 
     // PropN {'3sg', '3pl', 'GEN'}
@@ -182,13 +179,12 @@ public class MorphInfoObject {
         setNumberTag(mReading);
         setINDAUXTag(mReading);
         setNegationTag(mReading);
-        setInfinitiveTag(mReading);
         setTimeTag(mReading);
         setTOTag(mReading);
         setStrongVerbTag(mReading);
         setWeakVerbTag(mReading);
         setPassiveTag(mReading);
-        setCONTRTag(mReading);
+        setContractionTag(mReading);
     }
 
     // Pron {'ref2sg', '3sg', 'masc', 'ref3pl', '2pl', '3rd', '1sg', 'fem', 'reffem', 'refmasc', 'neut', 'wh', '3pl', 'nomacc', 'ref1sg', '1pl', 'ref3sg', 'GEN', 'ref1pl', 'ref2nd', 'NEG', 'nom', 'acc', 'refl', '2nd', '2sg'}
@@ -213,12 +209,6 @@ public class MorphInfoObject {
         }
     }
 
-    private void setInfinitiveTag(String[] mReading){
-        if (Arrays.asList(mReading).contains("INF")){
-            isInfinitive = true;
-        }
-    }
-
     private void setStrongVerbTag(String[] mReading){
         if (Arrays.asList(mReading).contains("STR")){
             isStrongVerb = true;
@@ -233,7 +223,7 @@ public class MorphInfoObject {
 
     private void setINDAUXTag(String[] mReading){
         if (Arrays.asList(mReading).contains("INDAUX")){
-            isIndaux = true;
+            isIndicativeAuxiliary = true;
         }
     }
 
@@ -255,9 +245,9 @@ public class MorphInfoObject {
         }
     }
 
-    private void setCONTRTag(String[] mReading){
+    private void setContractionTag(String[] mReading){
         if (Arrays.asList(mReading).contains("CONTR")){
-            isCONTR = true;
+            isContraction = true;
         }
     }
 
@@ -307,17 +297,15 @@ public class MorphInfoObject {
     public String getGender() { return gender; }
     public Boolean getIsWeakVerb() { return isWeakVerb; }
     public Boolean getIsStrongVerb() { return isStrongVerb; }
-    public Boolean getIsInfinitive() { return isInfinitive; }
-    public Boolean getIsContractions() { return isContractions; }
+    public Boolean getIsContractions() { return isContraction; }
     public Boolean getIsNegation() { return isNegation; }
     public Boolean getIsPassive() { return isPassive; }
-    public Boolean getIsIndaux() { return isIndaux; }
+    public Boolean getIsIndicativeAuxiliary() { return isIndicativeAuxiliary; }
     public Boolean getIsComparative() { return isComparative; };
     public Boolean getIsSuperlative() { return isSuperlative; };
     public Boolean getIsReflexive() { return isReflexive; };
     public Boolean getIsTO() { return isTO; };
     public Boolean getIsWh() { return isWh; };
-    public Boolean getIsCONTR() { return isCONTR; };
 
     @Override
     public String toString()

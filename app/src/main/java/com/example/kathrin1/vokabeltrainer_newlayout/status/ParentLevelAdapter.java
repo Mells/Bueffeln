@@ -92,24 +92,29 @@ public class ParentLevelAdapter extends BaseExpandableListAdapter {
                     int numberOfWordsInLevel;
                     int numberOfWordsInChapter = 0;
                     int learnedWordsInNumber = 0;
-                    float percentage = 0;
+                    float percentage;
                     if (bookNumber == 0){
-                        for(int l = 0; l <= 7; l++) {
+                        for(int l = 0; l <= 4; l++) {
                             numberOfWordsInLevel = (dbManager.getWordsByBookChapterLevel(book[bookNumber], chapter1[c], l)).size();
+                            //Log.d("Status: Num:", String.valueOf(numberOfWordsInLevel));
                             levelList.add("Level "+l+" Vokabeln: "+numberOfWordsInLevel);
                             learnedWordsInNumber = learnedWordsInNumber + (numberOfWordsInLevel * l);
-                            numberOfWordsInChapter = numberOfWordsInLevel + numberOfWordsInChapter;
+                            numberOfWordsInChapter = numberOfWordsInChapter + numberOfWordsInLevel;
                         }
                     }
                     else {
-                        for(int l = 0; l <= 7; l++) {
+                        for(int l = 0; l <= 4; l++) {
                             numberOfWordsInLevel = (dbManager.getWordsByBookChapterLevel(book[bookNumber], chapter23[c], l)).size();
                             levelList.add("Level "+l+" Vokabeln: "+numberOfWordsInLevel);
                             learnedWordsInNumber = learnedWordsInNumber + (numberOfWordsInLevel * l);
-                            numberOfWordsInChapter = numberOfWordsInLevel + numberOfWordsInChapter;
+                            numberOfWordsInChapter = numberOfWordsInChapter + numberOfWordsInLevel;
                         }
                     }
-                    percentage = learnedWordsInNumber / (numberOfWordsInChapter+7) * 100;
+                    //percentage = learnedWordsInNumber / (numberOfWordsInChapter + 5) * 100;
+                    Log.d("Status: lWiN", String.valueOf(learnedWordsInNumber));
+                    Log.d("Status: nOWiC", String.valueOf(numberOfWordsInChapter * 4));
+                    percentage = (float)learnedWordsInNumber / (numberOfWordsInChapter * 4) * 100; //* 100;
+                    Log.d("Status: %", String.valueOf(percentage));
                     String color;
                     // no correct word
                     if (percentage == 0){

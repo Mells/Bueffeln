@@ -2,26 +2,24 @@ package com.example.kathrin1.vokabeltrainer_newlayout;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.design.widget.TabLayout;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RelativeLayout;
 
 import com.example.kathrin1.vokabeltrainer_newlayout.achievement.AchievementMain;
-import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
+import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
 import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.VocabularyDictionary;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseUtils;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.ExerciseSelection;
+import com.example.kathrin1.vokabeltrainer_newlayout.exercise.WordTest;
+import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.status.Status;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +33,37 @@ public class MainActivity extends AppCompatActivity {
         Button btn_aufgabe = (Button) findViewById(R.id.btn_aufgabe);
         Button btn_status = (Button) findViewById(R.id.btn_status);
         Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
+
+
+        //################### Test for status ###################
+        DatabaseManager dbManager = null;
+        dbManager = DatabaseManager.build(MainActivity.this);
+        List<VocObject> allVocabulary = dbManager.getWordsByBookChapterUnit("I", "1", "A B C");
+
+        for (VocObject voc : allVocabulary){
+            dbManager.updateTested(1, voc.getId());
+        }
+        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "2", "A B C");
+
+        for (VocObject voc : allVocabulary){
+            dbManager.updateTested(2, voc.getId());
+        }
+        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "3", "A B C");
+
+        for (VocObject voc : allVocabulary){
+            dbManager.updateTested(3, voc.getId());
+        }
+        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "4", "A B C");
+
+        for (VocObject voc : allVocabulary){
+            dbManager.updateTested(4, voc.getId());
+        }
+        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "5", "A B C");
+
+        for (VocObject voc : allVocabulary){
+            dbManager.updateTested(0, voc.getId());
+        }
+
 
         btn_dictionary.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
         btn_aufgabe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, AufgabeAuswahl.class);
+                Intent intent = new Intent(MainActivity.this, ExerciseSelection.class);
                 startActivity(intent);
             }
         });

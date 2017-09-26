@@ -70,11 +70,11 @@
                         android:layout_alignLeft="@+id/txt_lemma"
                         android:layout_alignStart="@+id/txt_lemma"
                         android:layout_marginTop="24dp"
-                        android:text="Wortart &amp; Status:"
+                        android:text="Wortart &amp; Status: "
                         android:textColor="@color/colorPrimaryDark" />
 
                     <TextView
-                        android:id="@+id/txt_status_answer"
+                        android:id="@+id/txt_status_wordclass_answer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="24dp" />

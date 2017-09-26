@@ -1,18 +1,13 @@
 package com.example.kathrin1.vokabeltrainer_newlayout.exercise;
 
 import android.annotation.SuppressLint;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -34,14 +29,13 @@ import android.widget.Toast;
 import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.buch.PagerAdapter;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
-import com.wunderlist.slidinglayer.SlidingLayer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Created by kathrin1 on 20.12.16.
  */
 
-public class Translation extends AppCompatActivity {
+public class WordTest extends AppCompatActivity {
 
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
 
@@ -69,11 +63,13 @@ public class Translation extends AppCompatActivity {
 
     private int currentLayoutId = -1;
 
+    private Boolean onceWrong = false;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.exercise_translation);
 
-        dbManager = DatabaseManager.build(Translation.this);
+        dbManager = DatabaseManager.build(WordTest.this);
 
         Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         Button btn_next = (Button) findViewById(R.id.btn_next);
@@ -116,6 +112,11 @@ public class Translation extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 edit_solution.setEnabled(true);
+                if (onceWrong){
+                    if (voc.getTested() > 0) {
+                        dbManager.updateTested(0, voc.getId());
+                    }
+                }
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -159,16 +160,18 @@ public class Translation extends AppCompatActivity {
             public void onClick(View v) {
                 edit_solution.setEnabled(false);
                 String feedback = "";
+                dbManager.updateTested(0, voc.getId());
+
                 if (!sw_language.isChecked()) {
                     feedback = "Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>.";
-                    lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback));
+                    lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback, true));
                     scroll.postDelayed(new Runnable() { @Override public void run() {
                         scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                     //txt_feedback.setText(ExerciseUtils.fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>"));
                 }
                 else {
                     feedback = "Die korrekte Übersetzung für <b><i>" + voc.getTranslation() + "</i></b> ist <b><i>" + voc.getVoc() + "</i></b>.";
-                    lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback));
+                    lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback, true));
                     scroll.postDelayed(new Runnable() { @Override public void run() {
                         scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                     //txt_feedback.setText(ExerciseUtils.fromHtml("Die korrekte Übersetzung für <b><i>" + voc.getTranslation() + "</i></b> ist <b><i>" + voc.getVoc() + "</i></b>"));
@@ -179,7 +182,7 @@ public class Translation extends AppCompatActivity {
         btn_book_menu.setOnClickListener(new View.OnClickListener() {
              @Override
              public void onClick(View v) {
-                 Intent intent = new Intent(Translation.this, TheBook.class);
+                 Intent intent = new Intent(WordTest.this, TheBook.class);
                  startActivity(intent);
                  setBookValues();
              }
@@ -199,32 +202,77 @@ public class Translation extends AppCompatActivity {
                             InputMethodManager.HIDE_NOT_ALWAYS);
 
                     if (edit_solution.getText().toString().length() > 0) {
+
+                        lay_feedback_scroll.addView(createNewRelativeLayoutView(edit_solution.getText().toString(), false));
+
                         // German Input
                         if (!sw_language.isChecked()) {
+                            Boolean isCorrect = false;
                             if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                                isCorrect = true;
+                            }
+                            else{
+                                for (ArrayList<String> currentArraySolution : (ArrayList<ArrayList<String>>) voc.getProcessedTranslation()){
+                                    for (String currentSolution : currentArraySolution) {
+                                        if (currentSolution.equals(edit_solution.getText().toString())) {
+                                            isCorrect = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (isCorrect) {
                                 feedback_answer = "Gratulation, das ist korrekt.";
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
-                                scroll.postDelayed(new Runnable() { @Override public void run() {
-                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
+                                scroll.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        scroll.fullScroll(View.FOCUS_DOWN);
+                                    }
+                                }, 250);
 
                                 allVocabulary.remove(voc);
                                 // write to database
-                                if (voc.getId() > 6) {
-                                    dbManager.updateTested(voc.getTested() + 1, voc.getId());
-                                }
 
+
+                                if (onceWrong){
+                                    if (voc.getTested() > 0) {
+                                        dbManager.updateTested(voc.getTested() - 1, voc.getId());
+                                    }
+                                }
+                                else {
+                                    if (voc.getTested() > 4) {
+                                        dbManager.updateTested(voc.getTested() + 1, voc.getId());
+                                    }
+                                }
+                                onceWrong = false;
                             } else {
                                 // TODO feedback
+                                onceWrong = true;
                                 feedback_answer = "Es tut mir leid, aber <i><b>" +
                                         edit_solution.getText().toString() + "</b></i> ist nicht korrekt.";
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                                 scroll.postDelayed(new Runnable() { @Override public void run() {
                                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                             }
                         // English Input
                         } else {
+                            Boolean isCorrect = false;
                             if (edit_solution.getText().toString().equals(voc.getVoc())) {
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView("Gratulation, das ist korrekt."));
+                                isCorrect = true;
+                            }
+                            else{
+                                for (ArrayList<String> currentArraySolution : (ArrayList<ArrayList<String>>) voc.getProcessedVocable()){
+                                    for (String currentSolution : currentArraySolution) {
+                                        if (currentSolution.equals(edit_solution.getText().toString())) {
+                                            isCorrect = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (isCorrect) {
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView("Gratulation, das ist korrekt.", true));
                                 scroll.postDelayed(new Runnable() { @Override public void run() {
                                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                                 edit_solution.setEnabled(false);
@@ -233,19 +281,25 @@ public class Translation extends AppCompatActivity {
                                 //txt_feedback.setText("Gratulation, das ist korrekt.");
                                 allVocabulary.remove(voc);
                                 // write to database
-                                if (voc.getId() > 6) {
-                                    dbManager.updateTested(voc.getTested() + 1, voc.getId());
+                                if (onceWrong){
+                                    if (voc.getTested() > 0) {
+                                        dbManager.updateTested(voc.getTested() - 1, voc.getId());
+                                    }
                                 }
-
+                                else {
+                                    if (voc.getTested() > 4) {
+                                        dbManager.updateTested(voc.getTested() + 1, voc.getId());
+                                    }
+                                }
+                                onceWrong = false;
                             } else {
+                                onceWrong = true;
                                 Feedback feedback = new Feedback(edit_solution.getText().toString(),
-                                        voc, true, Translation.this);
+                                        voc, true, WordTest.this);
                                 feedback_answer = feedback.generateFeedback();
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                                 scroll.postDelayed(new Runnable() { @Override public void run() {
                                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
-                                //lay_feedback.setVisibility(View.VISIBLE);
-                                //txt_feedback.setText(answer);
                             }
                         }
                     }
@@ -261,16 +315,17 @@ public class Translation extends AppCompatActivity {
                 edit_solution.setEnabled(false);
                 if(!sw_language.isChecked()){
                     txt_voc.setText(voc.getVoc());
-                    // TODO:  get original sentence
-                    BookObject sentence = dbManager.getExampleGDEXSentence(voc);
+
+                    //BookObject sentence = dbManager.getExampleGDEXSentence(voc);
+                    BookObject sentence = ExerciseUtils.getWorttestSentence(WordTest.this, dbManager, voc);
                     txt_bsp.setText(ExerciseUtils.fromHtml(
                             ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
                 }
                 else {
                     txt_voc.setText(voc.getTranslation());
 
-                    // TODO:  get original sentence
-                    BookObject sentence = dbManager.getExampleGDEXSentence(voc);
+                    //BookObject sentence = dbManager.getExampleGDEXSentence(voc);
+                    BookObject sentence = ExerciseUtils.getWorttestSentence(WordTest.this, dbManager, voc);
                     txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
                 }
             }
@@ -279,7 +334,13 @@ public class Translation extends AppCompatActivity {
         btn_go_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                NavUtils.navigateUpFromSameTask(Translation.this);
+                edit_solution.setEnabled(true);
+                if (onceWrong){
+                    if (voc.getTested() > 0) {
+                        dbManager.updateTested(0, voc.getId());
+                    }
+                }
+                NavUtils.navigateUpFromSameTask(WordTest.this);
             }
         });
     }
@@ -298,6 +359,7 @@ public class Translation extends AppCompatActivity {
     }
 
     private void getVocabularyGerman() {
+        onceWrong = false;
         if (allVocabulary.size() == 0) {
             Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                     "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
@@ -310,12 +372,14 @@ public class Translation extends AppCompatActivity {
             Log.d("DE-Übersetzung", voc.getTranslation());
             txt_voc.setText(voc.getTranslation());
 
-            BookObject sentence = ExerciseUtils.getTranslationPreferenceSentence(Translation.this, dbManager, voc);
+            //BookObject sentence = ExerciseUtils.getTranslationPreferenceSentence(WordTest.this, dbManager, voc);
+            BookObject sentence = ExerciseUtils.getWorttestSentence(WordTest.this, dbManager, voc);
             txt_bsp.setText(ExerciseUtils.deleteWordFromSentence(sentence, voc));
         }
     }
 
     private void getVocabularyEnglish() {
+        onceWrong = false;
         if (allVocabulary.size() == 0) {
             Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
                     "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
@@ -326,20 +390,25 @@ public class Translation extends AppCompatActivity {
             voc = allVocabulary.get(index);
             txt_voc.setText(voc.getVoc());
 
-            BookObject sentence = ExerciseUtils.getTranslationPreferenceSentence(Translation.this, dbManager, voc);
+            //BookObject sentence = ExerciseUtils.getTranslationPreferenceSentence(WordTest.this, dbManager, voc);
+            BookObject sentence = ExerciseUtils.getWorttestSentence(WordTest.this, dbManager, voc);
             txt_bsp.setText(ExerciseUtils.fromHtml(
                     ExerciseUtils.replaceWordInSentence(sentence, voc, "<b><big>%s</big></b>")));
         }
     }
 
-    private TextView createNewTextView(String text) {
+    private TextView createNewTextView(String text, Boolean isFeedback) {
         //android:layout_width="wrap_content"
         //android:layout_height="wrap_content"
         final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 
         //android:layout_marginLeft="15dp"
         //android:layout_marginRight="60dp"
-        params.setMargins(pixelToDips(15), 0, pixelToDips(60), 0);
+        if (isFeedback) {
+            params.setMargins(pixelToDips(60), 0, pixelToDips(15), 0);
+        }else{
+            params.setMargins(pixelToDips(15), 0, pixelToDips(60), 0);
+        }
 
         //android:layout_centerVertical="true"
         params.addRule(RelativeLayout.CENTER_VERTICAL);
@@ -361,7 +430,7 @@ public class Translation extends AppCompatActivity {
         return textView;
     }
 
-    private RelativeLayout createNewRelativeLayoutView(String s){
+    private RelativeLayout createNewRelativeLayoutView(String s, Boolean isFeedback){
         //android:layout_width="match_parent"
         //android:layout_height="wrap_content"
         final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
@@ -379,20 +448,25 @@ public class Translation extends AppCompatActivity {
         relativeLayout.setLayoutParams(params);
 
         //android:background="@drawable/ic_sprechblase_main_rechts"
-        relativeLayout.setBackground(ContextCompat.getDrawable(Translation.this, R.drawable.ic_sprechblase_main_rechts));
+        if (isFeedback) {
+            relativeLayout.setBackground(ContextCompat.getDrawable(WordTest.this, R.drawable.ic_sprechblase_main));
+        }
+        else {
+            relativeLayout.setBackground(ContextCompat.getDrawable(WordTest.this, R.drawable.ic_sprechblase_main_rechts));
+        }
 
         int theId = generateViewId();
         Log.d("ID", String.valueOf(theId));
         relativeLayout.setId(theId);
         currentLayoutId = theId;
 
-        relativeLayout.addView(createNewTextView(String.valueOf(s)));
+        relativeLayout.addView(createNewTextView(String.valueOf(s), isFeedback));
         return relativeLayout;
     }
 
     private int pixelToDips(int x){
         int dpValue = x; // margin in dips
-        float d = Translation.this.getResources().getDisplayMetrics().density;
+        float d = WordTest.this.getResources().getDisplayMetrics().density;
         int margin = (int)(dpValue * d);
         return margin;
     }
@@ -427,15 +501,15 @@ public class Translation extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.item_help:
-                Intent intent_help = new Intent(Translation.this, Help.class);
+                Intent intent_help = new Intent(WordTest.this, Help.class);
                 startActivity(intent_help);
                 return (true);
             case R.id.item_home:
-                Intent intent_home = new Intent(Translation.this, MainActivity.class);
+                Intent intent_home = new Intent(WordTest.this, MainActivity.class);
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Translation.this, SettingSelection.class);
+                Intent intent_setting = new Intent(WordTest.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

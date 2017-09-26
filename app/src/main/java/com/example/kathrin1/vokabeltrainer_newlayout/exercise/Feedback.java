@@ -9,13 +9,9 @@ import com.example.kathrin1.vokabeltrainer_newlayout.objects.MorphObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.VocObject;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.StrBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by kathrin1 on 03.05.17.
@@ -25,10 +21,9 @@ public class Feedback {
 
     private String learnerAnswer;
 
-    private ArrayList appAnswer;
-    private ArrayList appAnswerTag;
+    private ArrayList appProcessedAnswer;
+    private ArrayList appProcessedAnswerTag;
     private ArrayList appLemma;
-    private ArrayList appLemmaTag;
     private ArrayList appSoundex;
 
     private String bestAppReading;
@@ -37,24 +32,24 @@ public class Feedback {
 
     private DatabaseManager dbManager;
 
+    private String singleTarget;
+
     public Feedback(String learnerAnswer, VocObject vocable, Boolean isEnglishWord, Context c){
 
         this.learnerAnswer = learnerAnswer;
         this.isEnglishWord = isEnglishWord;
 
         if(this.isEnglishWord) {
-            this.appAnswer = vocable.getProcessedVocable();
-            this.appAnswerTag = vocable.getTaggedProcessedVocable();
+            this.appProcessedAnswer = vocable.getProcessedVocable();
+            this.appProcessedAnswerTag = vocable.getTaggedProcessedVocable();
             this.appSoundex = vocable.getProcessedVocableSoundex();
             this.appLemma = vocable.getLemmaVocable();
-            this.appLemmaTag = vocable.getTaggedLemmaVocable();
         }
         else {
-            this.appAnswer = vocable.getProcessedTranslation();
-            this.appAnswerTag = vocable.getTaggedProcessedTranslation();
+            this.appProcessedAnswer = vocable.getProcessedTranslation();
+            this.appProcessedAnswerTag = vocable.getTaggedProcessedTranslation();
             this.appSoundex = vocable.getProcessedTranslationSoundex();
             this.appLemma = vocable.getLemmaTranslation();
-            this.appLemmaTag = vocable.getTaggedLemmaTranslation();
         }
 
         bestAppReading = "";
@@ -77,9 +72,9 @@ public class Feedback {
 
     private String generateEnglishFeedback() {
 
-        Log.d("Feedback: appA", appAnswer.toString());
+        Log.d("Feedback: appA", appProcessedAnswer.toString());
 
-        String singleTarget = getSingleTarget();
+        singleTarget = getSingleTarget();
 
         // <SingleTarget> is a single word:
         if (singleTarget.split("\\s").length < 2) {
@@ -87,11 +82,15 @@ public class Feedback {
             // <LearnerString> is a single word:
             if (learnerAnswer.split("\\s").length < 2) {
 
-                return singleWordComparison(singleTarget);
+
+                Log.d("Feedback", "aWord:" + singleTarget + " - " + singleTarget.getBytes());
+                Log.d("Feedback", "lWord:" + learnerAnswer + " - " + learnerAnswer.getBytes());
+
+                return learnerAnswer + ": " + singleWordComparison(singleTarget, learnerAnswer, null);
             }
             else { // <LearnerString> is more than a single word:
 
-                return "Deine Antwort beinhaltet " + Integer.toString(learnerAnswer.split("\\s").length) +
+                return learnerAnswer + ": Deine Antwort beinhaltet " + Integer.toString(learnerAnswer.split("\\s").length) +
                         " Wörter, es wird aber nur eins gesucht";
             }
         } else { // <SingleTarget> is more than one word
@@ -99,12 +98,12 @@ public class Feedback {
             //
             // [[('to', ['V TO']), ('expect', ['V INF']), ('a', ['Det']), ('baby', ['N 3sg'])],
             // [('to', ['V TO']), ('have', ['V INF']), ('a', ['Det']), ('baby', ['N 3sg'])]]
-
-
             if (singleTarget.split("\\s").length == learnerAnswer.split("\\s").length) {
                 // have the same number of words
 
-                ArrayList<Pair> newAppAnswerTag = getCorrectTaggedByIndex(singleTarget, appAnswer, appAnswerTag);
+                ArrayList<Pair> newAppAnswerTag = getCorrectTaggedByIndex(singleTarget, appProcessedAnswer, appProcessedAnswerTag);
+                Log.d("Feedback: appPAnswer: ", appProcessedAnswer.toString());
+                Log.d("Feedback: Pair: ", newAppAnswerTag.toString());
 
                 String[] learnerWords = learnerAnswer.split("\\s");
                 StringBuilder theFeedback = new StringBuilder();
@@ -115,11 +114,8 @@ public class Feedback {
                     Pair aWord = newAppAnswerTag.get(i);
                     String lWord = learnerWords[i];
 
-                    // todo theFeedback lacks newlines I think
                     theFeedback.append("<b>" + lWord + "</b>" + ": ");
-
-                    // todo check if lWord = aWord
-
+//
                     if (lWord.equals(aWord.getKey())){
                         theFeedback.append("Dieses Wort ist korrekt.");
                         if (i < newAppAnswerTag.size()){
@@ -128,20 +124,10 @@ public class Feedback {
                         continue;
                     }
 
-                    learnerWordReading = dbManager.getMorphInformation(lWord.replace("'", "''"));
+                    ArrayList<Pair> currentPair = new ArrayList<>();
+                    currentPair.add(Pair.of((String)aWord.getKey(), aWord.getValue()));
+                    theFeedback.append(singleWordComparison((String)aWord.getKey(), lWord, currentPair));
 
-                    if (learnerWordReading.isEmpty()) {
-
-                        theFeedback.append(feedbackForWordNotFound((String) aWord.getKey(), lWord));
-
-                    } else {
-                        String appReading = (String) aWord.getValue();
-                        String[] allAppReadings = appReading.split(", ");
-
-                        MorphInfoObject morphologicalReading = getBestLearnerReading(appReading, allAppReadings, learnerWordReading);
-
-                        theFeedback.append(compareReadings(learnerWordReading, morphologicalReading, bestAppReading));
-                    }
                     if (i < newAppAnswerTag.size()){
                         theFeedback.append("<br/>");
                     }
@@ -149,7 +135,7 @@ public class Feedback {
                 return theFeedback.toString();
             }
             else { // have not the same number of words
-                return "Die Antwort hat " + singleTarget.split("\\s").length + " Wörter. " +
+                return learnerAnswer + ": Die Antwort hat " + singleTarget.split("\\s").length + " Wörter. " +
                         "Deine Antwort hat " + learnerAnswer.split("\\s").length + " Wörter.";
             }
         }
@@ -158,14 +144,14 @@ public class Feedback {
     private String getSingleTarget(){
         String singleTarget = "";
         // if it has more than one correct answer
-        if (appAnswer.size() > 1) {
+        if (appProcessedAnswer.size() > 1) {
             // [[xxx], [yyy]]
             int topDistance = 1000;
             String topAnswer = "";
             // select element from list that has shortest Levensthein distance with LearnerString
-            for (int i = 0; i < appAnswer.size(); i++){
-                //Log.d("Feedback: appA0", appAnswer.get(i).toString());
-                ArrayList<String> temp = (ArrayList<String>) appAnswer.get(i);
+            for (int i = 0; i < appProcessedAnswer.size(); i++){
+                //Log.d("Feedback: appA0", appProcessedAnswer.get(i).toString());
+                ArrayList<String> temp = (ArrayList<String>) appProcessedAnswer.get(i);
                 String answer = temp.get(0);
                 int distance = levenshteinDistance(answer, learnerAnswer);
                 if (distance < topDistance){
@@ -180,14 +166,22 @@ public class Feedback {
         else {
             // [[we]]
             // <SingleTarget> = <TargetAnswer>
-            ArrayList<String> temp = (ArrayList<String>) appAnswer.get(0);
+            ArrayList<String> temp = (ArrayList<String>) appProcessedAnswer.get(0);
             singleTarget = temp.get(0);
         }
         Log.d("Feedback: singTar", singleTarget);
         return singleTarget;
     }
 
-    private String singleWordComparison(String singleTarget){
+    private String singleWordComparison(String singleTarget, String learnerAnswer, ArrayList<Pair> newAppAnswerTag){
+
+        ArrayList<Pair> mNewAppAnswerTag;
+        //is the problem just a upper-/lower case problem
+        if (singleTarget.toLowerCase().equals(learnerAnswer.toLowerCase())){
+            return "Es scheint als ob du einen Fehler in der " +
+                    "Groß- und Kleinschreibung hast.";
+        }
+
         //	<xtag> the morphological database
         MorphObject learnerWordReading = dbManager.getMorphInformation(learnerAnswer.replace("'", "''"));
 
@@ -198,11 +192,19 @@ public class Feedback {
 
         } else {
             // <SingleTarget> is known in <xtag>
-            Log.d("Feedback: reading", this.appAnswerTag.toString());
+            Log.d("Feedback: reading", this.appProcessedAnswerTag.toString());
 
             //[[(can,V PRES, V INF)]] more than one reading
-            ArrayList helper = (ArrayList) this.appAnswerTag.get(0);
-            Pair pair = (Pair) helper.get(0);
+
+            if (newAppAnswerTag == null){
+                mNewAppAnswerTag = getCorrectTaggedByIndex(singleTarget, appProcessedAnswer, appProcessedAnswerTag);
+            }
+            else{
+                mNewAppAnswerTag = newAppAnswerTag;
+            }
+            // only 1 entry long as we compare just one word
+
+            Pair pair = (Pair) mNewAppAnswerTag.get(0);
             String appReading = (String) pair.getValue();
             String[] allAppReadings = appReading.split(", ");
 
@@ -213,23 +215,32 @@ public class Feedback {
     }
 
     private String feedbackForWordNotFound(String singleTarget, String mLearnerAnswer) {
-        Log.d("Feedback: in empty", "TRUE");
+
         // calculate  <soundex> of learner word
         String learner_soundex = generateSoundex(mLearnerAnswer);
 
         // calculate <sound_levenshtein> between soundex
-        String singleTargetSoundex = getCorrectSoundexByIndex(singleTarget, appAnswer, appSoundex);
+        String singleTargetSoundex = getCorrectSoundexByIndex(singleTarget, appProcessedAnswer, appSoundex);
         int levenshtein_soundex = levenshteinDistance(learner_soundex, singleTargetSoundex);
 
         // calculate <word_levenshtein> between words
         int levenshtein_spelling = levenshteinDistance(mLearnerAnswer, singleTarget);
 
-        levenshtein_soundex = 1;
         Log.d("Feedback: learnerSound", learner_soundex);
         Log.d("Feedback: levenSound", String.valueOf(levenshtein_soundex));
         Log.d("Feedback: levenSpell", String.valueOf(levenshtein_spelling));
 
         // if <sound_levenshtein> distance = 0
+        if (levenshtein_spelling == 1){
+            if (mLearnerAnswer.toLowerCase().equals(singleTarget.toLowerCase())){
+                return "Es scheint als ob du einen Fehler in der " +
+                        "Groß- und Kleinschreibung hast";
+            }
+            else {
+                return "Du hast kein bekanntes Wort eingegeben, " +
+                        "aber die Lösung ist fast gleich zu deiner Eingabe.";
+            }
+        }
         if (levenshtein_soundex == 0) {
             // return “sounds the same”
             return "Du hast kein bekanntes Wort eingegeben, " +
@@ -260,7 +271,8 @@ public class Feedback {
         MorphInfoObject morphologicalReading = null;
 
         if (appReading.split(", ").length > 1){
-            if (learnerWordReading.getNumberOfReadings() > 1) { // <WordReading> has more than one <MorphologicalReading>
+            if (learnerWordReading.getNumberOfReadings() > 1) {
+                // <WordReading> has more than one <MorphologicalReading>
                 // get the best <morphologicalReading> through levenshtein
 
                 String bestStringResult = "";
@@ -325,36 +337,6 @@ public class Feedback {
         return morphologicalReading;
     }
 
-    private String compareReadings(MorphObject learnerWordReading, MorphInfoObject morphologicalLearnerReading, String bestAppReading) {
-        MorphInfoObject morphologicalAppReading = new MorphInfoObject(bestAppReading);
-        String learnerPOS = morphologicalLearnerReading.getPOS();
-        String appPos = morphologicalAppReading.getPOS();
-        if (learnerWordReading.getLemma().equals(this.appLemma.get(0))){
-            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
-                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
-            }
-            else {
-                return "Fehler: (1) Lemma ist das Gleiche, aber nicht der POS Tag.";
-            }
-        }
-        else if (morphologicalLearnerReading.getLemma().equals(this.appLemma.get(0))){
-            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
-                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
-            }
-            else {
-                return "Fehler: (2) Lemma ist das Gleiche, aber nicht der POS Tag.";
-            }
-        }
-        else if (appPos.equals(learnerPOS)){
-            return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
-        }
-        else {
-            return "Wir suchen ein " + posToString(appPos) + ", du hast ein "
-                    + posToString(learnerPOS) + " eingegeben.";
-        }
-
-    }
-
     private ArrayList<Pair> getCorrectTaggedByIndex(String voc, ArrayList vocableProcessed, ArrayList vocableProcessedTagged){
 
         int tmpX = 0;
@@ -409,38 +391,75 @@ public class Feedback {
         return ((ArrayList<String>) vocableSoundex.get(tmpX)).get(0);
     }
 
+
     /*
     COMPARE THE SAME PART OF SPEECH TAGS
      */
+    private String compareReadings(MorphObject learnerWordReading, MorphInfoObject morphologicalLearnerReading, String bestAppReading) {
+        MorphInfoObject morphologicalAppReading = new MorphInfoObject(bestAppReading);
+        String learnerPOS = morphologicalLearnerReading.getPOS();
+        String appPos = morphologicalAppReading.getPOS();
+        if (learnerWordReading.getLemma().equals(this.appLemma.get(0))){
+            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
+                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+            }
+            else {
+                return "Fehler: (1) Lemma ist das Gleiche, aber nicht der POS Tag.";
+            }
+        }
+        else if (morphologicalLearnerReading.getLemma().equals(this.appLemma.get(0))){
+            if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
+                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+            }
+            else {
+                return "Fehler: (2) Lemma ist das Gleiche, aber nicht der POS Tag.";
+            }
+        }
+        else if (appPos.equals(learnerPOS)){
+            //return "Die Wortart: " + posToString(appPos) + " ist richtig. Aber das ist nicht das " +
+            //        "gesuchte Wort. Probiere ein anderes "  + posToString(appPos) + ".";
+
+            return "Die Wortart: " + posToString(appPos) + " ist richtig. Aber das ist nicht das " +
+                    "gesuchte Wort. " + compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+
+            //return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+        }
+        else {
+            return "Es wird ein " + posToString(appPos) + " gesucht, du hast ein "
+                    + posToString(learnerPOS) + " eingegeben.";
+        }
+
+    }
+
     private String compareMorphologicalInformation(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
         Log.d("Feedback: CMI:", morphologicalAppReading.toString() + " - " + morphologicalLearnerReading.toString());
         switch (morphologicalAppReading.getPOS()) {
-            case "A":
-                return compareAdjectives(morphologicalAppReading, morphologicalLearnerReading);
-            case "Adv":
-                return compareAdverbs(morphologicalAppReading, morphologicalLearnerReading);
             case "Comp":
                 return compareComparatives();
             case "Conj":
                 return compareConjuctions();
-            case "Det":
-                return compareDeterminers(morphologicalAppReading, morphologicalLearnerReading);
             case "G":
                 return compareGenitiveNoun();
             case "I":
                 return compareInterjections();
+            case "Part":
+                return compareParticles();
+            case "Prep":
+                return comparePrepositions();
+            case "Punct":
+                return "Punctuation"; // TODO?
+            case "A":
+                return compareAdjectives(morphologicalAppReading, morphologicalLearnerReading);
+            case "Adv":
+                return compareAdverbs(morphologicalAppReading, morphologicalLearnerReading);
+            case "Det":
+                return compareDeterminers(morphologicalAppReading, morphologicalLearnerReading);
             case "N":
                 return compareNouns(morphologicalAppReading, morphologicalLearnerReading);
             case "NVC":
                 return compareNounVerbCombinations(morphologicalAppReading, morphologicalLearnerReading);
-            case "Part":
-                return compareParticles();
-            case "Punct":
-                return "Punctuation"; // TODO?
             case "Pron":
                 return comparePronouns(morphologicalAppReading, morphologicalLearnerReading);
-            case "Prep":
-                return comparePrepositions();
             case "PropN":
                 return compareProperNouns(morphologicalAppReading, morphologicalLearnerReading);
             case "V":
@@ -448,17 +467,41 @@ public class Feedback {
             case "VVC":
                 return compareVerbVerbCombinations(morphologicalAppReading, morphologicalLearnerReading);
             default:
-                return "Fehler";
+                return "Fehler: compareMorphologicalInformation";
         }
+    }
+
+    private String compareComparatives() {
+        return "Probiere ein anderes Komparativ.";
+    }
+
+    private String compareConjuctions() {
+        return "Probiere eine andere Konjuktion.";
+    }
+
+    private String compareGenitiveNoun() {
+        return "Probiere ein anderes Genetiv Nomen.";
+    }
+
+    private String compareInterjections() {
+        return "Probiere eine andere Interjektion.";
+    }
+
+    private String compareParticles() {
+        return "Probiere ein anderen Partikel.";
+    }
+
+    private String comparePrepositions() {
+        return "Probiere ein andere Preposition.";
     }
 
     private String compareAdjectives(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
 
-        String result = compareComperativeSuperlative(morphologicalAppReading, morphologicalLearnerReading);
+        String result = compareComparativeSuperlative(morphologicalAppReading, morphologicalLearnerReading);
         if (!result.equals("")){
             return result;
         }
-        return "Ich kann leider nichts festellen. Probiere ein anderes Adjektiv.";
+        return "Probiere ein anderes Adjektiv.";
     }
 
     private String compareAdverbs(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -468,15 +511,7 @@ public class Feedback {
         if (!result.equals("")){
             return result;
         }
-        return "Ich kann leider nichts festellen. Probiere ein anderes Adverb.";
-    }
-
-    private String compareComparatives() {
-        return "Ich kann leider nichts festellen. Probiere ein anderes Komparativ.";
-    }
-
-    private String compareConjuctions() {
-        return "Ich kann leider nichts festellen. Probiere eine andere Konjuktion.";
+        return "Probiere ein anderes Adverb.";
     }
 
     private String compareDeterminers(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -505,15 +540,7 @@ public class Feedback {
             return result;
         }
 
-        return "Ich kann leider nichts festellen. Probiere einen anderen Artikel.";
-    }
-
-    private String compareGenitiveNoun() {
-        return "Ich kann leider nichts festellen. Probiere ein anderes Genetiv Nomen.";
-    }
-
-    private String compareInterjections() {
-        return "Ich kann leider nichts festellen. Probiere eine andere Interjektion.";
+        return "Probiere einen anderen Artikel.";
     }
 
     private String compareNouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -536,7 +563,7 @@ public class Feedback {
             return result;
         }
 
-        return "Ich kann leider nichts festellen. Probiere ein anderes Nomen.";
+        return "Probiere ein anderes Nomen.";
     }
 
     private String compareNounVerbCombinations(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -571,12 +598,8 @@ public class Feedback {
             return result;
         }
 
-        return "Ich kann leider nichts festellen. Probiere eine andere Nomen-Verb-Kombination.";
+        return "Probiere eine andere Nomen-Verb-Kombination.";
 
-    }
-
-    private String compareParticles() {
-        return "Ich kann leider nichts festellen. Probiere ein anderes Partikel.";
     }
 
     private String comparePronouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -608,13 +631,9 @@ public class Feedback {
             return result;
         }
 
-        return "Ich kann leider nichts festellen. Probiere ein anderes Pronomen.";
+        return "Probiere ein anderes Pronomen.";
 
 
-    }
-
-    private String comparePrepositions() {
-        return "Ich kann leider nichts festellen. Probiere ein andere Preposition.";
     }
 
     private String compareProperNouns(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -632,7 +651,7 @@ public class Feedback {
             return result;
         }
 
-        return "Ich kann leider nichts festellen. Probiere ein anderen Eigenname.";
+        return "Probiere ein anderen Eigenname.";
     }
 
     private String compareVerbs(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -640,7 +659,6 @@ public class Feedback {
         // setNumberTag(mReading);
         // setINDAUXTag(mReading);
         // setNegationTag(mReading);
-        // setInfinitiveTag(mReading);
         // setTimeTag(mReading);
         // setTOTag(mReading);
         // setStrongVerbTag(mReading);
@@ -650,11 +668,6 @@ public class Feedback {
 
 
         String result = compareNegation(morphologicalAppReading, morphologicalLearnerReading);
-        if (!result.equals("")){
-            return result;
-        }
-
-        result = compareInfinitive(morphologicalAppReading, morphologicalLearnerReading);
         if (!result.equals("")){
             return result;
         }
@@ -684,26 +697,24 @@ public class Feedback {
             return result;
         }
 
-        // setTOTag(mReading);
-        return "Ich kann leider nichts festellen. Probiere ein anderes Verb.";
+        result = compareTO(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
+        return "Probiere ein anderes Verb.";
     }
 
     private String compareVerbVerbCombinations(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading){
         // VVC {'PRES', 'INF'}
         // setTimeTag(mReading);
-        // setInfinitiveTag(mReading);
 
-        String result = compareInfinitive(morphologicalAppReading, morphologicalLearnerReading);
+        String result = compareTime(morphologicalAppReading, morphologicalLearnerReading);
         if (!result.equals("")){
             return result;
         }
 
-        result = compareTime(morphologicalAppReading, morphologicalLearnerReading);
-        if (!result.equals("")){
-            return result;
-        }
-
-        return "Ich kann leider nichts festellen. Probiere eine andere Verb Verb Kombination.";
+        return "Probiere eine andere Verb Verb Kombination.";
     }
 
 
@@ -802,65 +813,25 @@ public class Feedback {
         return "";
     }
 
-    private String compareInfinitive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
-        if (morphologicalAppReading.getIsInfinitive()){
-            // solution has a infinitive marker
-            if (morphologicalLearnerReading.getIsInfinitive()){
-                // learner also has an infinitive marker
-                return "";
-            }
-            else {
-                // learner has no infinitive but a time marker
-                if (!morphologicalLearnerReading.getLingTime().equals("")) {
-                    // has a time marker
-                    return "Das Wort wird in Infinitiv gesucht. Du hast" + timeToString(morphologicalAppReading.getLingTime())
-                            + ".";
-                }
-                else {
-                    return "Das Wort wird in Infinitiv gesucht.";
-                }
-            }
-        }
-        else { // solution has no infinitive marker
-            // learner has infinitive
-            if (morphologicalLearnerReading.getIsInfinitive()){
-
-                if (!morphologicalAppReading.getLingTime().equals("")) {
-                    // has a time marker
-                    return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime()) + " gesucht. " +
-                            "Du hast es im Infinitiv";
-                }
-                else {
-                    return "Das Wort wird nicht in Infinitiv gesucht.";
-                }
-            }
-            else {
-                // no infinitive marker in solution and learner.
-                return "";
-
-            }
-        }
-    }
-
     private String compareNegation(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
         if (morphologicalAppReading.getIsNegation()){
-            // solution has a infinitive marker
+            // solution has a neg marker
             if (morphologicalLearnerReading.getIsNegation()){
-                // learner also has an infinitive marker
+                // learner also has an neg marker
                 return "";
             }
             else {
-                // learner has no infinitive but a time marker
-                return "Das Wort wird in Negation gesucht";
+                // learner has no infinitive but a neg marker
+                return "Das Wort wird in Verneinung gesucht.";
             }
         }
-        else { // solution has no infinitive marker
-            // learner has infinitive
+        else { // solution has no neg marker
+            // learner has neg
             if (morphologicalLearnerReading.getIsNegation()){
-                return "Wir suchen das Wort nicht in Negation.";
+                return "Das Wort wird nicht in Verneinung gesucht.";
             }
             else {
-                // no infinitive marker in solution and learner.
+                // no neg marker in solution and learner.
                 return "";
 
             }
@@ -917,6 +888,81 @@ public class Feedback {
         }
     }
 
+    private String compareNegative(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsNegation()){
+            // solution has a infinitive marker
+            if (morphologicalLearnerReading.getIsNegation()){
+                // learner also has an infinitive marker
+                return "";
+            }
+            else {
+                // learner has no infinitive but a time marker
+                return "Das Wort das gesucht wird ist ein starkes Verb.";
+            }
+        }
+        else { // solution has no infinitive marker
+            // learner has infinitive
+            if (morphologicalLearnerReading.getIsNegation()){
+                return "Das Wort das gesucht wird ist kein starkes Verb.";
+            }
+            else {
+                // no infinitive marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
+    private String compareReflexive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsReflexive()){
+            // solution has a reflexive marker
+            if (morphologicalLearnerReading.getIsReflexive()){
+                // learner also has an reflexive marker
+                return "";
+            }
+            else {
+                // learner has no reflexive marker
+                return "Das Wort das gesucht wird ist ein reflexives Verb.";
+            }
+        }
+        else { // solution has no reflexive marker
+            // learner has reflexive marker
+            if (morphologicalLearnerReading.getIsReflexive()){
+                return "Das Wort das gesucht wird ist kein reflexives Verb.";
+            }
+            else {
+                // no reflexive marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
+    private String compareTO(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+        if (morphologicalAppReading.getIsTO()){
+            // solution has a TO marker
+            if (morphologicalLearnerReading.getIsTO()){
+                // learner also has an TO marker
+                return "";
+            }
+            else {
+                // learner has no TO marker
+                return "Das gesuchte Verb wird für den Infinitiv benötigt.";
+            }
+        }
+        else { // solution has no TO marker
+            // learner has TO marker
+            if (morphologicalLearnerReading.getIsTO()){
+                return "Das gesuchte Verb wird nicht für den Infinitiv benötigt.";
+            }
+            else {
+                // no TO marker in solution and learner.
+                return "";
+
+            }
+        }
+    }
+
     private String comparePassive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
         if (morphologicalAppReading.getIsPassive()){
             // solution has a infinitive marker
@@ -932,7 +978,7 @@ public class Feedback {
         else { // solution has no infinitive marker
             // learner has infinitive
             if (morphologicalLearnerReading.getIsPassive()){
-                return "Das Verb wird nicht im Passiv gesucht";
+                return "Das Verb wird nicht im Passiv gesucht.";
             }
             else {
                 // no infinitive marker in solution and learner.
@@ -951,13 +997,13 @@ public class Feedback {
                     return "";
                 }
                 else {
-                    return "Das Wort wird im " + genderToString(morphologicalAppReading.getGender())
-                            + "gesucht, nicht im " + genderToString(morphologicalLearnerReading.getGender())
+                    return "Das Wort wird in " + genderToString(morphologicalAppReading.getGender())
+                            + "gesucht, nicht in " + genderToString(morphologicalLearnerReading.getGender())
                             + ".";
                 }
             }
             else {
-                return "Das Wort wird im " + genderToString(morphologicalAppReading.getGender())
+                return "Das Wort wird in " + genderToString(morphologicalAppReading.getGender())
                         + "gesucht.";
             }
         }
@@ -965,7 +1011,7 @@ public class Feedback {
             // solution has no case marker
             if (!morphologicalLearnerReading.getGender().equals("")){
                 // learner has case marker
-                return "Deine Eingabe ist im " + genderToString(morphologicalLearnerReading.getGender())
+                return "Deine Eingabe ist in " + genderToString(morphologicalLearnerReading.getGender())
                         + ". Bist du sicher ob das richtig ist?";
             }
         }
@@ -997,7 +1043,7 @@ public class Feedback {
         }
     }
 
-    private String compareComperativeSuperlative(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
+    private String compareComparativeSuperlative(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
         if (morphologicalAppReading.getIsComparative()){
             // is compartive
             if (morphologicalLearnerReading.getIsComparative()){
@@ -1110,15 +1156,14 @@ public class Feedback {
 
     private String genderToString(String lTime) {
         switch (lTime){
-            case "masc": return "Maskulin";
-            case "fem": return "Feminim";
-            case "neut": return "Neutrum";
-            case "reffem": return "reflexiv Feminim";
-            case "refmasc": return "reflexiv Maskulin";
+            case "masc": return "der männlichen Form";
+            case "fem": return "der weiblichen Form";
+            case "neut": return "der sächlichen Form";
+            case "reffem": return "reflexiven weiblichen Form";
+            case "refmasc": return "reflexiv männlichen Form";
             default: return "Fehler";
         }
     }
-
 
     /*
      HELPER METHODS: SOUNDEX, LEVENSHTEIN

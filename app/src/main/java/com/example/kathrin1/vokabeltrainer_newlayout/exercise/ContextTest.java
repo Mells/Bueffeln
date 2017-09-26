@@ -14,7 +14,6 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -29,7 +28,6 @@ import com.example.kathrin1.vokabeltrainer_newlayout.Help;
 import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
 import com.example.kathrin1.vokabeltrainer_newlayout.buch.TheBook;
-import com.example.kathrin1.vokabeltrainer_newlayout.database.DBUtils;
 import com.example.kathrin1.vokabeltrainer_newlayout.objects.BookObject;
 import com.example.kathrin1.vokabeltrainer_newlayout.settings.SettingSelection;
 import com.example.kathrin1.vokabeltrainer_newlayout.database.DatabaseManager;
@@ -40,7 +38,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Kontext extends AppCompatActivity {
+public class ContextTest extends AppCompatActivity {
 
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
 
@@ -61,16 +59,16 @@ public class Kontext extends AppCompatActivity {
 
     private int currentLayoutId = -1;
 
-    private List<String> copyOfSentenceList;
-
     ArrayList<String> currentlyUsedSentences;
+
+    private Boolean onceWrong = false;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.exercise_kontext);
 
-        dbManager = DatabaseManager.build(Kontext.this);
+        dbManager = DatabaseManager.build(ContextTest.this);
 
         Button btn_go_back = (Button) findViewById(R.id.btn_go_back);
         final Button btn_next = (Button) findViewById(R.id.btn_next);
@@ -79,7 +77,7 @@ public class Kontext extends AppCompatActivity {
         Button btn_menu = (Button) findViewById(R.id.btn_menu);
         final Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
 
-        final LinearLayout lay_vocabel = (LinearLayout) findViewById(R.id.lay_vocabel);
+        //final LinearLayout lay_vocabel = (LinearLayout) findViewById(R.id.lay_vocabel);
         final RelativeLayout lay_eingabe = (RelativeLayout) findViewById(R.id.lay_eingabe);
         final LinearLayout lay_menu_buttons = (LinearLayout) findViewById(R.id.lay_menu_buttons);
 
@@ -105,6 +103,11 @@ public class Kontext extends AppCompatActivity {
             public void onClick(View v) {
                 edit_solution.setEnabled(true);
                 btn_hint.setEnabled(true);
+                if (onceWrong){
+                    if (voc.getTested() > 0) {
+                        dbManager.updateTested(0, voc.getId());
+                    }
+                }
                 if (allVocabulary != null){
                     if (allVocabulary.isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Es gibt keine Vokabeln, die diese " +
@@ -148,9 +151,9 @@ public class Kontext extends AppCompatActivity {
                                 "Kriterien beinhalten.", Toast.LENGTH_LONG).show();
                     } else {
                         //if (copyOfSentenceList.size() > 0){
-                        Log.d("Kontext: inHint", currentlyUsedSentences.toString());
-                        BookObject hint_sentence = ExerciseUtils.getSentence(
-                                                Kontext.this, dbManager, voc, "hint", currentlyUsedSentences);
+                        Log.d("ContextTest: inHint", currentlyUsedSentences.toString());
+                        BookObject hint_sentence = ExerciseUtils.getKontextSentence(
+                                                ContextTest.this, dbManager, voc, "hint", currentlyUsedSentences);
                         if (!hint_sentence.getSentence().equals("")){
                             currentlyUsedSentences.add(hint_sentence.getSentence());
 
@@ -177,6 +180,8 @@ public class Kontext extends AppCompatActivity {
             public void onClick(View v) {
                 edit_solution.setEnabled(false);
                 btn_hint.setEnabled(false);
+                dbManager.updateTested(0, voc.getId());
+
                 feedback_answer = "Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>.";
                 lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
                 scroll.postDelayed(new Runnable() { @Override public void run() {
@@ -187,7 +192,7 @@ public class Kontext extends AppCompatActivity {
         btn_book_menu.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Kontext.this, TheBook.class);
+                Intent intent = new Intent(ContextTest.this, TheBook.class);
                 startActivity(intent);
                 setBookValues();
             }
@@ -207,27 +212,49 @@ public class Kontext extends AppCompatActivity {
                             InputMethodManager.HIDE_NOT_ALWAYS);
 
                     if (edit_solution.getText().toString().length() > 0) {
-                            if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                        Boolean isCorrect = false;
+                        if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                            isCorrect = true;
+                        }
+                        else{
+                            for (ArrayList<String> currentArraySolution : (ArrayList<ArrayList<String>>) voc.getProcessedTranslation()){
+                                for (String currentSolution : currentArraySolution) {
+                                    if (currentSolution.equals(edit_solution.getText().toString())) {
+                                        isCorrect = true;
+                                    }
+                                }
+                            }
+                        }
 
-                                feedback_answer = "Gratulation, das ist korrekt.";
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
-                                scroll.postDelayed(new Runnable() { @Override public void run() {
-                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+                        if (isCorrect) {
+                            feedback_answer = "Gratulation, das ist korrekt.";
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            scroll.postDelayed(new Runnable() { @Override public void run() {
+                                scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
 
-                                allVocabulary.remove(voc);
+                            allVocabulary.remove(voc);
 
-                                if (voc.getId() > 6) {
+                            if (onceWrong){
+                                if (voc.getTested() > 0) {
+                                    dbManager.updateTested(voc.getTested() - 1, voc.getId());
+                                }
+                            }
+                            else {
+                                if (voc.getTested() > 4) {
                                     dbManager.updateTested(voc.getTested() + 1, voc.getId());
                                 }
-                            } else {
-                                // Todo - feedback
-                                Feedback feedback = new Feedback(edit_solution.getText().toString(),
-                                        voc, true, Kontext.this);
-                                feedback_answer = feedback.generateFeedback();
-                                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
-                                scroll.postDelayed(new Runnable() { @Override public void run() {
-                                    scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                             }
+                            onceWrong = false;
+                        } else {
+                            Feedback feedback = new Feedback(edit_solution.getText().toString(),
+                                    voc, true, ContextTest.this);
+                            feedback_answer = feedback.generateFeedback();
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            scroll.postDelayed(new Runnable() { @Override public void run() {
+                                scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
+
+                            onceWrong = true;
+                        }
                     }
                     handled = true;
                 }
@@ -239,7 +266,12 @@ public class Kontext extends AppCompatActivity {
         btn_go_back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                NavUtils.navigateUpFromSameTask(Kontext.this);
+                if (onceWrong){
+                    if (voc.getTested() > 0) {
+                        dbManager.updateTested(0, voc.getId());
+                    }
+                }
+                NavUtils.navigateUpFromSameTask(ContextTest.this);
             }
         });
     }
@@ -268,31 +300,28 @@ public class Kontext extends AppCompatActivity {
             Log.d("KONTEXT:", Integer.toString(allVocabulary.size()));
             voc = allVocabulary.get(index);
 
-            // TODO: MAKE SURE THERE ARE NO SAME SENTENCES
-            List<String> gdexList = DBUtils.splitListString(voc.getGDEXSentences());
-            List<String> bookList = DBUtils.splitListString(voc.getOldSentences());
-            List<String> learnerList = DBUtils.splitListString(voc.getLearnerSentences());
+            // TODO: MAKE SURE THERE ARE NO SAME SENTENCES - should be covered by ExerciseUtils getKontextSentence()
 
             // get first preference sentence
-            BookObject first_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "first", currentlyUsedSentences);
+            BookObject first_sentence = ExerciseUtils.getKontextSentence(ContextTest.this, dbManager, voc, "first", currentlyUsedSentences);
             if(!first_sentence.getSentence().equals("")) {
                 currentlyUsedSentences.add(first_sentence.getSentence());
             }
-            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
+            Log.d("ContextTest: CUS:", currentlyUsedSentences.toString());
 
             // get second preference sentence
-            BookObject second_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "second", currentlyUsedSentences);
+            BookObject second_sentence = ExerciseUtils.getKontextSentence(ContextTest.this, dbManager, voc, "second", currentlyUsedSentences);
             if(!first_sentence.getSentence().equals("")) {
                 currentlyUsedSentences.add(second_sentence.getSentence());
             }
-            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
+            Log.d("ContextTest: CUS:", currentlyUsedSentences.toString());
 
             // get third preference sentence
-            BookObject third_sentence = ExerciseUtils.getSentence(Kontext.this, dbManager, voc, "third", currentlyUsedSentences);
+            BookObject third_sentence = ExerciseUtils.getKontextSentence(ContextTest.this, dbManager, voc, "third", currentlyUsedSentences);
             if(!first_sentence.getSentence().equals("")) {
                 currentlyUsedSentences.add(third_sentence.getSentence());
             }
-            Log.d("Kontext: CUS:", currentlyUsedSentences.toString());
+            Log.d("ContextTest: CUS:", currentlyUsedSentences.toString());
 
             txt_sent01.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(first_sentence, voc)));
             txt_sent02.setText(ExerciseUtils.fromHtml(ExerciseUtils.deleteWordFromSentence(second_sentence, voc)));
@@ -301,7 +330,6 @@ public class Kontext extends AppCompatActivity {
     }
 
     private RelativeLayout createNewRelativeLayoutView(String s){
-
 
         //android:layout_width="match_parent"
         //android:layout_height="wrap_content"
@@ -320,7 +348,7 @@ public class Kontext extends AppCompatActivity {
         relativeLayout.setLayoutParams(params);
 
         //android:background="@drawable/ic_sprechblase_main_rechts"
-        relativeLayout.setBackground(ContextCompat.getDrawable(Kontext.this, R.drawable.ic_sprechblase_main_rechts));
+        relativeLayout.setBackground(ContextCompat.getDrawable(ContextTest.this, R.drawable.ic_sprechblase_main_rechts));
 
         int theId = generateViewId();
         Log.d("ID", String.valueOf(theId));
@@ -363,7 +391,7 @@ public class Kontext extends AppCompatActivity {
     }
 
     private int pixelToDips(int x){
-        float d = Kontext.this.getResources().getDisplayMetrics().density;
+        float d = ContextTest.this.getResources().getDisplayMetrics().density;
         return (int)(x * d);
     }
 
@@ -396,15 +424,15 @@ public class Kontext extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.item_help:
-                Intent intent_help = new Intent(Kontext.this, Help.class);
+                Intent intent_help = new Intent(ContextTest.this, Help.class);
                 startActivity(intent_help);
                 return (true);
             case R.id.item_home:
-                Intent intent_home = new Intent(Kontext.this, MainActivity.class);
+                Intent intent_home = new Intent(ContextTest.this, MainActivity.class);
                 startActivity(intent_home);
                 return (true);
             case R.id.item_settings:
-                Intent intent_setting = new Intent(Kontext.this, SettingSelection.class);
+                Intent intent_setting = new Intent(ContextTest.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
         }

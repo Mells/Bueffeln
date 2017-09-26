@@ -11,13 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 
-import com.example.kathrin1.vokabeltrainer_newlayout.MainActivity;
 import com.example.kathrin1.vokabeltrainer_newlayout.R;
-import com.example.kathrin1.vokabeltrainer_newlayout.dictionary.Lektion;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.AufgabeAuswahl;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Kontext;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.TrainAndTest;
-import com.example.kathrin1.vokabeltrainer_newlayout.exercise.Translation;
 import com.wunderlist.slidinglayer.SlidingLayer;
 
 import net.qiujuer.genius.ui.widget.SeekBar;
@@ -309,7 +303,7 @@ public class Book1 extends Fragment {
             case "0":
                 return btn_chap0;
         }
-        return null;
+        return btn_chap0;
     }
     @Override
     public void onAttach(Context context) {
