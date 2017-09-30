@@ -5,20 +5,23 @@
     tools:context=".MainActivity">
 
     <item
-        android:id="@+id/item_help"
-        android:icon="@android:drawable/ic_menu_help"
-        android:title="@string/ic_help"
-        app:showAsAction="always|withText" />
-    <item
         android:id="@+id/item_home"
         android:icon="@drawable/ic_home_black_24dp"
         android:title="@string/ic_home"
+        app:showAsAction="always|withText" />
+
+    <!--
+    <item
+        android:id="@+id/item_help"
+        android:icon="@android:drawable/ic_menu_help"
+        android:title="@string/ic_help"
         app:showAsAction="always|withText" />
     <item
         android:id="@+id/item_achievement"
         android:icon="@drawable/ic_trophy"
         android:title="@string/ic_setting"
         app:showAsAction="always|withText" />
+    -->
     <item
         android:id="@+id/item_settings"
         android:icon="@drawable/ic_settings_black"

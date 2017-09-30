@@ -500,10 +500,10 @@ public class WordTest extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.item_help:
-                Intent intent_help = new Intent(WordTest.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(WordTest.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(WordTest.this, MainActivity.class);
                 startActivity(intent_home);

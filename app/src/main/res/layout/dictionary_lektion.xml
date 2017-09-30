@@ -136,14 +136,14 @@
                 android:layout_marginTop="10dp"
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
-                android:background="@drawable/ic_eingabe_hg"
+                android:background="@drawable/ic_eingabe_hg_dark"
                 android:id="@+id/lay_entry">
 
                 <View
                     android:id="@+id/v_divider"
                     android:layout_width="300dp"
                     android:layout_height="2dip"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="#BFC0C0"
                     android:layout_marginTop="37dp"
                     android:layout_below="@+id/txt_voc_de"
                     android:layout_centerHorizontal="true" />
@@ -155,6 +155,7 @@
                     android:layout_marginTop="29dp"
                     android:id="@+id/txt_voc_en"
                     android:textSize="25sp"
+                    android:textColor="#BFC0C0"
                     android:layout_below="@+id/v_divider"
                     android:layout_marginBottom="20dp"
                     android:layout_centerHorizontal="true"
@@ -167,6 +168,7 @@
                     android:layout_alignParentTop="true"
                     android:layout_centerHorizontal="true"
                     android:id="@+id/txt_voc_de"
+                    android:textColor="#BFC0C0"
                     android:layout_marginTop="20dp"
                     android:textSize="25sp"
                     android:gravity="center"/>

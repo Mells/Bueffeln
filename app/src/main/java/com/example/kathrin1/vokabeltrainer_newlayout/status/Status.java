@@ -68,10 +68,10 @@ public class Status extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.item_help:
-                Intent intent_help = new Intent(Status.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(Status.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(Status.this, MainActivity.class);
                 startActivity(intent_home);

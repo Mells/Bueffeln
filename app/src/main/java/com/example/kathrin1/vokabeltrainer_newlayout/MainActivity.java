@@ -34,37 +34,6 @@ public class MainActivity extends AppCompatActivity {
         Button btn_status = (Button) findViewById(R.id.btn_status);
         Button btn_book_menu = (Button) findViewById(R.id.btn_book_menu);
 
-
-        //################### Test for status ###################
-        DatabaseManager dbManager = null;
-        dbManager = DatabaseManager.build(MainActivity.this);
-        List<VocObject> allVocabulary = dbManager.getWordsByBookChapterUnit("I", "1", "A B C");
-
-        for (VocObject voc : allVocabulary){
-            dbManager.updateTested(1, voc.getId());
-        }
-        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "2", "A B C");
-
-        for (VocObject voc : allVocabulary){
-            dbManager.updateTested(2, voc.getId());
-        }
-        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "3", "A B C");
-
-        for (VocObject voc : allVocabulary){
-            dbManager.updateTested(3, voc.getId());
-        }
-        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "4", "A B C");
-
-        for (VocObject voc : allVocabulary){
-            dbManager.updateTested(4, voc.getId());
-        }
-        allVocabulary = dbManager.getWordsByBookChapterUnit("I", "5", "A B C");
-
-        for (VocObject voc : allVocabulary){
-            dbManager.updateTested(0, voc.getId());
-        }
-
-
         btn_dictionary.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -116,10 +85,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.item_help:
-                Intent intent_help = new Intent(MainActivity.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(MainActivity.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(MainActivity.this, MainActivity.class);
                 startActivity(intent_home);
@@ -128,10 +97,10 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent_setting = new Intent(MainActivity.this, SettingSelection.class);
                 startActivity(intent_setting);
                 return (true);
-            case R.id.item_achievement:
-                Intent intent_achievement = new Intent(MainActivity.this, AchievementMain.class);
-                startActivity(intent_achievement);
-                return (true);
+//            case R.id.item_achievement:
+//                Intent intent_achievement = new Intent(MainActivity.this, AchievementMain.class);
+//                startActivity(intent_achievement);
+//                return (true);
         }
         return (super.onOptionsItemSelected(item));
     }

@@ -107,7 +107,6 @@ public class Feedback {
 
                 String[] learnerWords = learnerAnswer.split("\\s");
                 StringBuilder theFeedback = new StringBuilder();
-                MorphObject learnerWordReading;
 
                 for (int i = 0; i < newAppAnswerTag.size(); i++){
                     //for (Pair word : newAppAnswerTag){
@@ -210,7 +209,7 @@ public class Feedback {
 
             MorphInfoObject morphologicalReading = getBestLearnerReading(appReading, allAppReadings, learnerWordReading);
 
-            return compareReadings(learnerWordReading, morphologicalReading, bestAppReading);
+            return compareReadings(singleTarget, learnerWordReading, morphologicalReading, bestAppReading);
         }
     }
 
@@ -237,33 +236,36 @@ public class Feedback {
                         "Groß- und Kleinschreibung hast";
             }
             else {
-                return "Du hast kein bekanntes Wort eingegeben, " +
-                        "aber die Lösung ist fast gleich zu deiner Eingabe.";
+                return "Du hast einen kleinen Rechtschreibfehler gemacht.";
             }
         }
-        if (levenshtein_soundex == 0) {
+        else if (levenshtein_soundex == 0) {
             // return “sounds the same”
             return "Du hast kein bekanntes Wort eingegeben, " +
                     "aber die Lösung klingt gleich wie deine Eingabe";
         }
-        else if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
-            Log.d("Feedback in", "same");
-            // todo threshold
-            return "Muss noch konstruiert werden";
-        } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
-            // return "Das Wort klingt gleich"
-            // todo threshold
-            Log.d("Feedback in", "soundex");
-            return "Du hast kein bekanntes Wort eingegeben, aber die Lösung klingt " +
-                    "ähnlich. Bitte überprüfe deine Rechtschreibung";
-        } else {
-            // else (if) <sound_levenshtein> larger than <word_levenshtein>
-            // return "schau nach einem Rechtschreibfehler"
-            // todo threshold
-            Log.d("Feedback in", "spelling");
-            return "Du hast kein bekanntes Wort eingegeben, " +
-                    "bitte überprüfe deine Rechtschreibung.";
+        // if the distance is grater than 1 third then its not just spelling
+        else if (levenshtein_spelling <= (singleTarget.length()/3)){
+            if (levenshtein_soundex == levenshtein_spelling) { // if <sound_levenshtein> = <word_levenshtein>
+                return "Du hast einen Rechtschreibfehler, aber deine Lösung klingt schon ähnlich wie das gesuchte Wort.";
+            } else if (levenshtein_soundex < levenshtein_spelling) { // else if <sound_levenshtein> smaller than <word_levenshtein>
+                // return "Das Wort klingt gleich"
+                Log.d("Feedback in", "soundex");
+                return "Du hast kein bekanntes Wort eingegeben, aber die Lösung klingt " +
+                        "ähnlich. Bitte überprüfe deine Rechtschreibung";
+            } else {
+                // else (if) <sound_levenshtein> larger than <word_levenshtein>
+                // return "schau nach einem Rechtschreibfehler"
+                Log.d("Feedback in", "spelling");
+                return "Du hast kein bekanntes Wort eingegeben, " +
+                        "bitte überprüfe deine Rechtschreibung.";
+            }
         }
+        // great distance in levensteihn
+        else {
+            return "Deine Eingabe ist nicht zu entziffern. Bitte überprüfe sie.";
+        }
+
     }
 
     private MorphInfoObject getBestLearnerReading(String appReading, String[] allAppReadings, MorphObject learnerWordReading) {
@@ -357,10 +359,10 @@ public class Feedback {
                 }
             }
         }
-        System.out.println(voc);
+        //System.out.println(voc);
         // convert to string before outputting:
-        System.out.println("The (x,y) is: ("+tmpX+","+tmpY+")");
-        System.out.println(vocableProcessedTagged.get(tmpX));
+        //System.out.println("The (x,y) is: ("+tmpX+","+tmpY+")");
+        //System.out.println(vocableProcessedTagged.get(tmpX));
         return (ArrayList<Pair>) vocableProcessedTagged.get(tmpX);
     }
 
@@ -391,25 +393,58 @@ public class Feedback {
         return ((ArrayList<String>) vocableSoundex.get(tmpX)).get(0);
     }
 
+    private String getCorrectLemmaByIndex(String voc, ArrayList vocableProcessed, ArrayList vocableSoundex){
+
+        int tmpX = 0;
+        int tmpY = 0;
+        //String max = "to have a baby";
+        // there are some changes here. in addition to the caching
+        for (int i = 0; i < vocableProcessed.size(); i++) {
+            ArrayList<String> inner = (ArrayList<String>) vocableProcessed.get(i);
+            // caches inner variable so that it does not have to be looked up
+            // as often, and it also tests based on the inner loop's length in
+            // case the inner loop has a different length from the outer loop.
+            for (int y = 0; y < inner.size(); y++) {
+                System.out.println(inner.get(y) + " - " + voc);
+                if (inner.get(y).equals(voc)) {
+                    voc = inner.get(y);
+                    // store the coordinates of max
+                    tmpX = i; tmpY = y;
+                }
+            }
+        }
+        System.out.println(voc);
+        // convert to string before outputting:
+        System.out.println("The (x,y) is: ("+tmpX+","+tmpY+")");
+        System.out.println(vocableSoundex.get(tmpX));
+        return ((ArrayList<String>) vocableSoundex.get(tmpX)).get(0);
+    }
+
 
     /*
     COMPARE THE SAME PART OF SPEECH TAGS
      */
-    private String compareReadings(MorphObject learnerWordReading, MorphInfoObject morphologicalLearnerReading, String bestAppReading) {
+    private String compareReadings(String voc, MorphObject learnerWordReading, MorphInfoObject morphologicalLearnerReading, String bestAppReading) {
         MorphInfoObject morphologicalAppReading = new MorphInfoObject(bestAppReading);
         String learnerPOS = morphologicalLearnerReading.getPOS();
         String appPos = morphologicalAppReading.getPOS();
-        if (learnerWordReading.getLemma().equals(this.appLemma.get(0))){
+
+        Log.d("Feedback: POS - POS", learnerPOS + " " + appPos);
+        //getCorrectLemmaByIndex(voc, appProcessedAnswer, appLemma)
+        Log.d("Feedback: L1 - Lemma", learnerWordReading.getLemma() + " " + getCorrectLemmaByIndex(voc, appProcessedAnswer, appLemma));
+        Log.d("Feedback: L2 - Lemma", morphologicalLearnerReading.getLemma() + " " + getCorrectLemmaByIndex(voc, appProcessedAnswer, appLemma));
+        //if (learnerWordReading.getLemma().equals(this.appLemma.get(0))){
+        if (learnerWordReading.getLemma().equals(getCorrectLemmaByIndex(voc, appProcessedAnswer, appLemma))){
             if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
-                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+                return "Die Grundform stimmt schon mal. " + compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
             }
             else {
                 return "Fehler: (1) Lemma ist das Gleiche, aber nicht der POS Tag.";
             }
         }
-        else if (morphologicalLearnerReading.getLemma().equals(this.appLemma.get(0))){
+        else if (morphologicalLearnerReading.getLemma().equals(getCorrectLemmaByIndex(voc, appProcessedAnswer, appLemma))){
             if (morphologicalAppReading.getPOS().equals(morphologicalLearnerReading.getPOS())){
-                return compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
+                return "Die Grundform stimmt schon mal. " + compareMorphologicalInformation(morphologicalAppReading, morphologicalLearnerReading);
             }
             else {
                 return "Fehler: (2) Lemma ist das Gleiche, aber nicht der POS Tag.";
@@ -447,7 +482,7 @@ public class Feedback {
             case "Prep":
                 return comparePrepositions();
             case "Punct":
-                return "Punctuation"; // TODO?
+                return "Probiere ein anderes Satzzeichen.";
             case "A":
                 return compareAdjectives(morphologicalAppReading, morphologicalLearnerReading);
             case "Adv":
@@ -488,11 +523,11 @@ public class Feedback {
     }
 
     private String compareParticles() {
-        return "Probiere ein anderen Partikel.";
+        return "Probiere einen anderen Partikel.";
     }
 
     private String comparePrepositions() {
-        return "Probiere ein andere Preposition.";
+        return "Probiere eine andere Preposition.";
     }
 
     private String compareAdjectives(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
@@ -616,6 +651,11 @@ public class Feedback {
             return result;
         }
 
+        result = compareNegation(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")){
+            return result;
+        }
+
         result = compareNumbers(morphologicalAppReading, morphologicalLearnerReading);
         if (!result.equals("")){
             return result;
@@ -627,6 +667,11 @@ public class Feedback {
         }
 
         result = compareCases(morphologicalAppReading, morphologicalLearnerReading);
+        if (!result.equals("")) {
+            return result;
+        }
+
+        result = compareReflexive(morphologicalAppReading, morphologicalLearnerReading);
         if (!result.equals("")) {
             return result;
         }
@@ -746,7 +791,7 @@ public class Feedback {
             if (!morphologicalLearnerReading.getNumber().equals("")){
                 // learner has number marker
                 return "Deine Eingabe ist in " + numberToString(morphologicalLearnerReading.getNumber())
-                        + ". Bist du sicher ob das richtig ist?";
+                        + ". Bist du sicher, dass dies richtig ist?";
             }
         }
 
@@ -763,13 +808,13 @@ public class Feedback {
                 }
                 else {
                     return "Das Wort wird in " + caseToString(morphologicalAppReading.getLingCase())
-                            + "gesucht, nicht in " + caseToString(morphologicalLearnerReading.getLingCase())
+                            + " gesucht, nicht in " + caseToString(morphologicalLearnerReading.getLingCase())
                             + ".";
                 }
             }
             else {
                 return "Das Wort wird in " + caseToString(morphologicalAppReading.getLingCase())
-                        + "gesucht.";
+                        + " gesucht.";
             }
         }
         else {
@@ -777,7 +822,7 @@ public class Feedback {
             if (!morphologicalLearnerReading.getLingCase().equals("")){
                 // learner has case marker
                 return "Deine Eingabe ist in " + caseToString(morphologicalLearnerReading.getLingCase())
-                        + ". Bist du sicher ob das richtig ist?";
+                        + ". Bist du sicher, dass dies richtig ist?";
             }
         }
         return "";
@@ -793,13 +838,13 @@ public class Feedback {
                 }
                 else {
                     return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime())
-                            + "gesucht, nicht in " + timeToString(morphologicalLearnerReading.getLingTime())
+                            + " gesucht, nicht in " + timeToString(morphologicalLearnerReading.getLingTime())
                             + ".";
                 }
             }
             else {
                 return "Das Wort wird in " + timeToString(morphologicalAppReading.getLingTime())
-                        + "gesucht.";
+                        + " gesucht.";
             }
         }
         else {
@@ -807,7 +852,7 @@ public class Feedback {
             if (!morphologicalLearnerReading.getLingTime().equals("")){
                 // learner has case marker
                 return "Deine Eingabe ist in " + timeToString(morphologicalLearnerReading.getLingTime())
-                        + ". Bist du sicher ob das richtig ist?";
+                        + ". Bist du sicher, dass dies richtig ist?";
             }
         }
         return "";
@@ -888,31 +933,6 @@ public class Feedback {
         }
     }
 
-    private String compareNegative(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
-        if (morphologicalAppReading.getIsNegation()){
-            // solution has a infinitive marker
-            if (morphologicalLearnerReading.getIsNegation()){
-                // learner also has an infinitive marker
-                return "";
-            }
-            else {
-                // learner has no infinitive but a time marker
-                return "Das Wort das gesucht wird ist ein starkes Verb.";
-            }
-        }
-        else { // solution has no infinitive marker
-            // learner has infinitive
-            if (morphologicalLearnerReading.getIsNegation()){
-                return "Das Wort das gesucht wird ist kein starkes Verb.";
-            }
-            else {
-                // no infinitive marker in solution and learner.
-                return "";
-
-            }
-        }
-    }
-
     private String compareReflexive(MorphInfoObject morphologicalAppReading, MorphInfoObject morphologicalLearnerReading) {
         if (morphologicalAppReading.getIsReflexive()){
             // solution has a reflexive marker
@@ -922,13 +942,13 @@ public class Feedback {
             }
             else {
                 // learner has no reflexive marker
-                return "Das Wort das gesucht wird ist ein reflexives Verb.";
+                return "Das Wort das gesucht wird ist ein reflexives Pronoun.";
             }
         }
         else { // solution has no reflexive marker
             // learner has reflexive marker
             if (morphologicalLearnerReading.getIsReflexive()){
-                return "Das Wort das gesucht wird ist kein reflexives Verb.";
+                return "Das Wort das gesucht wird ist kein reflexives Pronoun.";
             }
             else {
                 // no reflexive marker in solution and learner.
@@ -998,13 +1018,13 @@ public class Feedback {
                 }
                 else {
                     return "Das Wort wird in " + genderToString(morphologicalAppReading.getGender())
-                            + "gesucht, nicht in " + genderToString(morphologicalLearnerReading.getGender())
+                            + " gesucht, nicht in " + genderToString(morphologicalLearnerReading.getGender())
                             + ".";
                 }
             }
             else {
                 return "Das Wort wird in " + genderToString(morphologicalAppReading.getGender())
-                        + "gesucht.";
+                        + " gesucht.";
             }
         }
         else {
@@ -1012,7 +1032,7 @@ public class Feedback {
             if (!morphologicalLearnerReading.getGender().equals("")){
                 // learner has case marker
                 return "Deine Eingabe ist in " + genderToString(morphologicalLearnerReading.getGender())
-                        + ". Bist du sicher ob das richtig ist?";
+                        + ". Bist du sicher, dass dies richtig ist?";
             }
         }
         return "";
@@ -1094,7 +1114,8 @@ public class Feedback {
             case "PRES": return "Gegenwart";
             case "PPART": return "Partizip II";
             case "PROG": return "Verlaufsform der Gegenwart";
-            default: return "Fehler";
+            case "INF": return "Infinitiv";
+            default: return "Fehler: Time: " + lTime;
         }
     }
 
@@ -1139,7 +1160,7 @@ public class Feedback {
             case "ref1pl": return "erste Person Plural reflexive";
             case "ref2pl": return "zweite Person Plural reflexive";
             case "ref3pl": return "dritte Person Plural reflexive";
-            default: return "Fehler: nicht vorhandene Nummer";
+            default: return "Fehler: nicht vorhandene Nummer: " + number;
         }
     }
 
@@ -1150,18 +1171,18 @@ public class Feedback {
             case "nom": return "Nominative";
             case "GEN": return "Genetiv";
             case "nomacc": return "Nominative oder Akkusative";
-            default: return "Fehler: nicht vorhandener Case";
+            default: return "Fehler: nicht vorhandener Case: " + lCase;
         }
     }
 
-    private String genderToString(String lTime) {
-        switch (lTime){
+    private String genderToString(String lGender) {
+        switch (lGender){
             case "masc": return "der männlichen Form";
             case "fem": return "der weiblichen Form";
             case "neut": return "der sächlichen Form";
             case "reffem": return "reflexiven weiblichen Form";
             case "refmasc": return "reflexiv männlichen Form";
-            default: return "Fehler";
+            default: return "Fehler: Gender: " + lGender;
         }
     }
 

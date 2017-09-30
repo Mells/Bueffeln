@@ -885,10 +885,10 @@ public class TrainAndTest extends AppCompatActivity
     {
         switch (item.getItemId())
         {
-            case R.id.item_help:
-                Intent intent_help = new Intent(TrainAndTest.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(TrainAndTest.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(TrainAndTest.this, MainActivity.class);
                 startActivity(intent_home);

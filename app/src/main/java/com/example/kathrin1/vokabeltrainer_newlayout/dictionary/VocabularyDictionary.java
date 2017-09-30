@@ -114,10 +114,10 @@ public class VocabularyDictionary extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.item_help:
-                Intent intent_help = new Intent(VocabularyDictionary.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(VocabularyDictionary.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(VocabularyDictionary.this, MainActivity.class);
                 startActivity(intent_home);

@@ -157,13 +157,13 @@ public class ContextTest extends AppCompatActivity {
                         if (!hint_sentence.getSentence().equals("")){
                             currentlyUsedSentences.add(hint_sentence.getSentence());
 
-                            lay_feedback_scroll.addView(createNewRelativeLayoutView(ExerciseUtils.deleteWordFromSentence(hint_sentence, voc)));
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(ExerciseUtils.deleteWordFromSentence(hint_sentence, voc), true));
                             scroll.postDelayed(new Runnable() { @Override public void run() {
                                 scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                         }
                         else {
                             feedback_answer = "Es tut mir leid, es gibt keine weiteren Sätze für dieses Wort";
-                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                             scroll.postDelayed(new Runnable() { @Override public void run() {
                                 scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
                         }
@@ -182,8 +182,8 @@ public class ContextTest extends AppCompatActivity {
                 btn_hint.setEnabled(false);
                 dbManager.updateTested(0, voc.getId());
 
-                feedback_answer = "Die korrekte Übersetzung für <b><i>" + voc.getVoc() + "</i></b> ist <b><i>" + voc.getTranslation() + "</i></b>.";
-                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                feedback_answer = "Das gesuchte Wort ist <b><i>" + voc.getVoc() + "</i></b> und übersetzt bedeutet es <b><i>" + voc.getTranslation() + "</i></b>.";
+                lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                 scroll.postDelayed(new Runnable() { @Override public void run() {
                     scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
             }
@@ -212,12 +212,15 @@ public class ContextTest extends AppCompatActivity {
                             InputMethodManager.HIDE_NOT_ALWAYS);
 
                     if (edit_solution.getText().toString().length() > 0) {
+
+                        lay_feedback_scroll.addView(createNewRelativeLayoutView(edit_solution.getText().toString(), false));
+
                         Boolean isCorrect = false;
-                        if (edit_solution.getText().toString().equals(voc.getTranslation())) {
+                        if (edit_solution.getText().toString().equals(voc.getVoc())) {
                             isCorrect = true;
                         }
                         else{
-                            for (ArrayList<String> currentArraySolution : (ArrayList<ArrayList<String>>) voc.getProcessedTranslation()){
+                            for (ArrayList<String> currentArraySolution : (ArrayList<ArrayList<String>>) voc.getProcessedVocable()){
                                 for (String currentSolution : currentArraySolution) {
                                     if (currentSolution.equals(edit_solution.getText().toString())) {
                                         isCorrect = true;
@@ -228,7 +231,7 @@ public class ContextTest extends AppCompatActivity {
 
                         if (isCorrect) {
                             feedback_answer = "Gratulation, das ist korrekt.";
-                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                             scroll.postDelayed(new Runnable() { @Override public void run() {
                                 scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
 
@@ -249,7 +252,7 @@ public class ContextTest extends AppCompatActivity {
                             Feedback feedback = new Feedback(edit_solution.getText().toString(),
                                     voc, true, ContextTest.this);
                             feedback_answer = feedback.generateFeedback();
-                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer));
+                            lay_feedback_scroll.addView(createNewRelativeLayoutView(feedback_answer, true));
                             scroll.postDelayed(new Runnable() { @Override public void run() {
                                 scroll.fullScroll(View.FOCUS_DOWN); } }, 250);
 
@@ -329,8 +332,40 @@ public class ContextTest extends AppCompatActivity {
         }
     }
 
-    private RelativeLayout createNewRelativeLayoutView(String s){
+    private TextView createNewTextView(String text, Boolean isFeedback) {
+        //android:layout_width="wrap_content"
+        //android:layout_height="wrap_content"
+        final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 
+        //android:layout_marginLeft="15dp"
+        //android:layout_marginRight="60dp"
+        if (isFeedback) {
+            params.setMargins(pixelToDips(60), 0, pixelToDips(15), 0);
+        }else{
+            params.setMargins(pixelToDips(15), 0, pixelToDips(60), 0);
+        }
+
+        //android:layout_centerVertical="true"
+        params.addRule(RelativeLayout.CENTER_VERTICAL);
+
+        //android:layout_alignParentLeft="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+
+        //android:layout_alignParentStart="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_START);
+
+        //android:layout_alignParentRight="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+        //android:layout_alignParentEnd="true"
+        params.addRule(RelativeLayout.ALIGN_PARENT_END);
+        final TextView textView = new TextView(this);
+        textView.setLayoutParams(params);
+        textView.setText(ExerciseUtils.fromHtml(text));
+        return textView;
+    }
+
+    private RelativeLayout createNewRelativeLayoutView(String s, Boolean isFeedback){
         //android:layout_width="match_parent"
         //android:layout_height="wrap_content"
         final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
@@ -348,46 +383,20 @@ public class ContextTest extends AppCompatActivity {
         relativeLayout.setLayoutParams(params);
 
         //android:background="@drawable/ic_sprechblase_main_rechts"
-        relativeLayout.setBackground(ContextCompat.getDrawable(ContextTest.this, R.drawable.ic_sprechblase_main_rechts));
+        if (isFeedback) {
+            relativeLayout.setBackground(ContextCompat.getDrawable(ContextTest.this, R.drawable.ic_sprechblase_main));
+        }
+        else {
+            relativeLayout.setBackground(ContextCompat.getDrawable(ContextTest.this, R.drawable.ic_sprechblase_main_rechts));
+        }
 
         int theId = generateViewId();
         Log.d("ID", String.valueOf(theId));
         relativeLayout.setId(theId);
         currentLayoutId = theId;
 
-        relativeLayout.addView(createNewTextView(String.valueOf(s)));
+        relativeLayout.addView(createNewTextView(String.valueOf(s), isFeedback));
         return relativeLayout;
-    }
-
-    private TextView createNewTextView(String text) {
-        //android:layout_width="wrap_content"
-        //android:layout_height="wrap_content"
-        final RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-
-        //android:layout_marginLeft="15dp"
-        //android:layout_marginRight="60dp"
-        params.setMargins(pixelToDips(15), 0, pixelToDips(60), 0);
-
-        //android:layout_centerVertical="true"
-        params.addRule(RelativeLayout.CENTER_VERTICAL);
-
-        //android:layout_alignParentLeft="true"
-        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-
-        //android:layout_alignParentStart="true"
-        // todo changed to ALIGN_PARENT_TOP
-        params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-
-        //android:layout_alignParentRight="true"
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-        //android:layout_alignParentEnd="true"
-        // todo changed to ALIGN_PARENT_BOTTOM
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        final TextView textView = new TextView(this);
-        textView.setLayoutParams(params);
-        textView.setText(ExerciseUtils.fromHtml(text));
-        return textView;
     }
 
     private int pixelToDips(int x){
@@ -423,10 +432,10 @@ public class ContextTest extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.item_help:
-                Intent intent_help = new Intent(ContextTest.this, Help.class);
-                startActivity(intent_help);
-                return (true);
+//            case R.id.item_help:
+//                Intent intent_help = new Intent(ContextTest.this, Help.class);
+//                startActivity(intent_help);
+//                return (true);
             case R.id.item_home:
                 Intent intent_home = new Intent(ContextTest.this, MainActivity.class);
                 startActivity(intent_home);
